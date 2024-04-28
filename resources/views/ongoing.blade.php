@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>About Us | {{ config('app.name', 'Laravel') }}</title>
+        <title>On going Auction | {{ config('app.name', 'Laravel') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -23,7 +23,7 @@
                     <main class="mt-6">
                         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                             <div class="p-6 text-gray-900 dark:text-gray-100">
-                                {{ "You're in about!" }}
+                                {{ "You're in ongoing auction!" }}
                             </div>
                         </div>
                     </main>

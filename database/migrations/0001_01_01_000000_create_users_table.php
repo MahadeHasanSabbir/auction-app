@@ -16,7 +16,12 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('avatar')->nullable();
+            $table->integer('total_bid')->default(0);
+            $table->integer('total_sell')->default(0);
+            $table->integer('total_buy')->default(0);
             $table->string('password');
+            $table->boolean('active_status')->default(0);
             $table->rememberToken();
             $table->timestamps();
         });
