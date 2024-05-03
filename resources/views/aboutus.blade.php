@@ -18,14 +18,41 @@
         <div className="bg-gray-50 text-black/50 dark:bg-black dark:text-white/50">
             @include('layouts.navigation')
             <div class="relative min-h-screen flex flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
-                <div class="relative w-full max-w-2xl px-6 lg:max-w-7xl">
+                <div class="relative isolate overflow-hidden w-full max-w-2xl px-6 lg:max-w-7xl">
 
-                    <main class="mt-6">
-                        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                            <div class="p-6 text-gray-900 dark:text-gray-100">
-                                {{ "You're in about!" }}
+                    <main class="mt-4">
+                        <div class="mx-auto max-w-7xl px-6 lg:px-8">
+                            <div class="mx-auto max-w-2xl lg:mx-0 py-2">
+                                <h2 class="text-4xl font-bold tracking-tight sm:text-6xl">Work with us</h2>
+                                <p class="mt-6 text-lg leading-8 text-gray-300">Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo. Elit sunt amet fugiat veniam occaecat fugiat aliqua.</p>
                             </div>
-                        </div>
+                            <div class="mx-auto mt-10 max-w-2xl lg:mx-0 lg:max-w-none py-2">
+                                <div class="grid grid-cols-1 gap-x-8 gap-y-6 text-base font-semibold leading-7 sm:grid-cols-2 md:flex lg:gap-x-10 py-4">
+                                    <a href="#">Open roles <span aria-hidden="true">&rarr;</span></a>
+                                    <a href="#">Internship program <span aria-hidden="true">&rarr;</span></a>
+                                    <a href="#">Our values <span aria-hidden="true">&rarr;</span></a>
+                                    <a href="#">Meet our leadership <span aria-hidden="true">&rarr;</span></a>
+                                </div>
+                                <dl class="mt-16 grid grid-cols-1 gap-8 sm:mt-20 sm:grid-cols-2 lg:grid-cols-4">
+                                    <div class="flex flex-col-reverse">
+                                        <dt class="text-base leading-7 text-gray-300">Offices worldwide</dt>
+                                        <dd class="text-2xl font-bold leading-9 tracking-tight">12</dd>
+                                    </div>
+                                    <div class="flex flex-col-reverse">
+                                        <dt class="text-base leading-7 text-gray-300">Full-time colleagues</dt>
+                                        <dd class="text-2xl font-bold leading-9 tracking-tight">300+</dd>
+                                    </div>
+                                    <div class="flex flex-col-reverse">
+                                        <dt class="text-base leading-7 text-gray-300">Hours per week</dt>
+                                        <dd class="text-2xl font-bold leading-9 tracking-tight">40</dd>
+                                    </div>
+                                    <div class="flex flex-col-reverse">
+                                        <dt class="text-base leading-7 text-gray-300">Paid time off</dt>
+                                        <dd class="text-2xl font-bold leading-9 tracking-tight">Unlimited</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                          </div>
                     </main>
 
                     <footer class="py-16 text-center text-sm text-black dark:text-white/70">

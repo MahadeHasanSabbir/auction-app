@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuctionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\AuctionViewController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -13,14 +14,18 @@ Route::get('/about', function () {
     return view('aboutus');
 })->name('about');
 
-Route::resource('product', ProductController::class)->middleware(['auth', 'verified']);
+Route::resource('product', ProductController::class)->middleware(['auth', 'verified'])->except('show');
+Route::resource('product', ProductController::class)->only('show');
 
-Route::resource('auction', AuctionController::class)->middleware(['auth', 'verified']);
+Route::resource('auction', AuctionController::class)->middleware(['auth', 'verified'])->except('create', 'show', 'edit');
+Route::resource('product.auction', AuctionController::class)->middleware(['auth', 'verified'])->only('create');
+Route::resource('auction', AuctionController::class)->only('show');
+
+Route::get('/auctions', function(){
+    return view('auction');
+})->name('auction.view');
+
 /*
-Route::get('/products', function () {
-    return view('profile.product');
-})->middleware(['auth', 'verified'])->name('product.manage');
-
 Route::post('/products', function () {
     return view('profile.product');
 })->middleware(['auth', 'verified'])->name('products');

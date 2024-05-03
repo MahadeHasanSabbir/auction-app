@@ -16,7 +16,7 @@ class ProductController extends Controller
     public function index(): View
     {
         $products = Product::all();
-        return view('profile.manage', compact($products));
+        return view('profile.manage', compact('products'));
     }
 
     /**
@@ -37,13 +37,18 @@ class ProductController extends Controller
             'category' => ['required', 'string', 'max:50'],
             'description' => ['required', 'string', 'max:550'],
             'starting_price' => ['required', 'numeric'],
+            'picture' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:5120'],
         ]);
+
+        $picName = time().'.'.$request->picture->extension();
+        $path = $request->picture->move('storage', $picName);
 
         $product = Product::create([
             'name' => $request->name,
             'category' => $request->category,
             'description' => $request->description,
             'starting_price' => $request->starting_price,
+            'picture' => $path,
         ]);
 
         return redirect(route('product.index', absolute: false))
@@ -55,18 +60,17 @@ class ProductController extends Controller
      */
     public function show(string $id): View
     {
-        $product = Product::find($id);
-        return view('productview', compact($product));
+        $product = Product::findorfail($id);
+        return view('productview', compact('product'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Request $request): view
+    public function edit(string $id): view
     {
-        return view('profile.product', [
-            'product' => $request->product(),
-        ]);
+        $product = Product::findorfail($id);
+        return view('profile.update', compact('product'));
     }
 
     /**
@@ -74,15 +78,14 @@ class ProductController extends Controller
      */
     public function update(Request $request, string $id): RedirectResponse
     {
-        $request->product()->fill($request->validated());
+        $product = Product::where('id', $id)->update([
+            'name' => $request->name,
+            'category' => $request->category,
+            'description' => $request->description,
+            'starting_price' => $request->starting_price,
+        ]);
 
-        if ($request->product()->isDirty('email')) {
-            $request->product();
-        }
-
-        $request->product()->save();
-
-        return Redirect::route('product.edit')->with('status', 'product-updated');
+        return Redirect::route('product.index')->with('status', 'product updated successfully!');
     }
 
     /**
@@ -90,10 +93,8 @@ class ProductController extends Controller
      */
     public function destroy(string $id): RedirectResponse
     {
-        $product = $request->product();
+        Product::destroy($id);
 
-        $product->delete();
-
-        return Redirect::to('/product');
+        return Redirect::route('product.index')->with('status', 'Product delete successfully!');
     }
 }

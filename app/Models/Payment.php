@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Product extends Model
+class Payment extends Model
 {
     use HasFactory;
 
@@ -14,15 +14,9 @@ class Product extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'name',
-        'category',
-        'description',
-        'starting_price',
-        'picture',
-    ];
+    protected $guarded = [];
 
     public function auction(){
-        return $this->hasOne(Auction::class);
+        return $this->belongsTo(Auction::class);
     }
 }

@@ -1,5 +1,6 @@
 import defaultTheme from 'tailwindcss/defaultTheme';
 import forms from '@tailwindcss/forms';
+import aspectRatio from '@tailwindcss/aspect-ratio';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -16,13 +17,12 @@ export default {
             },
             gridTemplateRows: {
                 '[auto,auto,1fr]': 'auto auto 1fr',
-              },
+            },
         },
     },
 
-    //plugins: [forms],
     plugins: [
         forms,
-        require('@tailwindcss/aspect-ratio'),
+        aspectRatio,
       ],
 };

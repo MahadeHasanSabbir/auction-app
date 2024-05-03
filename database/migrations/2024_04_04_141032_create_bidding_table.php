@@ -11,11 +11,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('bidding', function (Blueprint $table) {
-            $table->id()->primary();
+        Schema::create('products', function (Blueprint $table) {
+            $table->id()->primary()->index();
             $table->string('name');
-            $table->date('start_time')->index();
-            $table->date('end_time');
+            $table->string('category');
+            $table->string('description');
+            $table->integer('starting_price');
+            $table->string('picture');
+            $table->timestamps();
+        });
+        
+        Schema::create('auctions', function (Blueprint $table) {
+            $table->id()->primary();
+            $table->foreignId('product_id')->constrained('products')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->integer('host');
+            $table->string('name');
+            $table->dateTime('start_time')->index();
+            $table->dateTime('end_time');
             $table->integer('final_price')->nullable();
             $table->integer('no_of_bid')->default(0);
             $table->string('owner')->nullable();
@@ -23,19 +35,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('product', function (Blueprint $table) {
-            $table->id()->primary()->index();
-            $table->foreignId('bidding_id')->constrained('bidding')->cascadeOnUpdate()->cascadeOnDelete();
-            $table->string('name');
-            $table->string('category');
-            $table->string('description');
-            $table->integer('starting_price');
-            $table->timestamps();
-        });
-        
-        Schema::create('payment', function (Blueprint $table) {
+        Schema::create('payments', function (Blueprint $table) {
             $table->id()->primary();
-            $table->foreignId('bidding_id')->constrained('bidding')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('auction_id')->constrained('auctions')->cascadeOnUpdate()->cascadeOnDelete();
             /* $table->unsignedBigInteger('bidding_id');
             $table->foreign('bidding_id')->references('id')->on('bidding')->onUpdate('cascade')->onDelete('cascade'); */
             $table->integer('amount');

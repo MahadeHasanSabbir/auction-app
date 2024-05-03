@@ -15,6 +15,8 @@ class Auction extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'product_id',
+        'host',
         'name',
         'start_time',
         'end_time',
@@ -23,4 +25,12 @@ class Auction extends Model
         'owner',
         'status',
     ];
+
+    public function product(){
+        return $this->belongsTo(Product::class);
+    }
+
+    public function payment(){
+        return $this->hasOne(Payment::class);
+    }
 }

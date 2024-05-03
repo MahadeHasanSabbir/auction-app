@@ -6,6 +6,7 @@ use App\Models\Auction;
 use App\Models\Product;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
 
 class AuctionController extends Controller
@@ -13,10 +14,14 @@ class AuctionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): View
+    public function index(Request $id): View
     {
-        $auctions = Auction::all();
-        return view('auction', compact($auctions));
+        $id->validate([
+            'key' => ['required','integer']
+        ]);
+
+        $auctions = Auction::all()->where('host', $id->key);
+        return view('profile.manageauction', compact('auctions'));
     }
 
     /**
@@ -24,8 +29,8 @@ class AuctionController extends Controller
      */
     public function create(string $id): View
     {
-        $product = Product::find($id);
-        return view('profile.create', $product);
+        $product = Product::findorfail($id);
+        return view('profile.create', compact('product'));
     }
 
     /**
@@ -35,14 +40,19 @@ class AuctionController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:200'],
-            'start_time' => ['required', 'string', 'max:50'],
-            'end_time' => ['required', 'string', 'max:550'],
+            'start_time' => ['required', 'date'],
+            'end_time' => ['required', 'date'],
         ]);
 
-        $product = Auction::create([
+        $product = Product::find($request->product);
+
+        $auction = Auction::create([
             'name' => $request->name,
-            'start_time' => $request->category,
-            'end_time' => $request->description,
+            'start_time' => $request->start_time." ".$request->start_time1,
+            'end_time' => $request->end_time." ".$request->end_time1,
+            'final_price' => $request->final_price,
+            'host' => $request->host,
+            'product_id' => $product->id,
         ]);
 
         return redirect(route('dashboard', absolute: false))
@@ -56,7 +66,7 @@ class AuctionController extends Controller
     {
         //$auction = Auction::find($auction);
         //return view('ongoing', compact($auction));
-        return view('ongoing', $auction);
+        return view('ongoing', compact('auction'));
     }
 
     /**
@@ -64,7 +74,7 @@ class AuctionController extends Controller
      */
     public function edit(Auction $auction): View
     {
-        return view('profile.create', $auction);
+        //
     }
 
     /**
@@ -72,7 +82,15 @@ class AuctionController extends Controller
      */
     public function update(Request $request, Auction $auction): RedirectResponse
     {
-        //
+        $auctions = Auction::where('id',$auction->id)->update([
+            'final_price' => $request->final_price,
+            'owner' => Auth::user()->name,
+        ]);
+
+        $auctions = Auction::where('id', $auction->id)->increment('no_of_bid');
+        Auth::user()->increment('total_bid');
+
+        return redirect(route('auction.show', compact('auction')));
     }
 
     /**
@@ -80,6 +98,8 @@ class AuctionController extends Controller
      */
     public function destroy(Auction $auction): RedirectResponse
     {
-        //
+        Auction::destroy($auction->id);
+
+        return redirect(route('auction.index'))->with('status', 'Auction deleted successfully!');
     }
 }

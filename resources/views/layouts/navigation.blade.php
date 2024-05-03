@@ -46,6 +46,9 @@
                                 </x-slot>
                             </x-dropdown>
                         </div>
+                        <x-nav-link :href="route('auction.index', ['key' => Auth::user()->id])" :active="request()->routeIs('auction.index')">
+                            {{ __('Auction Manage') }}
+                        </x-nav-link>
                         @else
                             <x-nav-link :href="route('home')" :active="request()->routeIs('home')">
                                 {{ __('Home') }}
@@ -53,11 +56,10 @@
                             <x-nav-link :href="route('about')" :active="request()->routeIs('about')">
                                 {{ __('About us') }}
                             </x-nav-link>
+                            <x-nav-link :href="route('auction.view')" :active="request()->routeIs('auction.view')">
+                                {{ __('Auctions') }}
+                            </x-nav-link>
                     @endauth
-                    <x-nav-link :href="route('auction.index')" :active="request()->routeIs('auction.index')">
-                        {{ __('Auctions') }}
-                    </x-nav-link>
-                    
                 </div>
             </div>
             <!-- Settings Dropdown -->
@@ -134,6 +136,9 @@
                 <x-responsive-nav-link :href="route('product.index')" :active="request()->routeIs('product.index')">
                     {{ __('Product Manage') }}
                 </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('auction.index')" :active="request()->routeIs('auction.index')">
+                    {{ __('Auction Manage') }}
+                </x-responsive-nav-link>
                 @else
                     <x-responsive-nav-link :href="route('home')" :active="request()->routeIs('home')">
                         {{ __('Home') }}
@@ -141,10 +146,10 @@
                     <x-responsive-nav-link :href="route('about')" :active="request()->routeIs('about')">
                         {{ __('About us') }}
                     </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('auction.view')" :active="request()->routeIs('auction.view')">
+                        {{ __('Auctions') }}
+                    </x-responsive-nav-link>
             @endauth
-            <x-responsive-nav-link :href="route('auction.index')" :active="request()->routeIs('auction.index')">
-                {{ __('Auctions') }}
-            </x-responsive-nav-link>
         </div>
         <!-- Responsive Settings Options -->
         <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
