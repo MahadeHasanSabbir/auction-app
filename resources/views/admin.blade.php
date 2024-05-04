@@ -1,27 +1,45 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight flex justify-center">
-            {{ Auth::user()->name; }}
-        </h2>
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight flex justify-center">Administrator</h2>
         <div class="max-w-8xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 grid gap-6 lg:grid-cols-3 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-gray-800 grid gap-6 lg:grid-cols-3 overflow-hidden shadow sm:rounded-lg">
                 <div class="p-6 text-center text-gray-900 dark:text-gray-100">
                     <h3 class="font-semibold text-gray-800 dark:text-gray-200 leading-tight">
                         {{ __("Number of sell") }}
                     </h3>
-                    {{ Auth::user()->total_sell; }}
+                    {{ Auth::user()->total_sell }}
                 </div>
                 <div class="p-6 text-center text-gray-900 dark:text-gray-100">
                     <h3 class="font-semibold text-gray-800 dark:text-gray-200 leading-tight">
                         {{ __("Number of buy") }}
                     </h3>
-                    {{ Auth::user()->total_buy; }}
+                    {{ Auth::user()->total_buy }}
                 </div>
                 <div class="p-6 text-center text-gray-900 dark:text-gray-100">
                     <h3 class="font-semibold text-gray-800 dark:text-gray-200 leading-tight">
                         {{ __("Number of bid") }}
                     </h3>
-                    {{ Auth::user()->total_bid; }}
+                    {{ Auth::user()->total_bid }}
+                </div>
+            </div>
+            <div class="mt-1 bg-white dark:bg-gray-800 grid gap-6 lg:grid-cols-3 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-center text-gray-900 dark:text-gray-100">
+                    <h3 class="font-semibold text-gray-800 dark:text-gray-200 leading-tight">
+                        {{ __("Number of User") }}
+                    </h3>
+                    {{ DB::table('users')->where('role', '0')->count() }}
+                </div>
+                <div class="p-6 text-center text-gray-900 dark:text-gray-100">
+                    <h3 class="font-semibold text-gray-800 dark:text-gray-200 leading-tight">
+                        {{ __("Number of Product") }}
+                    </h3>
+                    {{ DB::table('products')->count() }}
+                </div>
+                <div class="p-6 text-center text-gray-900 dark:text-gray-100">
+                    <h3 class="font-semibold text-gray-800 dark:text-gray-200 leading-tight">
+                        {{ __("Number of Auction") }}
+                    </h3>
+                    {{ DB::table('auctions')->count() }}
                 </div>
             </div>
         </div>

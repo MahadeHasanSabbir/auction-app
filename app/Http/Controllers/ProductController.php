@@ -93,6 +93,9 @@ class ProductController extends Controller
      */
     public function destroy(string $id): RedirectResponse
     {
+        $product = Product::find($id);
+        unlink(public_path($product->picture));
+
         Product::destroy($id);
 
         return Redirect::route('product.index')->with('status', 'Product delete successfully!');

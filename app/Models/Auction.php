@@ -16,13 +16,15 @@ class Auction extends Model
      */
     protected $fillable = [
         'product_id',
-        'host',
+        'host_id',
+        'host_name',
         'name',
         'start_time',
         'end_time',
         'final_price',
         'no_of_bid',
-        'owner',
+        'owner_id',
+        'owner_name',
         'status',
     ];
 

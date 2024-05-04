@@ -59,11 +59,18 @@
 
                         <!-- Host -->
                         <div>
-                            <x-input-label for="host" :value="__('Host')" />
-                            <x-text-input id="host" class="block mt-1 w-full" type="number"
-                                            name="host" value="{{Auth::user()->id}}"
-                                            readonly title="this field is not for edit" autocomplete="host" />
-                            <x-input-error :messages="$errors->get('host')" class="mt-2" />
+                            <x-input-label for="host_id" :value="__('Host ID')" />
+                            <x-text-input id="host_id" class="block mt-1 w-full" type="number"
+                                            name="host_id" value="{{Auth::user()->id}}"
+                                            readonly title="this field is not for edit" autocomplete="host id" />
+                            <x-input-error :messages="$errors->get('host_id')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="host_name" :value="__('Host Name')" />
+                            <x-text-input id="host_name" class="block mt-1 w-full" type="number"
+                                            name="host_name" value="{{Auth::user()->id}}"
+                                            readonly title="this field is not for edit" autocomplete="host name" />
+                            <x-input-error :messages="$errors->get('host_name')" class="mt-2" />
                         </div>
 
                         <!-- Product -->

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->integer('total_bid')->default(0);
             $table->integer('total_sell')->default(0);
             $table->integer('total_buy')->default(0);
+            $table->integer('role')->default(0);
             $table->string('password');
             $table->boolean('active_status')->default(0);
             $table->rememberToken();

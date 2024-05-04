@@ -14,7 +14,10 @@
         <div class="max-w-8xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
-                    <div class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
+                    @if ($products->isEmpty())
+                        <p class="p-6 text-md flex justify-center">There is nothing to do here!</p>
+                    @endif
+                    <div class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:gap-x-8">
                         @foreach ($products as $product)
                             <div class="shadow">
                                 <div class="group relative">

@@ -20,17 +20,19 @@
         <div className="bg-gray-50 text-black/50 dark:bg-black dark:text-white/50">
             @include('layouts.navigation')
             <div class="relative min-h-screen flex flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
+                
                 <div class="relative w-full max-w-2xl px-6 lg:max-w-7xl">
 
                     <main class="mt-6">
-                        <div class="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+                        <div class="mx-auto max-w-2xl py-32 sm:py-40 lg:py-48">
                             <div class="hidden sm:mb-8 sm:flex sm:justify-center">
                                 <div class="relative rounded-full px-3 py-1 text-sm leading-6 text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
                                     Announcing our next round of funding. <a href="#" class="font-semibold text-indigo-600"><span class="absolute inset-0" aria-hidden="true"></span>Read more <span aria-hidden="true">&rarr;</span></a>
                                 </div>
                             </div>
                             <div class="text-center">
-                                <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">Auction to enrich your online business</h1>
+                                <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+                                    <a href="{{route('home')}}" class="font-semibold text-indigo-600">Auction</a> to enrich your online business</h1>
                                 <p class="mt-6 text-lg leading-8 text-gray-600">We are full functional online auctioner. Explore our web application and know more about us. Join us to boost your business</p>
                                 <div class="mt-10 flex items-center justify-center gap-x-6">
                                     <a href="{{route('login')}}" class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Get started</a>
@@ -43,7 +45,7 @@
                                 <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Contact with us</h2>
                                 <p class="mt-2 text-lg leading-8 text-gray-600">Send massage by using folloing form. We will connect with you in while.</p>
                             </div>
-                            <form action="#" method="POST" class="mx-auto mt-16 max-w-xl sm:mt-20">
+                            <form action="#" method="POST" class="mx-auto mt-6 max-w-xl sm:mt-10">
                                 <div class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
                                     <div>
                                         <label for="first-name" class="block text-sm font-semibold leading-6 text-gray-900">First name</label>

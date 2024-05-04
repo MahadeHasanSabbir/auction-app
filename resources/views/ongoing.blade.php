@@ -26,9 +26,6 @@
                     $products = DB::table('products')->select('name','picture', 'starting_price')->where('id', $auction->product_id)->get();
                         foreach ($products as $product) {
                         }
-                    $users = DB::table('users')->select('name')->where('id', $auction->host)->get();
-                        foreach ($users as $user) {
-                        }
                 @endphp
                 <main class="mt-6">
                     <div class="relative flex w-full items-center overflow-hidden bg-white px-4 pb-8 pt-14 shadow-2xl sm:px-6 sm:pt-8 md:p-6 lg:p-8">
@@ -44,19 +41,20 @@
                                 <section aria-labelledby="information-heading" class="mt-2">
                                     <h3 id="information-heading" class="sr-only">Product information</h3>
                                     <div class="flex justify-between">
-                                        <p class="text-xl text-gray-900"> <b>Host:</b> {{$user->name}}</p>
+                                        <p class="text-xl text-gray-900"> <b>Host:</b> {{$auction->host_name}}</p>
                                         <p class="text-xl text-gray-900"> <b>Starting Price: </b> BDT{{$product->starting_price}}</p>
                                     </div>
-                                    
-
-                                    <!-- Reviews -->
-                                    <div class="mt-6 flex justify-between">
+                                    <div class="mt-4 flex justify-between">
+                                        <p class="text-md text-gray-900"> <b>Start:</b> {{$auction->start_time}}</p>
+                                        <p class="text-md text-gray-900"> <b>End: </b> {{$auction->end_time}}</p>
+                                    </div>
+                                    <div class="mt-4 flex justify-between">
                                         <p class="text-md"> <b> Number of bid: </b> {{$auction->no_of_bid}}</p>
                                         <p class="text-md"> <b> Last bidder: </b>
                                             @if ($auction->no_of_bid == 0)
                                                 {{"N/A"}}
                                             @endif
-                                             {{$auction->owner}}
+                                             {{$auction->owner_name}}
                                         </p>
                                     </div>
                                 </section>
@@ -66,8 +64,11 @@
                                     @if ($auction->end_time <= date('Y-m-d H:i:s'))
                                         <p class="text-md flex justify-center">
                                             <b> New owner of {{$product->name}}: &nbsp</b>
-                                            {{$auction->owner}}
+                                            {{$auction->owner_name}}
                                         </p>
+                                        @if (Auth::user()->id == $auction->owner_id)
+                                            <a href="{{route('payment')}}" class="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Payment for product</a>
+                                        @endif
                                     @else
                                         <form
                                         @auth

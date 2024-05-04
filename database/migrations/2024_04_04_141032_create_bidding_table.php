@@ -24,14 +24,16 @@ return new class extends Migration
         Schema::create('auctions', function (Blueprint $table) {
             $table->id()->primary();
             $table->foreignId('product_id')->constrained('products')->cascadeOnUpdate()->cascadeOnDelete();
-            $table->integer('host');
+            $table->integer('host_id');
+            $table->string('host_name');
             $table->string('name');
             $table->dateTime('start_time')->index();
             $table->dateTime('end_time');
             $table->integer('final_price')->nullable();
             $table->integer('no_of_bid')->default(0);
-            $table->string('owner')->nullable();
-            $table->boolean('status')->default(0);
+            $table->bigInteger('owner_id')->nullable();
+            $table->string('owner_name')->nullable();
+            $table->integer('status')->default(0);
             $table->timestamps();
         });
 

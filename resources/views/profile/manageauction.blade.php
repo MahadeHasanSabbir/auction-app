@@ -6,6 +6,9 @@
     </x-slot>
     <div class="py-2">
         <div class="max-w-8xl mx-auto sm:px-6 lg:px-8">
+            @if ($auctions->isEmpty())
+                <p class="p-6 bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg text-md flex justify-center">There is nothing to do here!</p>
+            @endif
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg grid lg:grid-cols-3">
                 @foreach ($auctions as $auction)
                     <div class="shadow">
@@ -16,27 +19,48 @@
                                     <span> Status:</span>
                                     @if ($auction->status == 0)
                                         {{ "On observation" }}
-                                    @else
+                                    @elseif ($auction->status == 1)
                                         {{ "Online" }}
+                                    @else
+                                        {{ "Request deny" }}
                                     @endif
                                 </div>
                             </p>
                         </div>
-                        <div class="p-6 text-gray-900 dark:text-gray-100 flex">
-                            <a href="{{route('auction.show', $auction->id)}}">
-                                <x-primary-button class="ms-4">
-                                    {{ __('View') }}
-                                </x-primary-button>
-                            </a>
-                            <form action="{{route('auction.destroy', $auction->id)}}" method="post">
-                                @csrf
-                                @method('DELETE')
-                                <x-danger-button class="ms-4">
-                                    {{ __('Delete') }}
-                                </x-danger-button>
-                            </form>
-                            </a>
-                        </div>
+                        @if (Auth::user()->role == 0)
+                            <div class="p-6 text-gray-900 dark:text-gray-100 flex">
+                                <a href="{{route('auction.show', $auction->id)}}">
+                                    <x-primary-button class="ms-4">
+                                        {{ __('View') }}
+                                    </x-primary-button>
+                                </a>
+                                <form action="{{route('auction.destroy', $auction->id)}}" method="post">
+                                    @csrf
+                                    @method('DELETE')
+                                    <x-danger-button class="ms-4">
+                                        {{ __('Delete') }}
+                                    </x-danger-button>
+                                </form>
+                            </div>
+                        @else
+                            <div class="p-6 text-gray-900 dark:text-gray-100 flex">
+                                <a href="{{route('auction.show', $auction->id)}}">
+                                    <x-primary-button class="ms-4">
+                                        {{ __('View') }}
+                                    </x-primary-button>
+                                </a>
+                                <a href="{{route('admin.accept', $auction->id)}}">
+                                    <x-primary-button class="ms-4">
+                                        {{ __('Accept') }}
+                                    </x-primary-button>
+                                </a>
+                                <a href="{{route('admin.deny', $auction->id)}}">
+                                    <x-danger-button class="ms-4">
+                                        {{ __('Deny') }}
+                                    </x-danger-button>
+                                </a>
+                            </div>
+                        @endif
                     </div>
                 @endforeach
             </div>

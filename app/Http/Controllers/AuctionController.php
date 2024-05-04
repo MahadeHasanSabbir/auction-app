@@ -51,12 +51,20 @@ class AuctionController extends Controller
             'start_time' => $request->start_time." ".$request->start_time1,
             'end_time' => $request->end_time." ".$request->end_time1,
             'final_price' => $request->final_price,
-            'host' => $request->host,
+            'host_id' => $request->host_id,
+            'host_name' => $request->host_name,
             'product_id' => $product->id,
         ]);
 
-        return redirect(route('dashboard', absolute: false))
+        if(Auth::user()->role == 0){
+            return redirect(route('dashboard', absolute: false))
+                                ->with('status', 'Auction created successfully. Please wait for administrator review to seen it online');
+        }
+        else{
+            return redirect(route('admin.index', absolute: false))
                     ->with('status', 'Auction created successfully. Please wait for administrator review to seen it online');
+        }
+        
     }
 
     /**
@@ -84,7 +92,8 @@ class AuctionController extends Controller
     {
         $auctions = Auction::where('id',$auction->id)->update([
             'final_price' => $request->final_price,
-            'owner' => Auth::user()->name,
+            'owner_id' => Auth::user()->id,
+            'owner_name' => Auth::user()->name,
         ]);
 
         $auctions = Auction::where('id', $auction->id)->increment('no_of_bid');

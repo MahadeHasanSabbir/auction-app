@@ -31,7 +31,22 @@ class AuthenticatedSessionController extends Controller
         Auth::user()->active_status = true;
         Auth::user()->save();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $userRole = Auth::user()->role;
+
+        switch ($userRole) {
+            case '0':
+                return redirect()->intended(route('dashboard', absolute: false));
+                break;
+            
+            case '1':
+                return redirect()->intended(route('admin.index', absolute: false));
+                break;
+            
+            default:
+                return redirect()->intended(route('home', absolute: false));
+                break;
+        }
+        
     }
 
     /**
