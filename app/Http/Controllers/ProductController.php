@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Redirect;
 
@@ -15,7 +16,7 @@ class ProductController extends Controller
      */
     public function index(): View
     {
-        $products = Product::all();
+        $products = Product::where('seller', Auth::user()->id)->get();
         return view('profile.manage', compact('products'));
     }
 
@@ -49,6 +50,7 @@ class ProductController extends Controller
             'description' => $request->description,
             'starting_price' => $request->starting_price,
             'picture' => $path,
+            'seller' => Auth::user()->id,
         ]);
 
         return redirect(route('product.index', absolute: false))

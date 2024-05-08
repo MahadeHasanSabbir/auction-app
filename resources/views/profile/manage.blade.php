@@ -4,7 +4,7 @@
             Manage products for auction
         </h2>
         @if (session('status'))
-            <div style="background:lime;color:black;position:absolute;" class="m-2 p-2 text-md">
+            <div class="flex justify-center m-2 p-2 text-md">
                 {{ session('status') }}
             </div>
         @endif
@@ -15,9 +15,9 @@
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     @if ($products->isEmpty())
-                        <p class="p-6 text-md flex justify-center">There is nothing to do here!</p>
+                        <p class="p-6 text-md flex justify-center">There is nothing to do here! Add product for manage.</p>
                     @endif
-                    <div class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:gap-x-8">
+                    <div class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
                         @foreach ($products as $product)
                             <div class="shadow">
                                 <div class="group relative">
@@ -37,7 +37,7 @@
                                             </h3>
                                             <p class="mt-1 text-sm text-gray-500">{{$product->category}}</p>
                                         </div>
-                                        <p class="text-sm font-medium text-gray-900">{{$product->starting_price}}</p>
+                                        <p class="text-sm font-medium text-gray-900">BDT {{$product->starting_price}}</p>
                                     </div>
                                 </div>
                                 <div class="p-2 text-gray-900 dark:text-gray-100 flex items-center">

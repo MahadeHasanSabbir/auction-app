@@ -16,11 +16,16 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('address')->nullable();
             $table->string('avatar')->nullable();
+            $table->string('mobile')->nullable();
             $table->integer('total_bid')->default(0);
             $table->integer('total_sell')->default(0);
             $table->integer('total_buy')->default(0);
             $table->integer('role')->default(0);
+            $table->integer('asset')->default(100);
+            $table->bigInteger('card_no')->default(0);
+            $table->bigInteger('card_pin')->default(0);
             $table->string('password');
             $table->boolean('active_status')->default(0);
             $table->rememberToken();

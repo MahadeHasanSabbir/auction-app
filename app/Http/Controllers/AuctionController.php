@@ -14,13 +14,9 @@ class AuctionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $id): View
+    public function index(): View
     {
-        $id->validate([
-            'key' => ['required','integer']
-        ]);
-
-        $auctions = Auction::all()->where('host', $id->key);
+        $auctions = Auction::all()->where('host_id', Auth::user()->id);
         return view('profile.manageauction', compact('auctions'));
     }
 
@@ -38,21 +34,13 @@ class AuctionController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:200'],
-            'start_time' => ['required', 'date'],
-            'end_time' => ['required', 'date'],
-        ]);
-
         $product = Product::find($request->product);
 
         $auction = Auction::create([
             'name' => $request->name,
-            'start_time' => $request->start_time." ".$request->start_time1,
-            'end_time' => $request->end_time." ".$request->end_time1,
             'final_price' => $request->final_price,
-            'host_id' => $request->host_id,
-            'host_name' => $request->host_name,
+            'host_id' => Auth::user()->id,
+            'host_name' => Auth::user()->name,
             'product_id' => $product->id,
         ]);
 
@@ -90,6 +78,14 @@ class AuctionController extends Controller
      */
     public function update(Request $request, Auction $auction): RedirectResponse
     {
+        $request->validate([
+            'final_price' => ['required', 'integer'],
+        ]);
+
+        if($request->final_price < $auction->final_price){
+            return redirect(route('auction.show', compact('auction')));
+        }
+        
         $auctions = Auction::where('id',$auction->id)->update([
             'final_price' => $request->final_price,
             'owner_id' => Auth::user()->id,

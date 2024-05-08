@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
-use Illuminate\Http\RedirectResponse;
+use App\Models\User;
+use Illuminate\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\View\View;
+use App\Http\Requests\ProfileUpdateRequest;
 
 class ProfileController extends Controller
 {
@@ -19,6 +20,15 @@ class ProfileController extends Controller
         return view('profile.edit', [
             'user' => $request->user(),
         ]);
+    }
+
+    /**
+     * Display the user's profile form.
+     */
+    public function view(string $id): View
+    {
+        $user = User::findorfail($id);
+        return view('users', compact('user'));
     }
 
     /**
@@ -34,7 +44,44 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        return Redirect::route('profile.view', $request->user()->id)->with('status', 'profile-updated');
+    }
+
+    /**
+     * Update the user's fund information.
+     */
+    public function fund(Request $request): RedirectResponse
+    {
+        $fund = $request->amount + $request->user()->asset;
+        $request->user()->update([
+            'asset' => $fund,
+            'card_no' => $request->card_no,
+            'card_pin' => $request->card_pin,
+        ]);
+
+        return Redirect::route('profile.view', $request->user()->id)->with('status', 'profile-updated');
+    }
+
+    /**
+     * Update the user's fund information.
+     */
+    public function contact(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'address' => ['required', 'string', 'max:200'],
+            'photo' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:5120'],
+        ]);
+
+        $picName = $request->user()->id.time().'.'.$request->photo->extension();
+        $path = $request->photo->move('storage', $picName);
+
+        $request->user()->update([
+            'mobile' => $request->mobile,
+            'address' => $request->address,
+            'avatar' => $path,
+        ]);
+
+        return Redirect::route('profile.view', $request->user()->id)->with('status', 'profile-updated');
     }
 
     /**

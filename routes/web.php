@@ -3,9 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuctionController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\AuctionViewController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -26,11 +26,9 @@ Route::get('/auctions', function(){
     return view('auction');
 })->name('auction.view');
 
-/*
-Route::post('/products', function () {
-    return view('profile.product');
-})->middleware(['auth', 'verified'])->name('products');
- */
+Route::get('/pay/{id}', [PaymentController::class, 'pay'])->middleware(['auth', 'verified'])->name('payment.pay');
+Route::get('/withdraw/{id}', [PaymentController::class, 'withdraw'])->middleware(['auth', 'verified'])->name('payment.withdraw');
+Route::put('/review/{id}', [PaymentController::class, 'review'])->middleware(['auth', 'verified'])->name('payment.review');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -42,10 +40,14 @@ Route::middleware('auth', 'verified', 'admin')->group(function () {
     Route::get('/request/{id}', [AdminController::class, 'accept'])->name('admin.accept');
     Route::get('/deny/{id}', [AdminController::class, 'deny'])->name('admin.deny');
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
+    Route::get('/user/{id}/edit', [AdminController::class, 'edit'])->name('user.edit');
 });
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile', [ProfileController::class, 'fund'])->name('profile.fund');
+    Route::put('/profile', [ProfileController::class, 'contact'])->name('profile.contact');
+    Route::get('/user/{id}', [ProfileController::class, 'view'])->name('profile.view');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });

@@ -55,17 +55,10 @@
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <h2 class="text-2xl font-bold tracking-tight text-gray-900">Ongoing auction</h2>
-
+                    @if ($auctions->isEmpty())
+                        <p class="mt-6"> Nothing is auctioning now!<br> Please wait for upcoming auction.</p>
+                    @endif
                     <div class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
-                        @php
-                            $auctions = DB::table('auctions')->where('status', '0')
-                                                            ->where('start_time', '<=', date('Y-m-d H:i:s'))
-                                                            ->where('end_time', '>=', date('Y-m-d H:i:s'))
-                                                            ->get();
-                            if($auctions->isEmpty()){
-                                echo "There is not any ongoing auction here!";
-                            }
-                        @endphp
                         @foreach ($auctions as $auction)
                             @php
                                 $products = DB::table('products')->select('name', 'picture')->where('id', $auction->product_id)->get();

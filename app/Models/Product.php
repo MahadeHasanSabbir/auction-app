@@ -10,17 +10,11 @@ class Product extends Model
     use HasFactory;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that are not mass assignable.
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'name',
-        'category',
-        'description',
-        'starting_price',
-        'picture',
-    ];
+    protected $guarded = [];
 
     public function auction(){
         return $this->hasOne(Auction::class);

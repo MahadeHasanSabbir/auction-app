@@ -8,6 +8,9 @@
         <div class="max-w-8xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
+                    @php
+                        $name = $product->name."'s auction";
+                    @endphp
                     <form method="POST" action="{{ route('auction.store') }}">
                         @csrf
 
@@ -15,37 +18,9 @@
                         <div>
                             <x-input-label for="name" :value="__('Name')" />
                             <x-text-input id="name" class="block mt-1 w-full" type="text"
-                                            name="name" :value="old('name')"
-                                            required autofocus autocomplete="name" />
+                                            name="name" value="{{ $name }}"
+                                            readonly title="this field is not for edit" autocomplete="name" />
                             <x-input-error :messages="$errors->get('name')" class="mt-2" />
-                        </div>
-
-                        <!-- Start time -->
-                        <div class="mt-4">
-                            <x-input-label for="start_time" :value="__('Start_time')" />
-
-                            <x-text-input id="start_time" class="block mt-1 w-full" type="date"
-                                            name="start_time" :value="old('start_time')"
-                                            required autocomplete="Start_time" />
-
-                            <x-text-input id="start_time1" class="block mt-1 w-full" type="time"
-                                            name="start_time1" :value="old('start_time')"
-                                            required autocomplete="Start_time" />
-                            <x-input-error :messages="$errors->get('start_time')" class="mt-2" />
-                        </div>
-
-                        <!-- End time -->
-                        <div class="mt-4">
-                            <x-input-label for="end_time" :value="__('End time')" />
-
-                            <x-text-input id="end_time" class="block mt-1 w-full" type="date"
-                                            name="end_time" :value="old('end_time')"
-                                            required autocomplete="End_time" />
-
-                            <x-text-input id="end_time1" class="block mt-1 w-full" type="time"
-                                            name="end_time1" :value="old('end_time')"
-                                            required autocomplete="End_time" />
-                            <x-input-error :messages="$errors->get('end_time')" class="mt-2" />
                         </div>
 
                         <!-- Price -->
@@ -53,28 +28,12 @@
                             <x-input-label for="final_price" :value="__('Price')" />
                             <x-text-input id="final_price" class="block mt-1 w-full" type="number"
                                             name="final_price" value="{{$product->starting_price}}"
-                                            readonly autocomplete="final price" />
+                                            readonly title="this field is not for edit" autocomplete="final price" />
                             <x-input-error :messages="$errors->get('final_price')" class="mt-2" />
                         </div>
 
-                        <!-- Host -->
-                        <div>
-                            <x-input-label for="host_id" :value="__('Host ID')" />
-                            <x-text-input id="host_id" class="block mt-1 w-full" type="number"
-                                            name="host_id" value="{{Auth::user()->id}}"
-                                            readonly title="this field is not for edit" autocomplete="host id" />
-                            <x-input-error :messages="$errors->get('host_id')" class="mt-2" />
-                        </div>
-                        <div>
-                            <x-input-label for="host_name" :value="__('Host Name')" />
-                            <x-text-input id="host_name" class="block mt-1 w-full" type="number"
-                                            name="host_name" value="{{Auth::user()->id}}"
-                                            readonly title="this field is not for edit" autocomplete="host name" />
-                            <x-input-error :messages="$errors->get('host_name')" class="mt-2" />
-                        </div>
-
                         <!-- Product -->
-                        <div>
+                        <div class="mt-4">
                             <x-input-label for="product" :value="__('Product')" />
                             <x-text-input id="product" class="block mt-1 w-full" type="number"
                                             name="product" value="{{$product->id}}"

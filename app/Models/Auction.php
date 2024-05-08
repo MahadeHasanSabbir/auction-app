@@ -10,23 +10,11 @@ class Auction extends Model
     use HasFactory;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that are not mass assignable.
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'product_id',
-        'host_id',
-        'host_name',
-        'name',
-        'start_time',
-        'end_time',
-        'final_price',
-        'no_of_bid',
-        'owner_id',
-        'owner_name',
-        'status',
-    ];
+    protected $guarded = [];
 
     public function product(){
         return $this->belongsTo(Product::class);
