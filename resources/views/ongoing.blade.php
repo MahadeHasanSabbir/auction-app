@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>On going Auction | {{ config('app.name', 'Laravel') }}</title>
+    <title>Auction | {{ config('app.name', 'Laravel') }}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -21,12 +21,6 @@
         @include('layouts.navigation')
         <div class="relative min-h-screen flex flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
             <img src="{{asset('pexels-karolina-grabowska-4862892.jpg')}}" alt="" class="absolute inset-0 -z-10 h-full w-full object-cover object-right md:object-center">
-            <div class="hidden sm:absolute sm:-top-10 sm:right-1/2 sm:-z-10 sm:mr-10 sm:block sm:transform-gpu sm:blur-3xl" aria-hidden="true">
-                <div class="aspect-[1097/845] w-[68.5625rem] bg-gradient-to-tr from-[#ff4694] to-[#776fff] opacity-20" style="clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)"></div>
-            </div>
-            <div class="absolute -top-52 left-1/2 -z-10 -translate-x-1/2 transform-gpu blur-3xl sm:top-[-28rem] sm:ml-16 sm:translate-x-0 sm:transform-gpu" aria-hidden="true">
-                <div class="aspect-[1097/845] w-[68.5625rem] bg-gradient-to-tr from-[#ff4694] to-[#776fff] opacity-20" style="clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)"></div>
-            </div>
             <div class="relative w-full max-w-2xl px-6 lg:max-w-7xl">
                 @php
                     $products = DB::table('products')->select('name','picture', 'description', 'starting_price')->where('id', $auction->product_id)->get();
@@ -35,7 +29,7 @@
                 @endphp
                 <main class="mt-6">
                     <div class="relative flex w-full items-center overflow-hidden bg-white px-4 pb-8 pt-14 shadow-2xl sm:px-6 sm:pt-8 md:p-6 lg:p-8">
-                        <div class="py-4 grid w-full grid-cols-1 items-start gap-x-6 gap-y-8 sm:grid-cols-12 lg:gap-x-8 shadow bg-gray-50">
+                        <div class="py-2 w-full shadow bg-gray-50">
                             <h2 class="text-xl py-4 font-bold bg-gray-200 rounded text-gray-900 sm:pr-12 text-center">
                                 {{ $auction->name }}
                             </h2>
@@ -55,7 +49,12 @@
                                 <section aria-labelledby="information-heading" class="mt-2">
                                     <h3 id="information-heading" class="sr-only">Product information</h3>
                                     <div class="flex justify-between">
-                                        <p class="text-md text-gray-900"> <b>Host:</b> {{$auction->host_name}}</p>
+                                        <p class="text-md text-gray-900"> <b>Host:</b>
+                                            <a href="{{route('profile.view', $auction->host_id)}}">
+                                                {{$auction->host_name}}
+                                            </a> 
+                                            
+                                        </p>
                                         <p class="text-md text-gray-900"> <b>Starting Price: </b> BDT {{$product->starting_price}}</p>
                                     </div>
                                     <div class="mt-4 flex justify-between">
@@ -93,8 +92,13 @@
                                                 @elseif (Auth::user()->id == $auction->host_id)
                                                     @if ($auction->payment == 0)
                                                         <h3 class="text-md py-4 font-medium text-gray-900 text-center"> Your product is sold. Please wait for get paid. </h3>
-                                                    @elseif($auction->payment_id == 0)
-                                                        <a href="{{route('payment.withdraw', $auction->id)}}" class="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Withdraw for {{$product->name}}</a>
+                                                    @elseif($auction->payment == 1)
+                                                        @php
+                                                            $withdraw = DB::table('payments')->where('id', $auction->payment_id)->value('withdrawer');
+                                                        @endphp
+                                                        @if ($withdraw == 0)
+                                                            <a href="{{route('payment.withdraw', $auction->id)}}" class="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Withdraw for {{$product->name}}</a>
+                                                        @endif
                                                     @else
                                                         <h3 class="text-md py-4 font-medium text-gray-900 text-center"> Your withdraw is done. Please wait for get review from buyer. </h3>
                                                     @endif
@@ -166,7 +170,7 @@
                                                     @php
                                                         $avatar = DB::table('users')->where('id', $auction->owner_id)->value('avatar');
                                                     @endphp
-                                                    <h3 class="text-xl font-medium text-gray-900">Product review:</h3>
+                                                    <h3 class="text-xl font-medium text-gray-900">Feedback from buyer:</h3>
                                                     <a href="{{route('profile.view', $auction->owner_id)}}" class="mt-2 ms-2 py-2 text-md font-bold flex items-center">
                                                         @if ($avatar == null)
                                                             <svg class="h-12 w-12 text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

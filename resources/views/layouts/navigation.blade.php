@@ -100,11 +100,11 @@
                         </x-slot>
 
                         <x-slot name="content">
-                            <x-dropdown-link :href="route('profile.view', Auth::user()->id)">
+                            <x-dropdown-link :href="route('profile.view', Auth::user()->id)" :active="request()->routeIs('profile.view')">
                                 {{ __('Profile') }}
                             </x-dropdown-link>
                             
-                            <x-dropdown-link :href="route('profile.edit')">
+                            <x-dropdown-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')">
                                 {{ __('Profile update') }}
                             </x-dropdown-link>
 

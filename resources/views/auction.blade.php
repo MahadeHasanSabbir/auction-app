@@ -21,12 +21,6 @@
         @include('layouts.navigation')
         <div class="relative min-h-screen flex flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
             <img src="{{asset('pexels-karolina-grabowska-4862892.jpg')}}" alt="" class="absolute inset-0 -z-10 h-full w-full object-cover object-right md:object-center">
-            <div class="hidden sm:absolute sm:-top-10 sm:right-1/2 sm:-z-10 sm:mr-10 sm:block sm:transform-gpu sm:blur-3xl" aria-hidden="true">
-                <div class="aspect-[1097/845] w-[68.5625rem] bg-gradient-to-tr from-[#ff4694] to-[#776fff] opacity-20" style="clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)"></div>
-            </div>
-            <div class="absolute -top-52 left-1/2 -z-10 -translate-x-1/2 transform-gpu blur-3xl sm:top-[-28rem] sm:ml-16 sm:translate-x-0 sm:transform-gpu" aria-hidden="true">
-                <div class="aspect-[1097/845] w-[68.5625rem] bg-gradient-to-tr from-[#ff4694] to-[#776fff] opacity-20" style="clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)"></div>
-            </div>
             <div class="relative bg-blend-normal w-full max-w-2xl px-6 lg:max-w-7xl">
 
                 <main class="mt-6">
@@ -44,14 +38,9 @@
                                 }
                             @endphp
                             @foreach ($auctions as $auction)
-                                @php
-                                    $products = DB::table('products')->select('name','picture')->where('id', $auction->product_id)->get();
-                                    foreach ($products as $product) {
-                                    }
-                                @endphp
                                 <div class="group relative bg-gray">
                                     <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80">
-                                        <img src="{{asset($product->picture)}}"
+                                        <img src="{{asset(DB::table('products')->where('id', $auction->product_id)->value('picture'))}}"
                                             alt="{{ $auction->name }}'s picture"
                                             class="h-full w-full object-cover object-center lg:h-full lg:w-full">
                                     </div>
@@ -63,9 +52,14 @@
                                                     {{$auction->name}}
                                                 </a>
                                             </h3>
-                                            <p class="mt-1 text-sm text-gray-500">{{ $product->name }}</p>
+                                            <p class="mt-1 text-sm text-gray-500">{{ DB::table('products')->where('id', $auction->product_id)->value('name') }}</p>
                                         </div>
-                                        <p class="text-sm font-medium text-gray-900">BDT {{ $auction->final_price }}</p>
+                                        <p class="text-sm font-medium text-gray-900 flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="correntcolor" class="w-6 h-6">
+                                                <path fill-rule="evenodd" d="M12 21.75c5.385 0 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25 2.25 6.615 2.25 12s4.365 9.75 9.75 9.75ZM10.5 7.963a1.5 1.5 0 0 0-2.17-1.341l-.415.207a.75.75 0 0 0 .67 1.342L9 7.963V9.75h-.75a.75.75 0 1 0 0 1.5H9v4.688c0 .563.26 1.198.867 1.525A4.501 4.501 0 0 0 16.41 14.4c.199-.977-.636-1.649-1.415-1.649h-.745a.75.75 0 1 0 0 1.5h.656a3.002 3.002 0 0 1-4.327 1.893.113.113 0 0 1-.045-.051.336.336 0 0 1-.034-.154V11.25h5.25a.75.75 0 0 0 0-1.5H10.5V7.963Z" clip-rule="evenodd" />
+                                            </svg>
+                                            &nbsp;{{ $auction->final_price }}
+                                        </p>
                                     </div>
                                 </div>
                             @endforeach
@@ -81,14 +75,9 @@
                                                                 ->get();
                             @endphp
                             @foreach ($auctions as $auction)
-                                @php
-                                    $products = DB::table('products')->select('name','picture')->where('id', $auction->product_id)->get();
-                                    foreach ($products as $product) {
-                                    }
-                                @endphp
                                 <div class="group relative">
                                     <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80">
-                                        <img src="{{asset($product->picture)}}"
+                                        <img src="{{asset(DB::table('products')->where('id', $auction->product_id)->value('picture'))}}"
                                             alt="{{ $auction->name }}'s picture"
                                             class="h-full w-full object-cover object-center lg:h-full lg:w-full">
                                     </div>
@@ -100,9 +89,14 @@
                                                     {{$auction->name}}
                                                 </a>
                                             </h3>
-                                            <p class="mt-1 text-sm text-gray-500">{{ $product->name }}</p>
+                                            <p class="mt-1 text-sm text-gray-500">{{ DB::table('products')->where('id', $auction->product_id)->value('name') }}</p>
                                         </div>
-                                        <p class="text-sm font-medium text-gray-900">BDT {{ $auction->final_price }}</p>
+                                        <p class="text-sm font-medium text-gray-900 flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="correntcolor" class="w-6 h-6">
+                                                <path fill-rule="evenodd" d="M12 21.75c5.385 0 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25 2.25 6.615 2.25 12s4.365 9.75 9.75 9.75ZM10.5 7.963a1.5 1.5 0 0 0-2.17-1.341l-.415.207a.75.75 0 0 0 .67 1.342L9 7.963V9.75h-.75a.75.75 0 1 0 0 1.5H9v4.688c0 .563.26 1.198.867 1.525A4.501 4.501 0 0 0 16.41 14.4c.199-.977-.636-1.649-1.415-1.649h-.745a.75.75 0 1 0 0 1.5h.656a3.002 3.002 0 0 1-4.327 1.893.113.113 0 0 1-.045-.051.336.336 0 0 1-.034-.154V11.25h5.25a.75.75 0 0 0 0-1.5H10.5V7.963Z" clip-rule="evenodd" />
+                                            </svg>
+                                            &nbsp;{{ $auction->final_price }}
+                                        </p>
                                     </div>
                                 </div>
                             @endforeach
@@ -119,14 +113,9 @@
                                                                 ->get();
                             @endphp
                             @foreach ($auctions as $auction)
-                                @php
-                                    $products = DB::table('products')->select('name','picture')->where('id', $auction->product_id)->get();
-                                    foreach ($products as $product) {
-                                    }
-                                @endphp
                                 <div class="group relative">
                                     <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80">
-                                        <img src="{{asset($product->picture)}}"
+                                        <img src="{{asset(DB::table('products')->where('id', $auction->product_id)->value('picture'))}}"
                                             alt="{{ $auction->name }}'s picture"
                                             class="h-full w-full object-cover object-center lg:h-full lg:w-full">
                                     </div>
@@ -138,9 +127,14 @@
                                                     {{$auction->name}}
                                                 </a>
                                             </h3>
-                                            <p class="mt-1 text-sm text-gray-500">{{ $product->name }}</p>
+                                            <p class="mt-1 text-sm text-gray-500">{{ DB::table('products')->where('id', $auction->product_id)->value('name') }}</p>
                                         </div>
-                                        <p class="text-sm font-medium text-gray-900">BDT {{ $auction->final_price }}</p>
+                                        <p class="text-sm font-medium text-gray-900 flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="correntcolor" class="w-6 h-6">
+                                                <path fill-rule="evenodd" d="M12 21.75c5.385 0 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25 2.25 6.615 2.25 12s4.365 9.75 9.75 9.75ZM10.5 7.963a1.5 1.5 0 0 0-2.17-1.341l-.415.207a.75.75 0 0 0 .67 1.342L9 7.963V9.75h-.75a.75.75 0 1 0 0 1.5H9v4.688c0 .563.26 1.198.867 1.525A4.501 4.501 0 0 0 16.41 14.4c.199-.977-.636-1.649-1.415-1.649h-.745a.75.75 0 1 0 0 1.5h.656a3.002 3.002 0 0 1-4.327 1.893.113.113 0 0 1-.045-.051.336.336 0 0 1-.034-.154V11.25h5.25a.75.75 0 0 0 0-1.5H10.5V7.963Z" clip-rule="evenodd" />
+                                            </svg>
+                                            &nbsp;{{ $auction->final_price }}
+                                        </p>
                                     </div>
                                 </div>
                             @endforeach

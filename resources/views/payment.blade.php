@@ -14,7 +14,7 @@
                         foreach ($products as $product) {
                         }
                     @endphp
-                    <div class="py-4 grid w-full grid-cols-1 items-start gap-x-6 gap-y-8 sm:grid-cols-12 lg:gap-x-8 shadow bg-gray-50">
+                    <div class="py-4 w-full gap-x-6 gap-y-8 lg:gap-x-8 shadow bg-gray-50">
                         <h2 class="text-xl py-4 font-bold bg-gray-200 rounded text-gray-900 sm:pr-12 text-center">
                             {{ $auction->name }}
                         </h2>

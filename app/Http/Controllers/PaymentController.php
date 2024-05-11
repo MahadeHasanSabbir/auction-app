@@ -27,7 +27,7 @@ class PaymentController extends Controller
             return view('payment', compact('auction'));
         }
 
-        $commission = ($auction->final_price - $product->starting_price) / 20;
+        $commission = ($auction->final_price - $product->starting_price) * 20;
         $payment = Payment::create([
             'auction_id' => $auction->id,
             'payer' => Auth::user()->id,
@@ -39,8 +39,8 @@ class PaymentController extends Controller
         $user = Auth::user()->decrement('asset', $payment->amount);
         $user = Auth::user()->increment('total_buy', 1);
         $admin = User::where('role', '1')->increment('asset', $commission);
-        $host = User::where('host_id', $auction->host_id)->increment('asset', $payment->amount - $commission);
-        $host = User::where('host_id', $auction->host_id)->increment('total_sell', 1);
+        $host = User::where('id', $auction->host_id)->increment('asset', $payment->amount - $commission);
+        $host = User::where('id', $auction->host_id)->increment('total_sell', 1);
 
         $auctions = Auction::where('id', $auction->id)->update([
             'payment' => '1',

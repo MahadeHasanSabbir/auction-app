@@ -38,7 +38,7 @@ Route::middleware('auth', 'verified', 'admin')->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
     Route::get('/requests', [AdminController::class, 'auction'])->name('admin.auction');
     Route::get('/request/{id}', [AdminController::class, 'accept'])->name('admin.accept');
-    Route::get('/deny/{id}', [AdminController::class, 'deny'])->name('admin.deny');
+    Route::patch('/deny/{id}', [AdminController::class, 'deny'])->name('admin.deny');
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::get('/user/{id}/edit', [AdminController::class, 'edit'])->name('user.edit');
 });
