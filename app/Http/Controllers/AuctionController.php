@@ -40,7 +40,6 @@ class AuctionController extends Controller
             'name' => $request->name,
             'final_price' => $request->final_price,
             'host_id' => Auth::user()->id,
-            'host_name' => Auth::user()->name,
             'product_id' => $product->id,
         ]);
 
@@ -89,7 +88,6 @@ class AuctionController extends Controller
         $auctions = Auction::where('id',$auction->id)->update([
             'final_price' => $request->final_price,
             'owner_id' => Auth::user()->id,
-            'owner_name' => Auth::user()->name,
         ]);
 
         $auctions = Auction::where('id', $auction->id)->increment('no_of_bid');

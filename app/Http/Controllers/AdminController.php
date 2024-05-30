@@ -23,19 +23,13 @@ class AdminController extends Controller
     public function auction(): View
     {
         $auctions = Auction::where('status', '0')->get();
-        return view('profile.manageauction', compact('auctions'));
+        return view('profile.requestauction', compact('auctions'));
     }
 
     public function users(): View
     {
-        $users = User::all();
+        $users = User::paginate(5);
         return view('viewusers', compact('users'));
-    }
-
-    public function edit(string $id): View
-    {
-        $user = User::find($id);
-        return view('profile.edit', compact('user'));
     }
 
     public function accept(string $id): RedirectResponse
@@ -43,14 +37,15 @@ class AdminController extends Controller
         $timezone = config('app.timezone');
         $start = Carbon::now($timezone)->addMinutes(30);
         $end = Carbon::now($timezone)->addHours(3);
+        //$end = Carbon::now($timezone)->addMinutes(30);
         $auctions = Auction::where('id', $id)->update([
             'start_time' => $start,
             'end_time' => $end,
             'status' => '1',
         ]);
 
-        $auctions = Auction::where('status', '0')->get();
-        return redirect(route('admin.auction', compact('auctions')));
+        //$auctions = Auction::where('status', '0')->get();
+        return redirect(route('admin.auction'));
     }
 
     public function deny(Request $request, string $id): RedirectResponse
@@ -60,7 +55,7 @@ class AdminController extends Controller
             'massage' => $request->massage,
         ]);
 
-        $auctions = Auction::where('status', '0')->get();
-        return redirect(route('admin.auction', compact('auctions')));
+        //$auctions = Auction::where('status', '0')->get();
+        return redirect(route('admin.auction'));
     }
 }

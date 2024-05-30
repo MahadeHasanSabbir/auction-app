@@ -59,7 +59,7 @@ class ProfileController extends Controller
             'card_pin' => $request->card_pin,
         ]);
 
-        return Redirect::route('profile.view', $request->user()->id)->with('status', 'profile-updated');
+        return Redirect::route('profile.view', $request->user()->id)->with('status', 'Fund added to profile');
     }
 
     /**

@@ -41,7 +41,7 @@
                             <div class="sm:col-span-8 lg:col-span-7">
                                 <a href="{{route('product.show', $auction->product_id)}}" class="text-md sm:pr-12">
                                     @php
-                                        $details = substr($product->description, 0, strlen($product->description)/4).".....View more";
+                                        $details = substr($product->description, 0, strlen($product->description)/3).".....View more";
                                     @endphp
                                     <p class="text-md bg-gray-200 text-gray-900"> <b>Details:</b> {{ $details }} </p>
                                     
@@ -51,9 +51,8 @@
                                     <div class="flex justify-between">
                                         <p class="text-md text-gray-900"> <b>Host:</b>
                                             <a href="{{route('profile.view', $auction->host_id)}}">
-                                                {{$auction->host_name}}
+                                                {{DB::table('users')->where('id', $auction->host_id)->value('name')}}
                                             </a> 
-                                            
                                         </p>
                                         <p class="text-md text-gray-900"> <b>Starting Price: </b> BDT {{$product->starting_price}}</p>
                                     </div>
@@ -67,7 +66,7 @@
                                             @if ($auction->no_of_bid == 0)
                                                 {{"N/A"}}
                                             @endif
-                                             {{$auction->owner_name}}
+                                            {{DB::table('users')->where('id', $auction->owner_id)->value('name')}}
                                         </p>
                                     </div>
                                 </section>
@@ -77,13 +76,15 @@
                                     <h3 id="bidding-heading" class="sr-only">bidding options</h3>
                                     {{-- Auction finished --}}
                                     @if ($auction->end_time <= date('Y-m-d H:i:s') && $auction->status == 1)
+                                        {{-- Product sold --}}
                                         @if ($auction->no_of_bid > 0)
                                             <p class="text-md flex items-center justify-center">
                                                 <b> New owner of {{$product->name}}: </b>
                                                 <a href="{{route('profile.view', $auction->owner_id)}}" class="ms-2 py-2 text-md font-bold flex items-center">
-                                                    {{$auction->owner_name}}
+                                                    {{DB::table('users')->where('id', $auction->owner_id)->value('name')}}
                                                 </a>
                                             </p>
+                                            {{-- Payment procedure --}}
                                             @auth
                                                 @if (Auth::user()->id == $auction->owner_id && $auction->payment == 0)
                                                     <a href="{{route('payment.pay', $auction->id)}}" class="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Payment for {{$product->name}}</a>
@@ -99,8 +100,7 @@
                                                         @if ($withdraw == 0)
                                                             <a href="{{route('payment.withdraw', $auction->id)}}" class="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Withdraw for {{$product->name}}</a>
                                                         @endif
-                                                    @else
-                                                        <h3 class="text-md py-4 font-medium text-gray-900 text-center"> Your withdraw is done. Please wait for get review from buyer. </h3>
+                                                        <h3 class="text-md py-4 font-medium text-gray-900 text-center"> Payment is done. Please wait for get review from buyer. </h3>
                                                     @endif
                                                 @endif
                                             @endauth
@@ -113,7 +113,7 @@
                                     {{-- Auction ongoing --}}
                                     @if ($auction->start_time <= date('Y-m-d H:i:s') && $auction->end_time >= date('Y-m-d H:i:s'))
                                         @auth
-                                            @if (Auth::user()->id != $auction->host_id)
+                                            @if (Auth::user()->id != $auction->host_id && Auth::user()->role == '0')
                                                 <form action="{{route('auction.update', $auction->id)}}" method="POST">
                                                 @csrf
                                                 @method('PUT')
@@ -177,9 +177,9 @@
                                                                 <path fill-rule="evenodd" d="M18.685 19.097A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.065 7.097A9.716 9.716 0 0012 21.75a9.716 9.716 0 006.685-2.653zm-12.54-1.285A7.486 7.486 0 0112 15a7.486 7.486 0 015.855 2.812A8.224 8.224 0 0112 20.25a8.224 8.224 0 01-5.855-2.438zM15.75 9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" clip-rule="evenodd" />
                                                             </svg>
                                                         @else
-                                                            <img class="h-12 w-12 rounded-full" src="{{asset($avatar)}}" alt="{{$auction->owner_name}}'s photo">
+                                                            <img class="h-12 w-12 rounded-full" src="{{asset($avatar)}}" alt="{{DB::table('users')->where('id', $auction->owner_id)->value('name')}}'s photo">
                                                         @endif
-                                                        &nbsp;{{$auction->owner_name}}:
+                                                        &nbsp;{{DB::table('users')->where('id', $auction->owner_id)->value('name')}}:
                                                     </a>
                                                     <p name="message" id="message" rows="4" class="block w-full rounded-md ms-4 px-6 py-2 text-gray-900 shadow-sm ">
                                                         {{$auction->massage}}

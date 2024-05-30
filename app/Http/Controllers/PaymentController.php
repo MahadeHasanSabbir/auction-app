@@ -27,7 +27,7 @@ class PaymentController extends Controller
             return view('payment', compact('auction'));
         }
 
-        $commission = ($auction->final_price - $product->starting_price) * 20;
+        $commission = ($auction->final_price - $product->starting_price) * 0.2;
         $payment = Payment::create([
             'auction_id' => $auction->id,
             'payer' => Auth::user()->id,

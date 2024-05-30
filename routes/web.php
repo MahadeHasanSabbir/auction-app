@@ -40,7 +40,6 @@ Route::middleware('auth', 'verified', 'admin')->group(function () {
     Route::get('/request/{id}', [AdminController::class, 'accept'])->name('admin.accept');
     Route::patch('/deny/{id}', [AdminController::class, 'deny'])->name('admin.deny');
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
-    Route::get('/user/{id}/edit', [AdminController::class, 'edit'])->name('user.edit');
 });
 
 Route::middleware('auth')->group(function () {
