@@ -22,11 +22,10 @@ class Admin
         
         $userRole = Auth::user()->role;
 
-        if($userRole == 1){
+        if($userRole != 0){
             return $next($request);
         }
-
-        if($userRole == 0){
+        else{
             return redirect(route('dashboard'));
         }
         

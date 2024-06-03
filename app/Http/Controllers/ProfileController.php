@@ -68,6 +68,7 @@ class ProfileController extends Controller
     public function contact(Request $request): RedirectResponse
     {
         $request->validate([
+            'mobile' => ['required', 'unique:'.User::class],
             'address' => ['required', 'string', 'max:200'],
             'photo' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:5120'],
         ]);

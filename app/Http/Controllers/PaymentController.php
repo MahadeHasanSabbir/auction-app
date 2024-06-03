@@ -37,17 +37,17 @@ class PaymentController extends Controller
         ]);
 
         $user = Auth::user()->decrement('asset', $payment->amount);
-        $user = Auth::user()->increment('total_buy', 1);
-        $admin = User::where('role', '1')->increment('asset', $commission);
+        $user = Auth::user()->increment('total_buy');
+        $admin = User::where('role', '2')->increment('asset', $commission);
         $host = User::where('id', $auction->host_id)->increment('asset', $payment->amount - $commission);
-        $host = User::where('id', $auction->host_id)->increment('total_sell', 1);
+        $host = User::where('id', $auction->host_id)->increment('total_sell');
 
         $auctions = Auction::where('id', $auction->id)->update([
             'payment' => '1',
             'payment_id' => $payment->id,
         ]);
 
-        session()->flash('status', 'Congratulation! your payment is successful.');
+        session()->flash('status-success', 'Congratulation! your payment is successful.');
         return view('payment', compact('auction'));
     }
 
@@ -72,7 +72,7 @@ class PaymentController extends Controller
             'withdrawer' => Auth::user()->id,
         ]);
 
-        session()->flash('status', 'Congratulation! your withdraw is successful.');
+        session()->flash('status-success', 'Congratulation! your withdraw is successful.');
         return view('payment', compact('auction'));
     }
 

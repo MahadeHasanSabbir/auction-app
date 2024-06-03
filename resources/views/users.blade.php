@@ -4,9 +4,9 @@
             {{ Auth::user()->name; }}
         </h2>
         @if (session('status'))
-        <div class="text-md w-full text-center">
-            {{ session('status') }}
-        </div>
+            <div class="text-md w-full text-center text-green-800">
+                {{ session('status') }}
+            </div>
         @endif
     </x-slot>
 

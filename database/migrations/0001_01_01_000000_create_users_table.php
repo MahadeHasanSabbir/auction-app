@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('address')->nullable();
             $table->string('avatar')->nullable();
-            $table->string('mobile')->nullable();
+            $table->string('mobile')->uniqid()->nullable();
             $table->integer('total_bid')->default(0);
             $table->integer('total_sell')->default(0);
             $table->integer('total_buy')->default(0);

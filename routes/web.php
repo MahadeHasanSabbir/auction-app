@@ -37,12 +37,14 @@ Route::get('/dashboard', function () {
 Route::middleware('auth', 'verified', 'admin')->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
     Route::get('/requests', [AdminController::class, 'auction'])->name('admin.auction');
+    Route::get('/add-admin', [AdminController::class, 'create'])->name('admin.create');
+    Route::post('/add-admin', [AdminController::class, 'store'])->name('admin.store');
     Route::get('/request/{id}', [AdminController::class, 'accept'])->name('admin.accept');
     Route::patch('/deny/{id}', [AdminController::class, 'deny'])->name('admin.deny');
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware('auth', 'verified')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/profile', [ProfileController::class, 'fund'])->name('profile.fund');
     Route::put('/profile', [ProfileController::class, 'contact'])->name('profile.contact');

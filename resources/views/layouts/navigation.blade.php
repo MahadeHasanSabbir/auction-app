@@ -25,7 +25,7 @@
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     @auth
-                        @if (Auth::user()->role == 1)
+                        @if (Auth::user()->role != 0)
                             <x-nav-link :href="route('admin.index')" :active="request()->routeIs('admin.index')">
                                 {{ __('Dashboard') }}
                             </x-nav-link>
@@ -35,11 +35,15 @@
                             <x-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users')">
                                 {{ __('Users') }}
                             </x-nav-link>
+                            @if (Auth::user()->role == 2)
+                                <x-nav-link :href="route('admin.create')" :active="request()->routeIs('admin.create')">
+                                    {{ __('Add admin') }}
+                                </x-nav-link>
+                            @endif
                         @else
                             <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                                 {{ __('Dashboard') }}
                             </x-nav-link>
-                            
                         @endif
                         <x-nav-link :href="route('auction.index')" :active="request()->routeIs('auction.index')">
                             {{ __('Auction Manage') }}
@@ -179,6 +183,11 @@
                     <x-responsive-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users')">
                         {{ __('Users') }}
                     </x-responsive-nav-link>
+                    @if (Auth::user()->role == 2)
+                        <x-responsive-nav-link :href="route('admin.create')" :active="request()->routeIs('admin.create')">
+                            {{ __('Add admin') }}
+                        </x-responsive-nav-link>
+                    @endif
                 @endif
                 <x-responsive-nav-link :href="route('product.create')" :active="request()->routeIs('product.create')">
                     {{ __('Product Insert') }}

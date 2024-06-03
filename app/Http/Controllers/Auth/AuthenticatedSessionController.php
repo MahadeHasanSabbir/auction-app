@@ -42,6 +42,10 @@ class AuthenticatedSessionController extends Controller
                 return redirect()->intended(route('admin.index', absolute: false));
                 break;
             
+            case '2':
+                return redirect()->intended(route('admin.index', absolute: false));
+                break;
+            
             default:
                 return redirect()->intended(route('home', absolute: false));
                 break;

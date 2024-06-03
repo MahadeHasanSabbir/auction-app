@@ -17,6 +17,7 @@
                             <th class="px-4 py-2 border">ID</th>
                             <th class="px-4 py-2 border">Name</th>
                             <th class="px-4 py-2 border">Email</th>
+                            <th class="px-4 py-2 border">Role</th>
                             <th class="px-4 py-2 border">Action</th>
                         </tr>
                     </thead>
@@ -26,6 +27,15 @@
                             <td class="px-4 py-2 border">{{$user->id}}</td>
                             <td class="px-4 py-2 border">{{$user->name}}</td>
                             <td class="px-4 py-2 border">{{$user->email}}</td>
+                            <td class="px-4 py-2 border">
+                                @php
+                                    if ($user->role == 0) {
+                                        echo "User";
+                                    }else{
+                                        echo "Admin";
+                                    }
+                                @endphp
+                            </td>
                             <td class="px-4 py-2 border">
                                 <a href="{{route('profile.view', $user->id)}}" class="flex items-center justify-center font-semibold">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">

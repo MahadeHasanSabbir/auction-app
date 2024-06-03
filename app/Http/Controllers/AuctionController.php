@@ -49,7 +49,7 @@ class AuctionController extends Controller
         }
         else{
             return redirect(route('admin.index', absolute: false))
-                    ->with('status', 'Auction created successfully. Please wait for administrator review to seen it online');
+                    ->with('status', 'Auction created successfully');
         }
         
     }

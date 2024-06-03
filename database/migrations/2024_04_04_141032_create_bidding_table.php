@@ -26,7 +26,6 @@ return new class extends Migration
             $table->id()->primary()->index();
             $table->foreignId('product_id')->constrained('products')->cascadeOnUpdate()->cascadeOnDelete();
             $table->unsignedBigInteger('host_id');
-            $table->string('host_name');
             $table->string('name');
             $table->dateTime('start_time')->nullable();
             $table->dateTime('end_time')->nullable();
@@ -34,7 +33,6 @@ return new class extends Migration
             $table->integer('no_of_bid')->default(0);
             $table->unsignedBigInteger('payment_id')->default(0);
             $table->unsignedBigInteger('owner_id')->nullable();
-            $table->string('owner_name')->nullable();
             $table->longText('massage')->nullable();
             $table->tinyInteger('status')->default(0);
             $table->boolean('payment')->default(0);
