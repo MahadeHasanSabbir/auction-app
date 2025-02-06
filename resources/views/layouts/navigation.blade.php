@@ -6,7 +6,7 @@
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     @auth
-                        @if (Auth::user()->role == 1)
+                        @if (Auth::user()->role != 0)
                             <a href="{{ route('admin.index') }}">
                                 <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
                             </a>
@@ -34,6 +34,9 @@
                             </x-nav-link>
                             <x-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users')">
                                 {{ __('Users') }}
+                            </x-nav-link>
+                            <x-nav-link :href="route('contact.index')" :active="request()->routeIs('contact.index')">
+                                {{ __('Messages') }}
                             </x-nav-link>
                             @if (Auth::user()->role == 2)
                                 <x-nav-link :href="route('admin.create')" :active="request()->routeIs('admin.create')">
@@ -182,6 +185,9 @@
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users')">
                         {{ __('Users') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('contact.index')" :active="request()->routeIs('contact.index')">
+                        {{ __('Messages') }}
                     </x-responsive-nav-link>
                     @if (Auth::user()->role == 2)
                         <x-responsive-nav-link :href="route('admin.create')" :active="request()->routeIs('admin.create')">

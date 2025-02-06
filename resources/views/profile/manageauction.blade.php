@@ -21,6 +21,8 @@
                                         {{ "On observation" }}
                                     @elseif ($auction->status == 1)
                                         {{ "Online" }}
+                                    @elseif ($auction->status == 2)
+                                        {{ "Finished" }}
                                     @else
                                         {{ "Request deny" }}
                                     @endif

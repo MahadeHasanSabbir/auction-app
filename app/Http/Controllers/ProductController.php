@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Redirect;
 class ProductController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the products.
      */
     public function index(): View
     {
@@ -21,7 +21,7 @@ class ProductController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new product.
      */
     public function create(): View
     {
@@ -29,7 +29,7 @@ class ProductController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created product in storage.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -58,7 +58,7 @@ class ProductController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified product.
      */
     public function show(string $id): View
     {
@@ -67,7 +67,7 @@ class ProductController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show the form for editing the specified product.
      */
     public function edit(string $id): view
     {
@@ -76,7 +76,7 @@ class ProductController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified product in storage.
      */
     public function update(Request $request, string $id): RedirectResponse
     {
@@ -91,7 +91,7 @@ class ProductController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified product from storage.
      */
     public function destroy(string $id): RedirectResponse
     {

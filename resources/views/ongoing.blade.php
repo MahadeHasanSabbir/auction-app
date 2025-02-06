@@ -44,8 +44,12 @@
                                         $details = substr($product->description, 0, strlen($product->description)/3).".....View more";
                                     @endphp
                                     <p class="text-md bg-gray-200 text-gray-900"> <b>Details:</b> {{ $details }} </p>
-                                    
                                 </a>
+                                @if (session('status'))
+                                    <div class="text-md w-full text-center my-2 py-2 text-red">
+                                        {{ session('status') }}
+                                    </div>
+                                @endif
                                 <section aria-labelledby="information-heading" class="mt-2">
                                     <h3 id="information-heading" class="sr-only">Product information</h3>
                                     <div class="flex justify-between">
@@ -66,7 +70,9 @@
                                             @if ($auction->no_of_bid == 0)
                                                 {{"N/A"}}
                                             @endif
-                                            {{DB::table('users')->where('id', $auction->owner_id)->value('name')}}
+                                            <a href="{{route('profile.view', $auction->host_id)}}">
+                                                {{DB::table('users')->where('id', $auction->owner_id)->value('name')}}
+                                            </a>
                                         </p>
                                     </div>
                                 </section>

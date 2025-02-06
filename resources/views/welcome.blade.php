@@ -45,19 +45,25 @@
                             <div class="mx-auto max-w-2xl text-center">
                                 <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Contact with us</h2>
                                 <p class="mt-2 text-lg leading-8 text-gray-600">Send massage by using folloing form. We will connect with you in while.</p>
+                                @if (session('status'))
+                                    <div class="text-md w-full text-center">
+                                        {{ session('status') }}
+                                    </div>
+                                @endif
                             </div>
-                            <form action="#" method="POST" class="mx-auto mt-6 max-w-xl sm:mt-10">
+                            <form action="{{ route('contact.store') }}" method="POST" class="mx-auto mt-6 max-w-xl sm:mt-10">
+                                @csrf
                                 <div class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
                                     <div>
-                                        <label for="first-name" class="block text-sm font-semibold leading-6 text-gray-900">First name</label>
+                                        <label for="first_name" class="block text-sm font-semibold leading-6 text-gray-900">First name</label>
                                         <div class="mt-2.5">
-                                        <input type="text" name="first-name" id="first-name" autocomplete="given-name" class="block w-full rounded-md border-1 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Enter first part of your name">
+                                            <input type="text" name="first_name" id="first-name" autocomplete="given-name" class="block w-full rounded-md border-1 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Enter first part of your name">
                                         </div>
                                     </div>
                                     <div>
-                                        <label for="last-name" class="block text-sm font-semibold leading-6 text-gray-900">Last name</label>
+                                        <label for="last_name" class="block text-sm font-semibold leading-6 text-gray-900">Last name</label>
                                         <div class="mt-2.5">
-                                            <input type="text" name="last-name" id="last-name" autocomplete="family-name" class="block w-full rounded-md bg-none border-1 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Enter last part of your name">
+                                            <input type="text" name="last_name" id="last-name" autocomplete="family-name" class="block w-full rounded-md bg-none border-1 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Enter last part of your name">
                                         </div>
                                     </div>
                                     <div class="sm:col-span-2">
@@ -67,9 +73,9 @@
                                         </div>
                                     </div>
                                     <div class="sm:col-span-2">
-                                        <label for="phone-number" class="block text-sm font-semibold leading-6 text-gray-900">Phone number</label>
+                                        <label for="number" class="block text-sm font-semibold leading-6 text-gray-900">Phone number</label>
                                         <div class="relative mt-2.5">
-                                            <input type="tel" name="phone-number" id="phone-number" autocomplete="tel" class="block w-full rounded-md border-1 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Enter your phone number">
+                                            <input type="tel" name="number" id="phone-number" autocomplete="tel" class="block w-full rounded-md border-1 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Enter your phone number">
                                         </div>
                                     </div>
                                     <div class="sm:col-span-2">

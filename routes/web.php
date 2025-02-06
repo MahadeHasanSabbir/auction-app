@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuctionController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -14,6 +15,9 @@ Route::get('/', function () {
 Route::get('/about', function () {
     return view('aboutus');
 })->name('about');
+
+Route::resource('contact', ContactController::class)->only('store');
+Route::resource('contact', ContactController::class)->middleware(['auth', 'verified', 'admin'])->only('index', 'edit', 'destroy');
 
 Route::resource('product', ProductController::class)->middleware(['auth', 'verified'])->except('show');
 Route::resource('product', ProductController::class)->only('show');

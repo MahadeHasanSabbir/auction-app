@@ -23,7 +23,7 @@ return new class extends Migration
             $table->integer('total_sell')->default(0);
             $table->integer('total_buy')->default(0);
             $table->integer('role')->default(0);
-            $table->integer('asset')->default(100);
+            $table->integer('asset')->default(50);
             $table->bigInteger('card_no')->default(0);
             $table->bigInteger('card_pin')->default(0);
             $table->string('password');

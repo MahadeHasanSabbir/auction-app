@@ -2,7 +2,7 @@
 
 ## About Auction-app
 
-
+Auction app is a open source web app which is for making auction automated and wild speared. It help to open a new world for e-commerce sector. This web app help to sell add buy product which will be supervised by this system and administration.
 
 
 ## Security Vulnerabilities

@@ -13,7 +13,7 @@ use App\Http\Requests\ProfileUpdateRequest;
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Display the user's profile edit form.
      */
     public function edit(Request $request): View
     {
@@ -23,7 +23,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Display the user's profile form.
+     * Display the user's profile.
      */
     public function view(string $id): View
     {
@@ -52,18 +52,22 @@ class ProfileController extends Controller
      */
     public function fund(Request $request): RedirectResponse
     {
+        $request->validate([
+            'asset' => ['required', 'integer'],
+            'card_no' => ['required', 'integer'],
+            'card_pin' => ['required', 'integer'],
+        ]);
         $fund = $request->amount + $request->user()->asset;
         $request->user()->update([
             'asset' => $fund,
             'card_no' => $request->card_no,
-            'card_pin' => $request->card_pin,
         ]);
 
         return Redirect::route('profile.view', $request->user()->id)->with('status', 'Fund added to profile');
     }
 
     /**
-     * Update the user's fund information.
+     * Update the user's contact information.
      */
     public function contact(Request $request): RedirectResponse
     {

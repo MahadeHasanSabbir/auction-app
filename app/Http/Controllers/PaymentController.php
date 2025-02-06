@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Auth;
 
 class PaymentController extends Controller
 {
+    /**
+     * function for completing the payment
+     */
     public function pay(string $id): View
     {
         $auction = Auction::find($id);
@@ -23,11 +26,11 @@ class PaymentController extends Controller
         }
 
         if(Auth::user()->asset <= $auction->final_price + 50){
-            session()->flash('status', 'Sorry you have insufficient balance for payment');
+            session()->flash('status', 'Sorry, you have insufficient balance for payment');
             return view('payment', compact('auction'));
         }
 
-        $commission = ($auction->final_price - $product->starting_price) * 0.2;
+        $commission = ($auction->final_price - $product->starting_price) * 0.35;
         $payment = Payment::create([
             'auction_id' => $auction->id,
             'payer' => Auth::user()->id,
@@ -45,12 +48,16 @@ class PaymentController extends Controller
         $auctions = Auction::where('id', $auction->id)->update([
             'payment' => '1',
             'payment_id' => $payment->id,
+            'status' => '2',
         ]);
 
-        session()->flash('status-success', 'Congratulation! your payment is successful.');
+        session()->flash('status', 'Congratulation! your payment is successful.');
         return view('payment', compact('auction'));
     }
 
+    /**
+     * function for completing the withdraw
+     */
     public function withdraw(string $id): View
     {
         $auction = Auction::find($id);
@@ -72,10 +79,13 @@ class PaymentController extends Controller
             'withdrawer' => Auth::user()->id,
         ]);
 
-        session()->flash('status-success', 'Congratulation! your withdraw is successful.');
+        session()->flash('status', 'Congratulation! your withdraw is successful.');
         return view('payment', compact('auction'));
     }
 
+    /**
+     * function for giving the review of product
+     */
     public function review(Request $request, string $id)
     {
         $auctions = Auction::where('id', $id)->update([

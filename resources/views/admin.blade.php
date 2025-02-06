@@ -56,7 +56,7 @@
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <h2 class="text-2xl font-bold tracking-tight text-gray-900">Ongoing auction</h2>
                     @if ($auctions->isEmpty())
-                        <p class="mt-6"> Nothing is auctioning now!<br> Please wait for upcoming auction.</p>
+                        <p class="mt-6"> Nothing is auctioning now!<br> Please check auction request for add upcoming auction.</p>
                     @endif
                     <div class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
                         @foreach ($auctions as $auction)

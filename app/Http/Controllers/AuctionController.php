@@ -21,16 +21,22 @@ class AuctionController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new auction.
      */
     public function create(string $id): View
     {
+        if(Auth::user()->address == null){
+            $products = Product::where('seller', Auth::user()->id)->get();
+            session()->flash('status', 'Complete your profile before create auction.');
+            return view('profile.manage', compact('products'));
+        }
+
         $product = Product::findorfail($id);
         return view('profile.create', compact('product'));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created auction in storage.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -49,18 +55,17 @@ class AuctionController extends Controller
         }
         else{
             return redirect(route('admin.index', absolute: false))
-                    ->with('status', 'Auction created successfully');
+                    ->with('status', 'Auction created successfully. please check auction request to make it online');
         }
         
     }
 
     /**
-     * Display the specified resource.
+     * Display the ongoing auction.
      */
     public function show(Auction $auction): View
     {
-        //$auction = Auction::find($auction);
-        //return view('ongoing', compact($auction));
+        $auction = Auction::findorfail($auction->id);
         return view('ongoing', compact('auction'));
     }
 
@@ -73,7 +78,7 @@ class AuctionController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified auction in storage.
      */
     public function update(Request $request, Auction $auction): RedirectResponse
     {
@@ -81,6 +86,9 @@ class AuctionController extends Controller
             'final_price' => ['required', 'integer'],
         ]);
 
+        if($request->final_price > Auth::user()->asset + 50){
+            return redirect(route('auction.show', compact('auction')))->with('status', 'You have insufficient balance for bid!');
+        }
         if($request->final_price < $auction->final_price){
             return redirect(route('auction.show', compact('auction')));
         }
@@ -97,7 +105,7 @@ class AuctionController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified auction from storage.
      */
     public function destroy(Auction $auction): RedirectResponse
     {
