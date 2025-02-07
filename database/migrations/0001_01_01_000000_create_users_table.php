@@ -25,7 +25,6 @@ return new class extends Migration
             $table->integer('role')->default(0);
             $table->integer('asset')->default(50);
             $table->bigInteger('card_no')->default(0);
-            $table->bigInteger('card_pin')->default(0);
             $table->string('password');
             $table->boolean('active_status')->default(0);
             $table->rememberToken();

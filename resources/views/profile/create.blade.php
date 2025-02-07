@@ -34,7 +34,7 @@
 
                         <!-- Product -->
                         <div class="mt-4">
-                            <x-input-label for="product" :value="__('Product')" />
+                            <x-input-label for="product" :value="__('Product ID')" />
                             <x-text-input id="product" class="block mt-1 w-full" type="number"
                                             name="product" value="{{$product->id}}"
                                             readonly title="this field is not for edit" autocomplete="product" />

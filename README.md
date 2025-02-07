@@ -4,6 +4,24 @@
 
 Auction app is a open source web app which is for making auction automated and wild speared. It help to open a new world for e-commerce sector. This web app help to sell add buy product which will be supervised by this system and administration.
 
+For using this auction system follow this:
+1. Get the source into your system
+    git clone -link from github-
+
+2. Get the dependencies
+    composer install
+    npm install
+    npm run build
+
+3. Migrate the database
+    php artisan migrate
+    (I use mysql for database. if you use other then you need to work on config file)
+4. Add super admin
+    php artisan db:seed
+    
+5. Run in your system
+    php artisan serve
+
 
 ## Security Vulnerabilities
 

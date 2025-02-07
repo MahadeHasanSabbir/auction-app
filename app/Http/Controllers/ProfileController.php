@@ -53,11 +53,12 @@ class ProfileController extends Controller
     public function fund(Request $request): RedirectResponse
     {
         $request->validate([
-            'asset' => ['required', 'integer'],
+            'amount' => ['required', 'integer'],
             'card_no' => ['required', 'integer'],
-            'card_pin' => ['required', 'integer'],
         ]);
+
         $fund = $request->amount + $request->user()->asset;
+
         $request->user()->update([
             'asset' => $fund,
             'card_no' => $request->card_no,

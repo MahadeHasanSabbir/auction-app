@@ -40,6 +40,7 @@ Route::get('/dashboard', function () {
 
 Route::middleware('auth', 'verified', 'admin')->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
+    Route::get('/payments', [PaymentController::class, 'index'])->name('payment.index');
     Route::get('/requests', [AdminController::class, 'auction'])->name('admin.auction');
     Route::get('/add-admin', [AdminController::class, 'create'])->name('admin.create');
     Route::post('/add-admin', [AdminController::class, 'store'])->name('admin.store');

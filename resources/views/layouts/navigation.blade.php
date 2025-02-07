@@ -32,12 +32,33 @@
                             <x-nav-link :href="route('admin.auction')" :active="request()->routeIs('admin.auction')">
                                 {{ __('Auction Request') }}
                             </x-nav-link>
-                            <x-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users')">
-                                {{ __('Users') }}
-                            </x-nav-link>
-                            <x-nav-link :href="route('contact.index')" :active="request()->routeIs('contact.index')">
-                                {{ __('Messages') }}
-                            </x-nav-link>
+                            <div class="hidden space-x-8 sm:flex sm:items-center sm:ms-6">
+                                <x-dropdown>
+                                    <x-slot name="trigger">
+                                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                                            <div>{{ "Information's" }}</div>
+            
+                                            <div class="ms-1">
+                                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                        </button>
+                                    </x-slot>
+            
+                                    <x-slot name="content">
+                                        <x-dropdown-link :href="route('admin.users')">
+                                            {{ __('Users') }}
+                                        </x-dropdown-link>
+                                        <x-dropdown-link :href="route('payment.index')">
+                                            {{ __('Payments') }}
+                                        </x-dropdown-link>
+                                        <x-dropdown-link :href="route('contact.index')">
+                                            {{ __('Messages') }}
+                                        </x-dropdown-link>
+                                    </x-slot>
+                                </x-dropdown>
+                            </div>
                             @if (Auth::user()->role == 2)
                                 <x-nav-link :href="route('admin.create')" :active="request()->routeIs('admin.create')">
                                     {{ __('Add admin') }}
@@ -185,6 +206,9 @@
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users')">
                         {{ __('Users') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('payment.index')" :active="request()->routeIs('payment.index')">
+                        {{ __('Payments') }}
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('contact.index')" :active="request()->routeIs('contact.index')">
                         {{ __('Messages') }}

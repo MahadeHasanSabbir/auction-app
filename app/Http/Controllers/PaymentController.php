@@ -13,6 +13,16 @@ use Illuminate\Support\Facades\Auth;
 class PaymentController extends Controller
 {
     /**
+     * Display a listing of the resource.
+     */
+    public function index(): View
+    {
+        $payments = Payment::paginate(10);
+
+        return view('profile.payhistory', compact('payments'));
+    }
+
+    /**
      * function for completing the payment
      */
     public function pay(string $id): View
@@ -79,14 +89,14 @@ class PaymentController extends Controller
             'withdrawer' => Auth::user()->id,
         ]);
 
-        session()->flash('status', 'Congratulation! your withdraw is successful.');
+        session()->flash('status', 'Congratulation! withdraw is in process. You will get your money soon');
         return view('payment', compact('auction'));
     }
 
     /**
      * function for giving the review of product
      */
-    public function review(Request $request, string $id)
+    public function review(Request $request, string $id): View
     {
         $auctions = Auction::where('id', $id)->update([
             'massage' => $request->message,

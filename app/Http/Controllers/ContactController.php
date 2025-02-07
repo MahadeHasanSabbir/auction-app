@@ -6,6 +6,7 @@ use App\Models\Contact;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Redirect;
 
 class ContactController extends Controller
 {
@@ -47,8 +48,7 @@ class ContactController extends Controller
             'message' => $request->message,
         ]);
         
-        return redirect(route('home', absolute: false))
-                    ->with('status', 'Message sent successfully');
+        return Redirect::route('home')->with('status', 'Message sent successfully');
     }
 
     /**
@@ -68,8 +68,7 @@ class ContactController extends Controller
             'status' => '1',
         ]);
 
-        return redirect(route('contact.index'))
-                    ->with('status', 'Message mark as read');
+        return Redirect::route('contact.index')->with('status', 'Message mark as read');
     }
 
     /**
@@ -87,8 +86,7 @@ class ContactController extends Controller
     {
         Contact::destroy($id);
 
-        return redirect(route('contact.index', absolute: false))
-                    ->with('status', 'Massage delete successfully');
+        return Redirect::route('contact.index')->with('status', 'Massage delete successfully');
     }
     
 }

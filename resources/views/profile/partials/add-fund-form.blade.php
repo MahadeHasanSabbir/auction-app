@@ -23,12 +23,6 @@
             <x-text-input id="card_no" name="card_no" type="number" class="mt-1 block w-full" :value="old('card_no', $user->card_no)" required autocomplete="username" />
             <x-input-error class="mt-2" :messages="$errors->get('card_no')" />
         </div>
-        
-        <div>
-            <x-input-label for="card_pin" :value="__('Card pin')" />
-            <x-text-input id="card_pin" name="card_pin" type="number" class="mt-1 block w-full" :value="old('card_pin')" required autocomplete="card pin" />
-            <x-input-error class="mt-2" :messages="$errors->get('card_pin')" />
-        </div>
 
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Add fund') }}</x-primary-button>

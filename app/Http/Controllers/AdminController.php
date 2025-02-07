@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Facades\Redirect;
 
 class AdminController extends Controller
 {
@@ -62,8 +63,7 @@ class AdminController extends Controller
 
         event(new Registered($user));
         
-        return redirect(route('admin.create', absolute: false))
-                    ->with('status', 'New admin created successfully');
+        return Redirect::route('admin.create')->with('status', 'New admin created successfully');
     }
     
     /**
@@ -82,7 +82,7 @@ class AdminController extends Controller
     {
         $timezone = config('app.timezone');
         $start = Carbon::now($timezone)->addMinutes(30);
-        $end = Carbon::now($timezone)->addHours(3);
+        $end = Carbon::now($timezone)->addHours(4);
         //$end = Carbon::now($timezone)->addMinutes(30);
         $auctions = Auction::where('id', $id)->update([
             'start_time' => $start,
@@ -90,7 +90,7 @@ class AdminController extends Controller
             'status' => '1',
         ]);
 
-        return redirect(route('admin.auction'));
+        return Redirect::route('admin.auction');
     }
 
     /**
@@ -103,6 +103,6 @@ class AdminController extends Controller
             'massage' => $request->massage,
         ]);
 
-        return redirect(route('admin.auction'));
+        return Redirect::route('admin.auction');
     }
 }

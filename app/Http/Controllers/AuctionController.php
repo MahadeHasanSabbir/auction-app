@@ -8,6 +8,7 @@ use Illuminate\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Redirect;
 
 class AuctionController extends Controller
 {
@@ -50,12 +51,10 @@ class AuctionController extends Controller
         ]);
 
         if(Auth::user()->role == 0){
-            return redirect(route('dashboard', absolute: false))
-                                ->with('status', 'Auction created successfully. Please wait for administrator review to seen it online');
+            return Redirect::route('dashboard')->with('status', 'Auction created successfully. Please wait for administrator review to seen it online');
         }
         else{
-            return redirect(route('admin.index', absolute: false))
-                    ->with('status', 'Auction created successfully. please check auction request to make it online');
+            return Redirect::route('admin.index')->with('status', 'Auction created successfully. please check auction request to make it online');
         }
         
     }
@@ -87,10 +86,10 @@ class AuctionController extends Controller
         ]);
 
         if($request->final_price > Auth::user()->asset + 50){
-            return redirect(route('auction.show', compact('auction')))->with('status', 'You have insufficient balance for bid!');
+            return Redirect::route('auction.show', compact('auction'))->with('status', 'You have insufficient balance for bid!');
         }
         if($request->final_price < $auction->final_price){
-            return redirect(route('auction.show', compact('auction')));
+            return Redirect::route('auction.show', compact('auction'))->with('status', 'Your bid is lower than previous');
         }
         
         $auctions = Auction::where('id',$auction->id)->update([
@@ -101,7 +100,7 @@ class AuctionController extends Controller
         $auctions = Auction::where('id', $auction->id)->increment('no_of_bid');
         Auth::user()->increment('total_bid');
 
-        return redirect(route('auction.show', compact('auction')));
+        return Redirect::route('auction.show', compact('auction'));
     }
 
     /**
@@ -111,6 +110,6 @@ class AuctionController extends Controller
     {
         Auction::destroy($auction->id);
 
-        return redirect(route('auction.index'))->with('status', 'Auction deleted successfully!');
+        return Redirect::route('auction.index')->with('status', 'Auction deleted successfully!');
     }
 }

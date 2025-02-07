@@ -53,8 +53,7 @@ class ProductController extends Controller
             'seller' => Auth::user()->id,
         ]);
 
-        return redirect(route('product.index', absolute: false))
-                    ->with('status', 'Product add successfully! Check it out in list.');
+        return Redirect::route('product.index')->with('status', 'Product add successfully! Check it out in list.');
     }
 
     /**
