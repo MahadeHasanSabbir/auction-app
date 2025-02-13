@@ -87,7 +87,7 @@
                                     <div class="flex gap-x-4 sm:col-span-2">
                                         <div class="flex h-6 items-center">
                                             <!-- Enabled: "bg-indigo-600", Not Enabled: "bg-gray-200" -->
-                                            <input type="checkbox" class="bg-gray-200 flex flex-none cursor-pointer transition-colors duration-200" aria-labelledby="switch-1-label"/>
+                                            <input name="check" type="checkbox" class="bg-gray-200 flex flex-none cursor-pointer transition-colors duration-200" aria-labelledby="switch-1-label" checked/>
                                             <span class="sr-only">Agree to policies</span>
                                         </div>
                                         <label class="text-sm leading-6 text-gray-600" id="switch-1-label">
@@ -97,7 +97,7 @@
                                     </div>
                                 </div>
                                 <div class="mt-10">
-                                <button type="submit" class="block w-full rounded-md bg-indigo-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Let's talk</button>
+                                    <button type="submit" class="block w-full rounded-md bg-indigo-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Let's talk</button>
                                 </div>
                             </form>
                         </div>

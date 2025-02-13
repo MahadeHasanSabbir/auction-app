@@ -24,9 +24,15 @@
                         @foreach ($payments as $payment)
                             <tr>
                                 <td class="px-4 py-2 border">{{$payment->id}}</td>
-                                <td class="px-4 py-2 border">{{$payment->auction_id}}</td>
-                                <td class="px-4 py-2 border">{{$payment->payer}}</td>
-                                <td class="px-4 py-2 border">{{$payment->withdrawer}}</td>
+                                <td class="px-4 py-2 border">
+                                    <a href="{{route('auction.show', $payment->auction_id)}}">{{$payment->auction_id}}</a>
+                                </td>
+                                <td class="px-4 py-2 border">
+                                    <a href="{{route('profile.view', $payment->payer)}}">{{$payment->payer}}</a>
+                                </td>
+                                <td class="px-4 py-2 border">
+                                    <a href="{{route('profile.view', $payment->withdrawer)}}">{{$payment->withdrawer}}</a>
+                                </td>
                                 <td class="px-4 py-2 border">{{$payment->amount}}</td>
                                 <td class="px-4 py-2 border">{{$payment->commission}}</td>
                                 <td class="px-4 py-2 border">{{$payment->gateway}}</td>

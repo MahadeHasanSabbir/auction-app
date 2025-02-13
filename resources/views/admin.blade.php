@@ -7,6 +7,7 @@
             </div>
         @endif
         <div class="max-w-8xl mx-auto sm:px-6 lg:px-8">
+            <!--info of finance-->
             <div class="bg-white dark:bg-gray-800 grid gap-6 lg:grid-cols-3 overflow-hidden shadow sm:rounded-lg">
                 <div class="p-6 text-center text-gray-900 dark:text-gray-100">
                     <h3 class="font-semibold text-gray-800 dark:text-gray-200 leading-tight">
@@ -27,6 +28,7 @@
                     {{ Auth::user()->total_bid }}
                 </div>
             </div>
+            <!--info of user-->
             <div class="mt-1 bg-white dark:bg-gray-800 grid gap-6 lg:grid-cols-3 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-center text-gray-900 dark:text-gray-100">
                     <h3 class="font-semibold text-gray-800 dark:text-gray-200 leading-tight">

@@ -28,8 +28,8 @@
                         }
                 @endphp
                 <main class="mt-6">
-                    <div class="relative flex w-full items-center overflow-hidden bg-white px-4 pb-8 pt-14 shadow-2xl sm:px-6 sm:pt-8 md:p-6 lg:p-8">
-                        <div class="py-2 w-full shadow bg-gray-50">
+                    <div class="relative flex w-full items-center overflow-hidden rounded bg-white px-4 pb-8 pt-14 shadow-2xl sm:px-6 sm:pt-8 md:p-6 lg:p-8">
+                        <div class="w-full shadow rounded bg-gray-50">
                             <h2 class="text-xl py-4 font-bold bg-gray-200 rounded text-gray-900 sm:pr-12 text-center">
                                 {{ $auction->name }}
                             </h2>
@@ -45,13 +45,9 @@
                                     @endphp
                                     <p class="text-md bg-gray-200 text-gray-900"> <b>Details:</b> {{ $details }} </p>
                                 </a>
-                                @if (session('status'))
-                                    <div class="text-md w-full text-center my-2 py-2 text-red">
-                                        {{ session('status') }}
-                                    </div>
-                                @endif
+                                {{--auction information--}}
                                 <section aria-labelledby="information-heading" class="mt-2">
-                                    <h3 id="information-heading" class="sr-only">Product information</h3>
+                                    <h3 id="information-heading" class="sr-only">Auction information</h3>
                                     <div class="flex justify-between">
                                         <p class="text-md text-gray-900"> <b>Host:</b>
                                             <a href="{{route('profile.view', $auction->host_id)}}">
@@ -70,32 +66,38 @@
                                             @if ($auction->no_of_bid == 0)
                                                 {{"N/A"}}
                                             @endif
-                                            <a href="{{route('profile.view', $auction->host_id)}}">
+                                            <a href="{{route('profile.view', $auction->owner_id)}}">
                                                 {{DB::table('users')->where('id', $auction->owner_id)->value('name')}}
                                             </a>
                                         </p>
                                     </div>
                                 </section>
-
+                                @if (session('status'))
+                                    <div class="text-md w-full text-center my-2 py-2 text-red" style="color: red;">
+                                        {{ session('status') }}
+                                    </div>
+                                @endif
                                 {{-- Bidding process --}}
                                 <section aria-labelledby="bidding-heading" class="mt-6">
                                     <h3 id="bidding-heading" class="sr-only">bidding options</h3>
                                     {{-- Auction finished --}}
-                                    @if ($auction->end_time <= date('Y-m-d H:i:s') && $auction->status == 1)
+                                    @if ($auction->end_time <= date('Y-m-d H:i:s') && $auction->status != 0)
                                         {{-- Product sold --}}
                                         @if ($auction->no_of_bid > 0)
                                             <p class="text-md flex items-center justify-center">
-                                                <b> New owner of {{$product->name}}: </b>
+                                                <b> Winner of this action: </b>
                                                 <a href="{{route('profile.view', $auction->owner_id)}}" class="ms-2 py-2 text-md font-bold flex items-center">
                                                     {{DB::table('users')->where('id', $auction->owner_id)->value('name')}}
                                                 </a>
                                             </p>
                                             {{-- Payment procedure --}}
                                             @auth
-                                                @if (Auth::user()->id == $auction->owner_id && $auction->payment == 0)
-                                                    <a href="{{route('payment.pay', $auction->id)}}" class="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Payment for {{$product->name}}</a>
-                                                @elseif (Auth::user()->id == $auction->owner_id && $auction->payment == 1)
+                                                @if (Auth::user()->id == $auction->owner_id)
+                                                    @if ($auction->payment == 0)
+                                                        <a href="{{route('payment.pay', $auction->id)}}" class="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Payment for {{$product->name}}</a>
+                                                    @elseif ($auction->payment == 1)
                                                         <h3 class="text-md py-4 font-medium text-gray-900 text-center"> Your payment is done. Please wait for delivery. </h3>
+                                                    @endif
                                                 @elseif (Auth::user()->id == $auction->host_id)
                                                     @if ($auction->payment == 0)
                                                         <h3 class="text-md py-4 font-medium text-gray-900 text-center"> Your product is sold. Please wait for get paid. </h3>
@@ -106,13 +108,12 @@
                                                         @if ($withdraw == 0)
                                                             <a href="{{route('payment.withdraw', $auction->id)}}" class="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Withdraw for {{$product->name}}</a>
                                                         @endif
-                                                        <h3 class="text-md py-4 font-medium text-gray-900 text-center"> Payment is done. Please wait for get review from buyer. </h3>
                                                     @endif
                                                 @endif
                                             @endauth
-                                                <button class="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Product Sold</button>
+                                                <p class="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white">Product Sold</p>
                                         @else
-                                            <button type="submit" class="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Unsold</button>
+                                            <p type="submit" class="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white">Unsold</p>
                                         @endif
                                         <h3 class="text-md mt-4 font-medium text-gray-900 text-center"><b>Last Price of this product: </b>BDT {{$auction->final_price}}</h3>
                                     @endif
@@ -147,9 +148,10 @@
                                     @endif
                                 </section>
                                 {{-- Review --}}
-                                @if ($auction->payment == 1)
+                                @if ($auction->status == 2)
                                     <section aria-labelledby="review-heading" class="mt-6">
                                         <h3 id="review-heading" class="sr-only">review options</h3>
+                                        {{--create review--}}
                                         @if ($auction->massage == null)
                                             @auth
                                                 @if (Auth::user()->id == $auction->owner_id)
@@ -168,28 +170,30 @@
                                                             </x-primary-button>
                                                         </div>
                                                     </form>
+                                                @elseif (Auth::user()->id == $auction->host_id)
+                                                    <h3 class="text-md py-4 font-medium text-gray-900 text-center"> Payment is done. Please wait for get review from buyer. </h3>
                                                 @endif
                                             @endauth
+                                        {{--show the review--}}
                                         @else
-                                            <div>
-                                                <div class="mt-2">
-                                                    @php
-                                                        $avatar = DB::table('users')->where('id', $auction->owner_id)->value('avatar');
-                                                    @endphp
-                                                    <h3 class="text-xl font-medium text-gray-900">Feedback from buyer:</h3>
-                                                    <a href="{{route('profile.view', $auction->owner_id)}}" class="mt-2 ms-2 py-2 text-md font-bold flex items-center">
-                                                        @if ($avatar == null)
-                                                            <svg class="h-12 w-12 text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                                                <path fill-rule="evenodd" d="M18.685 19.097A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.065 7.097A9.716 9.716 0 0012 21.75a9.716 9.716 0 006.685-2.653zm-12.54-1.285A7.486 7.486 0 0112 15a7.486 7.486 0 015.855 2.812A8.224 8.224 0 0112 20.25a8.224 8.224 0 01-5.855-2.438zM15.75 9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" clip-rule="evenodd" />
-                                                            </svg>
-                                                        @else
-                                                            <img class="h-12 w-12 rounded-full" src="{{asset($avatar)}}" alt="{{DB::table('users')->where('id', $auction->owner_id)->value('name')}}'s photo">
-                                                        @endif
-                                                        &nbsp;{{DB::table('users')->where('id', $auction->owner_id)->value('name')}}:
-                                                    </a>
-                                                    <p name="message" id="message" rows="4" class="block w-full rounded-md ms-4 px-6 py-2 text-gray-900 shadow-sm ">
-                                                        {{$auction->massage}}
-                                                    </p>
+                                            <div class="mt-2">
+                                                @php
+                                                    $avatar = DB::table('users')->where('id', $auction->owner_id)->value('avatar');
+                                                    $owner_name = DB::table('users')->where('id', $auction->owner_id)->value('name');
+                                                @endphp
+                                                <h3 class="px-2 text-xl font-medium text-gray-900">Feedback from buyer:</h3>
+                                                <a href="{{route('profile.view', $auction->owner_id)}}" class="mt-2 ms-2 py-2 text-md font-bold flex items-center">
+                                                    @if ($avatar == null)
+                                                        <svg class="h-12 w-12 text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                                            <path fill-rule="evenodd" d="M18.685 19.097A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.065 7.097A9.716 9.716 0 0012 21.75a9.716 9.716 0 006.685-2.653zm-12.54-1.285A7.486 7.486 0 0112 15a7.486 7.486 0 015.855 2.812A8.224 8.224 0 0112 20.25a8.224 8.224 0 01-5.855-2.438zM15.75 9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" clip-rule="evenodd" />
+                                                        </svg>
+                                                    @else
+                                                        <img class="h-12 w-12 rounded-full" src="{{asset($avatar)}}" alt="{{$owner_name}}'s photo">
+                                                    @endif
+                                                    &nbsp;{{$owner_name}}:
+                                                </a>
+                                                <div name="message" id="message" rows="4" class="block w-full rounded-md px-4 py-2 text-gray-900 shadow-sm ">
+                                                    {{$auction->massage}}
                                                 </div>
                                             </div>
                                         @endif

@@ -83,13 +83,15 @@ class AuctionController extends Controller
     {
         $request->validate([
             'final_price' => ['required', 'integer'],
+        ],[
+            'final_price.required' => 'Amount is required!',
         ]);
 
         if($request->final_price > Auth::user()->asset + 50){
             return Redirect::route('auction.show', compact('auction'))->with('status', 'You have insufficient balance for bid!');
         }
         if($request->final_price < $auction->final_price){
-            return Redirect::route('auction.show', compact('auction'))->with('status', 'Your bid is lower than previous');
+            return Redirect::route('auction.show', compact('auction'))->with('status', 'Your bid is lower than present value!');
         }
         
         $auctions = Auction::where('id',$auction->id)->update([

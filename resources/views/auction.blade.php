@@ -24,9 +24,9 @@
             <div class="relative bg-blend-normal w-full max-w-2xl px-6 lg:max-w-7xl">
 
                 <main class="mt-4">
+                    <!--ongoing auction-->
                     <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-6 lg:max-w-7xl lg:px-8">
                         <h2 class="text-2xl font-bold tracking-tight text-gray-900">Ongoing auction</h2>
-                        
                         <div class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
                             @php
                                 $auctions = DB::table('auctions')->where('status', '1')
@@ -65,9 +65,9 @@
                             @endforeach
                         </div>
                     </div>
+                    <!--upcoming auction-->
                     <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-6 lg:max-w-7xl lg:px-8">
                         <h2 class="text-2xl font-bold tracking-tight text-gray-900">Upcoming auction</h2>
-
                         <div class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
                             @php
                                 $auctions = DB::table('auctions')->where('status', '1')
@@ -102,14 +102,13 @@
                             @endforeach
                         </div>
                     </div>
+                    <!--finished auction-->
                     <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-6 lg:max-w-7xl lg:px-8">
                         <h2 class="text-2xl font-bold tracking-tight text-gray-900">Finished auction</h2>
 
                         <div class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
                             @php
-                                $auctions = DB::table('auctions')->where('status', '1')
-                                                                ->where('end_time', '<=', date('Y-m-d H:i:s'))
-                                                                ->where('no_of_bid', '>', '0')
+                                $auctions = DB::table('auctions')->where('status', '2')
                                                                 ->get();
                             @endphp
                             @foreach ($auctions as $auction)

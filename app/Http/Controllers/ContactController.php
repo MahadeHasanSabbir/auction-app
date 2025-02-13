@@ -38,6 +38,7 @@ class ContactController extends Controller
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255'],
             'message' => ['required', 'string'],
+            'check' => ['required'],
         ]);
 
         $contact = Contact::create([
@@ -56,7 +57,11 @@ class ContactController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $contact = Contact::where('id', $id)->update([
+            'status' => '1',
+        ]);
+
+        return Redirect::route('contact.index')->with('status', 'Message mark as read');
     }
 
     /**
@@ -64,11 +69,7 @@ class ContactController extends Controller
      */
     public function edit(string $id)
     {
-        $contact = Contact::where('id', $id)->update([
-            'status' => '1',
-        ]);
-
-        return Redirect::route('contact.index')->with('status', 'Message mark as read');
+        //
     }
 
     /**

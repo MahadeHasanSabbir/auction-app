@@ -25,7 +25,7 @@
                                         <span>{{$contact->id}}</span>
                                     </div>
                                     @if ($contact->status == 0)
-                                        <a href="{{route('contact.edit', $contact->id)}}">
+                                        <a href="{{route('contact.show', $contact->id)}}">
                                             <x-primary-button class="ms-4">
                                                 {{ __('Mark as read') }}
                                             </x-primary-button>
@@ -42,7 +42,7 @@
                                 </div>
                                 <div>
                                     <span class="font-semibold">From: </span>
-                                    <span>{{$contact->first_name.' '.$contact->last_name}}</span>
+                                    <span>{{$contact->first_name.' - '.$contact->last_name}}</span>
                                 </div>
                                 <div>
                                     <span class="font-semibold">Email: </span>

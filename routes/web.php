@@ -17,7 +17,7 @@ Route::get('/about', function () {
 })->name('about');
 
 Route::resource('contact', ContactController::class)->only('store');
-Route::resource('contact', ContactController::class)->middleware(['auth', 'verified', 'admin'])->only('index', 'edit', 'destroy');
+Route::resource('contact', ContactController::class)->middleware(['auth', 'verified', 'admin'])->only('index', 'show', 'destroy');
 
 Route::resource('product', ProductController::class)->middleware(['auth', 'verified'])->except('show');
 Route::resource('product', ProductController::class)->only('show');
