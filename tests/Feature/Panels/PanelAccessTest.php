@@ -15,14 +15,17 @@ class PanelAccessTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guests_are_sent_to_the_panel_login(): void
+    public function test_guests_are_sent_to_the_one_site_login(): void
     {
         $company = Company::factory()->create();
 
-        $this->get('/admin')->assertRedirect('/admin/login');
-        $this->get("/seller/{$company->slug}")->assertRedirect('/seller/login');
-        $this->get('/admin/login')->assertOk();
-        $this->get('/seller/login')->assertOk();
+        $this->get('/admin')->assertRedirect('/login');
+        $this->get("/seller/{$company->slug}")->assertRedirect('/login');
+
+        // The panels have no sign-in page of their own. ("login" under
+        // /seller is read as a company address, and guests are sent away.)
+        $this->get('/admin/login')->assertNotFound();
+        $this->get('/seller/login')->assertRedirect('/login');
     }
 
     public function test_platform_roles_can_open_the_admin_panel(): void

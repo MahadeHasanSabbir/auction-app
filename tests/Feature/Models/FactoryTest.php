@@ -22,6 +22,7 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\Review;
 use App\Models\Subscription;
+use App\Models\TrustedDevice;
 use App\Models\User;
 use App\Models\UserType;
 use App\Models\Wallet;
@@ -53,7 +54,7 @@ class FactoryTest extends TestCase
             User::class, UserType::class, Plan::class, Company::class, Subscription::class,
             CompanyAgreement::class, CompanyInvitation::class, Category::class, Product::class,
             ProductImage::class, Auction::class, Bid::class, AutoBid::class, Wallet::class,
-            FeeRule::class, Order::class, Review::class, Notice::class,
+            FeeRule::class, Order::class, Review::class, Notice::class, TrustedDevice::class,
         ])->mapWithKeys(fn (string $model) => [class_basename($model) => [$model]])->all();
     }
 

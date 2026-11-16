@@ -2,15 +2,23 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\OtpPurpose;
+use App\Http\Controllers\Auth\Concerns\SignsUsersIn;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\Otp\OtpService;
+use App\Services\Otp\OtpThrottledException;
+use App\Services\TrustedDevices;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
+    use SignsUsersIn;
+
     /**
      * Display the login view.
      */
@@ -20,25 +28,37 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Handle an incoming authentication request.
+     * First step of signing in: the email and password.
+     *
+     * A browser the user chose to trust is signed in straight away. Any other
+     * browser gets a code by email and continues on the code page.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request, OtpService $otp, TrustedDevices $devices): RedirectResponse
     {
-        $request->authenticate();
+        $user = $request->validateCredentials();
+        $remember = $request->boolean('remember');
 
-        $request->session()->regenerate();
+        if ($devices->isTrusted($user, $request)) {
+            return $this->signIn($request, $user, $remember);
+        }
 
-        $user = $request->user();
-        $user->forceFill(['last_login_at' => now()])->save();
+        try {
+            $otp->send($user, OtpPurpose::Login, $request->ip());
+        } catch (OtpThrottledException $e) {
+            // Fine if a code is already waiting in the inbox; otherwise the
+            // hourly allowance is used up and there is nothing to enter.
+            if (! $otp->hasLiveCode($user, OtpPurpose::Login)) {
+                throw ValidationException::withMessages(['email' => $e->userMessage()]);
+            }
+        }
 
-        // Each kind of account lands in its own workspace.
-        $home = match (true) {
-            $user->isPlatform() => '/admin',
-            $user->isSeller() => '/seller',
-            default => route('dashboard', absolute: false),
-        };
+        $request->session()->put(LoginCodeController::SESSION_KEY, [
+            'user_id' => $user->id,
+            'remember' => $remember,
+            'started_at' => now()->getTimestamp(),
+        ]);
 
-        return redirect()->intended($home);
+        return redirect()->route('login.code');
     }
 
     /**

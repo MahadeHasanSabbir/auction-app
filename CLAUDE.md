@@ -8,7 +8,7 @@ Online auction marketplace, mid-rebuild from a practice project ("v1") into a pr
 
 - **Stack:** Laravel 13 on PHP 8.4, Livewire 4 (which ships Alpine — never import or start Alpine in `resources/js/app.js`), Filament 5 for the admin and seller panels, Tailwind CSS 4 via `@tailwindcss/vite` (configured in `resources/css/app.css`; there is no `tailwind.config.js`), Vite 8, Laravel Reverb + Echo for websockets, MySQL.
 - **Target model:** one shared marketplace. Seller companies subscribe to a plan (team size capped by plan) and work in a `/seller` panel; buyers register freely and bid from the public site; platform staff and the system owner work in `/admin`. See `app/Enums/UserRole.php`.
-- **State of the rebuild:** the foundation (Phase 0) and the data layer (Phase 1: schema, models, factories, seed data, empty Filament panels) are done. The v1 controllers, views and migrations are gone. No business action exists yet: nothing can place a bid, move money, invite a member or approve an auction. The public pages, Breeze auth screens and layouts are still the v1 look and are rebuilt in Phase 2.
+- **State of the rebuild:** the foundation (Phase 0), the data layer (Phase 1) and accounts plus the public site (Phase 2: sign-up, sign-in with emailed codes, profile and security pages, the design system, home, about, auction list and auction detail) are done. No business action exists yet: nothing can place a bid, move money, invite a member or approve an auction, and both Filament panels are empty shells.
 
 ## Conventions for new code
 
@@ -25,7 +25,7 @@ Online auction marketplace, mid-rebuild from a practice project ("v1") into a pr
 
 ## Commands
 
-PHP must be 8.4; the build fails on older versions. First-time setup (no `.env` or `vendor/` is committed):
+PHP must be 8.4 (with the `gd` and `exif` extensions, among the usual Laravel ones); the build fails on older versions. First-time setup (no `.env` or `vendor/` is committed):
 
 ```
 composer install
@@ -35,6 +35,7 @@ php artisan key:generate
 php artisan migrate
 php artisan db:seed        # system owner, plans, fee rules, categories + demo data
 npm run build
+php artisan storage:link   # uploaded pictures are served from the public disk
 ```
 
 Day to day:
@@ -75,7 +76,27 @@ Notes:
 
 `User::canAccessPanel()` decides panel access: platform roles get `/admin`, company roles get `/seller`, inactive accounts get neither. The seller panel uses Filament tenancy with `Company` as the tenant (`/seller/{company-slug}`); `canAccessTenant()` allows only the user's own company, and resources added to that panel are scoped to it automatically. Both panels are empty shells (`app/Providers/Filament/`); resources go in `app/Filament/Admin/` and `app/Filament/Seller/`.
 
-Login is still Breeze (`routes/auth.php`); it refuses inactive accounts and redirects by role. `User` implements `MustVerifyEmail`; with the default `MAIL_MAILER=log` the verification link is written to `storage/logs/laravel.log`.
+### Sign-up, sign-in and codes
+
+There is **one sign-in page for every role** (`/login`); the Filament panels have no login page and send guests there. `App\Support\Home::pathFor()` says where each role works (`/admin`, `/seller`, `/dashboard`) and is used for every post-login redirect. Inactive and deleted accounts cannot sign in.
+
+- **Sign-up** (`RegisteredUserController`) takes `account_type` buyer or seller and calls `App\Actions\Accounts\RegisterBuyer` (buyer + wallet) or `RegisterCompany` (pending company + owner + company wallet). Choosing a plan is deferred to the seller panel (Phase 4).
+- **Emailed codes** come from `App\Services\Otp\OtpService` (`config/auction.php` → `otp`): six digits, stored hashed in `otp_codes`, ten minutes, single use, five wrong guesses, a resend cooldown and an hourly cap. One live code per user and `OtpPurpose`. The mail is sent synchronously, not queued. With the default `MAIL_MAILER=log` it lands in `storage/logs/laravel.log`; in the `local` environment only, the plain code is also flashed to the session and shown on the code page.
+- **Email verification** uses a code, not a signed link (`User::sendEmailVerificationNotification()` is overridden; `EmailVerificationController`). Both panels require a verified email too.
+- **Sign-in is two steps:** `AuthenticatedSessionController` checks the password and emails a code without signing anyone in (the pending user id sits in the session under `login.challenge`); `LoginCodeController` checks the code and signs in. A browser the user chose to trust (`App\Services\TrustedDevices`, encrypted cookie + hash in `trusted_devices`, 30 days) skips the code. Changing the password forgets every trusted device.
+- **Step-up:** the `otp.confirmed` middleware (`EnsureOtpConfirmed`) guards `/profile/security` and everything on it (email, password, trusted devices, closing the account). It wants a code entered within the last 15 minutes; a sign-in with a code or an email verification counts, a trusted-device sign-in does not. Put the same middleware on later sensitive actions (withdrawals, payout details).
+- Only buyers can close their own account, and only with an empty wallet; the user is soft-deleted.
+- Code that compares against "now" uses `now()`, not `time()`, so tests can travel in time.
+
+### Public site and design system
+
+- **Layouts:** `layouts/site.blade.php` (header, footer, toasts) and `layouts/auth.blade.php` (centred card). Blade pages use `<x-site-layout title="…">` / `<x-auth-layout>`; full-page Livewire components use `#[Layout('layouts.site')]` and set the title with `->title(__('…'))` in `render()`. Signed-in account pages wrap their content in `<x-account.shell>`.
+- **Livewire pages** (`app/Livewire/`): `Home`, `Auctions\Index` (search, status, category, seller, price and sort, all bound to the query string), `Auctions\Show` (read-only until the bidding phase), `Account\Overview` (buyers only). Cards need the eager loads of `Auction::forCards()`.
+- **Components** (`resources/views/components/`): `button`, `field`, `card`, `badge`, `money`, `countdown`, `datetime`, `flash` (toasts from session `status` / `error`, or `$this->dispatch('toast', message: …)`), `empty-state`, `avatar`, `product-image`, `otp-form`, `auction.card`, `auction.status`, `site.header` (class component; loads wallet balance and notifications), `site.footer`. Icons are `<x-app-icon name="…">`. **`<x-icon>` belongs to the blade-icons package that Filament installs**, so never create a component with that name.
+- **Theme** lives in `resources/css/app.css`: brand colour scale `brand-50…950` (an indigo-leaning blue), neutrals `slate`, Inter for text and `font-display` (Space Grotesk) for headings, flat bordered cards with `rounded-md`/`rounded-lg` corners, `.form-control` and `.tabular`. Dark mode is the `dark` class on `<html>`, set before first paint by an inline script and toggled through the Alpine store `$store.theme`. Alpine pieces (`countdown`, `cooldown`, the theme store) are registered in `resources/js/app.js` on `alpine:init`.
+- **Times** are shown with `<x-datetime>`, which converts UTC to the viewer's `users.timezone` or `auction.display_timezone`. Countdowns run on the server's clock, not the visitor's.
+- **Bidder privacy:** other bidders are shown as `User::maskedName()`; the reserve amount is never rendered, only whether it is met.
+- **Uploads** go through `App\Services\ImageStore`: the picture is decoded, turned upright (needs the `exif` PHP extension), resized and re-encoded as WebP under a random name on the `public` disk (`php artisan storage:link`). Only avatars use it so far.
 
 ### Schema, by migration file
 
@@ -103,8 +124,8 @@ Things that are not obvious from any single file:
 
 ### What is left of v1
 
-The Breeze auth controllers and views, `ProfileController` (name, email, password, delete), the Blade components in `resources/views/components/`, the two layouts and navigation, and the `welcome` and `aboutus` pages (standalone HTML documents that `@include('layouts.navigation')`). `/auctions` is a plain controller-rendered list (`AuctionListController`) standing in until the Livewire rebuild. Product images will use the `public` disk (`php artisan storage:link`); there is no upload code at the moment.
+Only the Breeze password-reset controllers (`PasswordResetLinkController`, `NewPasswordController`, which still email a link) and the `dropdown`, `dropdown-link`, `input-error` and `modal` components, restyled. Everything else has been replaced.
 
 ## Tests
 
-`tests/Feature/Models/` covers the role rules, the database-enforced constraints and every factory; `tests/Feature/Seeders/DemoSeederTest.php` checks that the demo data covers every auction status and that its ledger balances; `tests/Feature/Panels/PanelAccessTest.php` covers who may open which panel. The Breeze auth and profile tests remain. When adding a model, add its factory to the data provider in `FactoryTest`.
+`tests/Feature/Models/` covers the role rules, the database-enforced constraints and every factory; `tests/Feature/Seeders/DemoSeederTest.php` checks that the demo data covers every auction status and that its ledger balances; `tests/Feature/Panels/PanelAccessTest.php` covers who may open which panel. `tests/Feature/Auth/` covers the code service, sign-up, two-step sign-in, trusted devices and email verification; `tests/Feature/Account/` the step-up gate, the security settings and the buyer overview; `tests/Feature/Auctions/` the list filters and the detail page; `PublicPagesTest` renders every public page against the demo data. Tests that go through an emailed code call `Notification::fake()` and use the `Tests\Support\InteractsWithOtp` trait (`emailedCode()`, `withConfirmedOtp()`). When adding a model, add its factory to the data provider in `FactoryTest`.

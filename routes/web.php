@@ -1,7 +1,11 @@
 <?php
 
-use App\Http\Controllers\AuctionListController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SecurityController;
+use App\Livewire\Account\Overview;
+use App\Livewire\Auctions\Index as AuctionIndex;
+use App\Livewire\Auctions\Show as AuctionShow;
+use App\Livewire\Home;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -10,16 +14,25 @@ use Illuminate\Support\Facades\Route;
 | (/admin); both are Filament panels registered by their own providers.
 */
 
-Route::view('/', 'welcome')->name('home');
-Route::view('/about', 'aboutus')->name('about');
-Route::get('/auctions', AuctionListController::class)->name('auctions.index');
+Route::get('/', Home::class)->name('home');
+Route::view('/about', 'about')->name('about');
+Route::get('/auctions', AuctionIndex::class)->name('auctions.index');
+Route::get('/auctions/{auction}', AuctionShow::class)->name('auctions.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('/dashboard', 'dashboard')->name('dashboard');
+    Route::get('/dashboard', Overview::class)->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Email, password, trusted devices, closing the account: these ask for
+    // an emailed code first.
+    Route::middleware('otp.confirmed')->group(function () {
+        Route::get('/profile/security', [SecurityController::class, 'show'])->name('profile.security');
+        Route::patch('/profile/email', [SecurityController::class, 'updateEmail'])->name('profile.email');
+        Route::delete('/profile/devices', [SecurityController::class, 'forgetDevices'])->name('profile.devices');
+        Route::delete('/profile', [SecurityController::class, 'destroy'])->name('profile.destroy');
+    });
 });
 
 require __DIR__.'/auth.php';

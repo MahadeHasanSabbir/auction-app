@@ -150,6 +150,26 @@ class Auction extends Model
         ));
     }
 
+    /**
+     * Everything an auction card shows, loaded in a fixed number of queries.
+     *
+     * @param  Builder<$this>  $query
+     */
+    public function scopeForCards(Builder $query): void
+    {
+        $query->with([
+            'company:id,name,slug',
+            'product:id,category_id',
+            'product.category:id,name',
+            'product.coverImage',
+        ]);
+    }
+
+    public function isLive(): bool
+    {
+        return $this->status === AuctionStatus::Live;
+    }
+
     /** The lowest amount the next bid must reach. */
     public function minimumNextBid(): Money
     {

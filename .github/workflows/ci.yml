@@ -19,7 +19,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: bcmath, curl, fileinfo, gd, intl, mbstring, openssl, pdo_mysql, pdo_sqlite, sockets, sodium, zip
+          extensions: bcmath, curl, exif, fileinfo, gd, intl, mbstring, openssl, pdo_mysql, pdo_sqlite, sockets, sodium, zip
           coverage: none
 
       - name: Install PHP dependencies
@@ -76,7 +76,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: bcmath, curl, fileinfo, gd, intl, mbstring, openssl, pdo_mysql, pdo_sqlite, sockets, sodium, zip
+          extensions: bcmath, curl, exif, fileinfo, gd, intl, mbstring, openssl, pdo_mysql, pdo_sqlite, sockets, sodium, zip
           coverage: none
 
       - uses: actions/setup-node@v4

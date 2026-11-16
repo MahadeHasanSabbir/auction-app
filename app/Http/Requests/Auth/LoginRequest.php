@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -33,16 +34,22 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Attempt to authenticate the request's credentials.
+     * Check the email and password without signing in, and return the account.
+     *
+     * Signing in happens afterwards, once the emailed code is confirmed or the
+     * browser is recognised as trusted.
      *
      * @throws ValidationException
      */
-    public function authenticate(): void
+    public function validateCredentials(): User
     {
         $this->ensureIsNotRateLimited();
 
         // A deactivated account fails exactly like a wrong password.
-        if (! Auth::attempt($this->only('email', 'password') + ['is_active' => true], $this->boolean('remember'))) {
+        $valid = Auth::validate($this->only('email', 'password') + ['is_active' => true]);
+        $user = Auth::getLastAttempted();
+
+        if (! $valid || ! $user instanceof User) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -51,6 +58,8 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+
+        return $user;
     }
 
     /**

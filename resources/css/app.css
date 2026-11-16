@@ -4,16 +4,67 @@
 
 @source '../views';
 @source '../../app/Livewire';
+@source '../../app/View';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
+@source '../../vendor/livewire/livewire/src/Features/SupportPagination/views/*.blade.php';
 
-/* Dark mode is switched by a `dark` class on <html>, not by the OS setting. */
+/* Dark mode follows a class on <html>, set before first paint by the layouts. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+    /*
+     * Brand: an indigo-leaning blue. Neutrals are Tailwind's cool "slate"; amber
+     * is the accent for anything live or urgent. Platform branding (Phase 12)
+     * will be able to override these variables.
+     */
+    --color-brand-50: #eff4ff;
+    --color-brand-100: #dbe6fe;
+    --color-brand-200: #bfd3fe;
+    --color-brand-300: #93b4fd;
+    --color-brand-400: #6090fa;
+    --color-brand-500: #3b6cf6;
+    --color-brand-600: #2550eb;
+    --color-brand-700: #1d3fd8;
+    --color-brand-800: #1e35af;
+    --color-brand-900: #1e328a;
+    --color-brand-950: #172154;
 }
 
-[x-cloak] {
-    display: none !important;
+@layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        @apply bg-slate-50 font-sans text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200;
+    }
+
+    h1,
+    h2 {
+        @apply font-display tracking-tight;
+    }
+
+    /* One visible, consistent keyboard focus ring everywhere. */
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-brand-500;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+}
+
+@layer components {
+    /* Money, countdowns and counters line up digit by digit. */
+    .tabular {
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Form controls share one look; the forms plugin supplies the reset. */
+    .form-control {
+        @apply block w-full rounded-md border-slate-300 bg-white text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500 disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-brand-400 dark:focus:ring-brand-400;
+    }
 }

@@ -33,6 +33,26 @@ return [
         'password' => env('AUCTION_OWNER_PASSWORD') ?: null,
     ],
 
+    // Times are stored in UTC and shown in the viewer's own timezone when
+    // the account has one, otherwise in this one.
+    'display_timezone' => env('AUCTION_DISPLAY_TIMEZONE', 'Asia/Dhaka'),
+
+    // Emailed one-time codes: sign-up verification, the login second step
+    // and the confirmation asked before sensitive account changes.
+    'otp' => [
+        'length' => 6,
+        'ttl_minutes' => 10,
+        // Wrong guesses allowed against one code before it is dead.
+        'max_attempts' => 5,
+        // Minimum wait between two codes, and the most codes per hour.
+        'resend_seconds' => 60,
+        'max_per_hour' => 5,
+        // How long a confirmed code keeps the sensitive pages unlocked.
+        'confirm_minutes' => 15,
+        // How long a browser marked "trust this device" skips the login code.
+        'trusted_device_days' => 30,
+    ],
+
     'bidding' => [
         // Share of a buyer's available balance that may be committed to bids.
         'biddable_share_bps' => 8000,

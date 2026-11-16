@@ -3,7 +3,10 @@
 namespace App\Models;
 
 use App\Enums\KycStatus;
+use App\Enums\OtpPurpose;
 use App\Enums\UserRole;
+use App\Services\Otp\OtpService;
+use App\Services\Otp\OtpThrottledException;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasTenants;
@@ -19,6 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use LogicException;
 
 class User extends Authenticatable implements FilamentUser, HasTenants, MustVerifyEmail
@@ -148,6 +152,49 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     public function trustedDevices(): HasMany
     {
         return $this->hasMany(TrustedDevice::class);
+    }
+
+    /**
+     * Email addresses are confirmed with a code, not a link. Called by the
+     * framework when an account is registered.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        try {
+            app(OtpService::class)->send($this, OtpPurpose::EmailVerification, request()->ip());
+        } catch (OtpThrottledException) {
+            // A code was sent moments ago and is still valid.
+        }
+    }
+
+    /**
+     * How this user appears to other bidders: "Ayesha R." becomes "A****a R.".
+     * Full names are only ever shown to the user and to staff.
+     */
+    public function maskedName(): string
+    {
+        $parts = preg_split('/\s+/u', trim($this->name)) ?: [];
+        $first = $parts[0] ?? '';
+        $length = mb_strlen($first);
+
+        $masked = $length <= 2
+            ? mb_substr($first, 0, 1).'*'
+            : mb_substr($first, 0, 1).str_repeat('*', min($length - 2, 4)).mb_substr($first, -1);
+
+        $last = count($parts) > 1 ? ' '.mb_strtoupper(mb_substr((string) end($parts), 0, 1)).'.' : '';
+
+        return $masked.$last;
+    }
+
+    public function avatarUrl(): ?string
+    {
+        return $this->avatar_path === null ? null : Storage::disk('public')->url($this->avatar_path);
+    }
+
+    /** The timezone times are shown in for this user. */
+    public function displayTimezone(): string
+    {
+        return $this->timezone ?? (string) config('auction.display_timezone');
     }
 
     public function isSystemOwner(): bool

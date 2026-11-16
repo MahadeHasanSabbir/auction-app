@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use Database\Factories\TrustedDeviceFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TrustedDevice extends Model
 {
+    /** @use HasFactory<TrustedDeviceFactory> */
+    use HasFactory;
+
     /** @var list<string> */
     protected $fillable = ['user_id', 'token_hash', 'user_agent', 'ip_address', 'last_used_at', 'expires_at'];
 
