@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class TrustedDevice extends Model
+{
+    /** @var list<string> */
+    protected $fillable = ['user_id', 'token_hash', 'user_agent', 'ip_address', 'last_used_at', 'expires_at'];
+
+    /** @var list<string> */
+    protected $hidden = ['token_hash'];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'last_used_at' => 'datetime',
+            'expires_at' => 'datetime',
+        ];
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+}

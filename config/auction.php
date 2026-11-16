@@ -23,6 +23,16 @@ return [
     // Number of minor-unit digits of that currency (BDT, USD, EUR: 2).
     'currency_decimals' => (int) env('AUCTION_CURRENCY_DECIMALS', 2),
 
+    // The system owner account created by `php artisan db:seed`. Outside
+    // production the password falls back to "admin"; in production seeding
+    // refuses to run until AUCTION_OWNER_PASSWORD is set.
+    'owner' => [
+        'name' => env('AUCTION_OWNER_NAME', 'System Owner'),
+        'email' => env('AUCTION_OWNER_EMAIL', 'admin@auction.com'),
+        // An empty value in .env counts as "not set".
+        'password' => env('AUCTION_OWNER_PASSWORD') ?: null,
+    ],
+
     'bidding' => [
         // Share of a buyer's available balance that may be committed to bids.
         'biddable_share_bps' => 8000,

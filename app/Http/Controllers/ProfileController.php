@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,23 +12,13 @@ use Illuminate\View\View;
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile edit form.
+     * Display the user's profile form.
      */
     public function edit(Request $request): View
     {
         return view('profile.edit', [
             'user' => $request->user(),
         ]);
-    }
-
-    /**
-     * Display the user's profile.
-     */
-    public function view(string $id): View
-    {
-        $user = User::findorfail($id);
-
-        return view('users', compact('user'));
     }
 
     /**
@@ -45,50 +34,7 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        return Redirect::route('profile.view', $request->user()->id)->with('status', 'profile-updated');
-    }
-
-    /**
-     * Update the user's fund information.
-     */
-    public function fund(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'amount' => ['required', 'integer'],
-            'card_no' => ['required', 'integer'],
-        ]);
-
-        $fund = $request->amount + $request->user()->asset;
-
-        $request->user()->update([
-            'asset' => $fund,
-            'card_no' => $request->card_no,
-        ]);
-
-        return Redirect::route('profile.view', $request->user()->id)->with('status', 'Fund added to profile');
-    }
-
-    /**
-     * Update the user's contact information.
-     */
-    public function contact(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'mobile' => ['required', 'unique:'.User::class],
-            'address' => ['required', 'string', 'max:200'],
-            'photo' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:5120'],
-        ]);
-
-        $picName = $request->user()->id.time().'.'.$request->photo->extension();
-        $path = $request->photo->move('storage', $picName);
-
-        $request->user()->update([
-            'mobile' => $request->mobile,
-            'address' => $request->address,
-            'avatar' => $path,
-        ]);
-
-        return Redirect::route('profile.view', $request->user()->id)->with('status', 'profile-updated');
+        return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
     /**
@@ -104,6 +50,8 @@ class ProfileController extends Controller
 
         Auth::logout();
 
+        // A soft delete: the account can no longer sign in, while its bids,
+        // orders and ledger history stay intact.
         $user->delete();
 
         $request->session()->invalidate();

@@ -8,17 +8,20 @@ Online auction marketplace, mid-rebuild from a practice project ("v1") into a pr
 
 - **Stack:** Laravel 13 on PHP 8.4, Livewire 4 (which ships Alpine — never import or start Alpine in `resources/js/app.js`), Filament 5 for the admin and seller panels, Tailwind CSS 4 via `@tailwindcss/vite` (configured in `resources/css/app.css`; there is no `tailwind.config.js`), Vite 8, Laravel Reverb + Echo for websockets, MySQL.
 - **Target model:** one shared marketplace. Seller companies subscribe to a plan (team size capped by plan) and work in a `/seller` panel; buyers register freely and bid from the public site; platform staff and the system owner work in `/admin`. See `app/Enums/UserRole.php`.
-- **State of the rebuild:** the foundation is in place (framework upgrade, tooling, enums in `app/Enums/`, `App\Support\Money`, `config/auction.php`). The controllers, models, migrations and views are still the v1 code described under "Architecture (v1 code still in place)" and are replaced phase by phase. New code must not follow the v1 patterns.
+- **State of the rebuild:** the foundation (Phase 0) and the data layer (Phase 1: schema, models, factories, seed data, empty Filament panels) are done. The v1 controllers, views and migrations are gone. No business action exists yet: nothing can place a bid, move money, invite a member or approve an auction. The public pages, Breeze auth screens and layouts are still the v1 look and are rebuilt in Phase 2.
 
 ## Conventions for new code
 
-- **Money** is an integer number of minor units (paisa) in `BIGINT` columns, handled through `App\Support\Money`; rates are basis points. No floats, no `decimal` columns.
+- **Money** is an integer number of minor units (paisa) in `BIGINT` columns, handled through `App\Support\Money`; rates are basis points. No floats, no `decimal` columns. Models cast money columns with `App\Casts\MoneyCast`, so `$auction->current_price` is a `Money`; the cast accepts a `Money` or an `int` and throws on anything else.
 - **Business operations** live in single-purpose classes under `app/Actions/` and run inside DB transactions; controllers, Livewire components, Filament pages and the API all call the same action.
 - **Statuses and roles** are the backed enums in `app/Enums/`, never bare integers or strings. `AuctionStatus` and `OrderStatus` define the allowed transitions.
 - **Authorization** goes through policies. Every state change is a non-GET request.
 - **Interface text** goes through `__()`; times are stored in UTC.
-- **Models** use explicit `$fillable`. Lazy loading throws outside production (`AppServiceProvider`), so eager-load relations.
+- **Models** use explicit `$fillable`, and it lists only what a form may set. Columns that decide privilege or money (`users.role`, `users.company_id`, `auctions.status`, wallet balances, order amounts, …) are left out on purpose and are set with property assignment or `forceFill()` by the code that is allowed to. Factories are unguarded, so tests can set anything.
+- **Lazy loading throws** outside production (`AppServiceProvider`), in tests and seeders too, so eager-load relations.
+- **Polymorphic columns** use the morph map in `AppServiceProvider` (`enforceMorphMap`); add a model there before using it as a ledger reference, notifiable or activity-log subject.
 - Queue jobs and broadcasts are dispatched after commit (`after_commit` is on for every queue connection).
+- **Migrations are edited in place** until the first release (data starts fresh, there is nothing to preserve). Group new tables into the existing per-domain migration file rather than adding `alter` migrations.
 
 ## Commands
 
@@ -30,7 +33,7 @@ npm install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
-php artisan db:seed        # creates the super admin: admin@auction.com / admin
+php artisan db:seed        # system owner, plans, fee rules, categories + demo data
 npm run build
 ```
 
@@ -42,6 +45,7 @@ php artisan serve          # or run the pieces separately
 npm run dev
 php artisan reverb:start   # websocket server (BROADCAST_CONNECTION=reverb)
 npm run build              # production assets into public/build
+php artisan migrate:fresh --seed   # rebuild the dev database with demo data
 
 composer check             # pint --test, phpstan, tests: run before finishing any change
 composer test              # all tests (PHPUnit 13)
@@ -55,63 +59,52 @@ php artisan log:clear      # custom command in routes/console.php
 
 Notes:
 
-- **Static analysis baseline:** `phpstan-baseline.neon` holds errors from v1 code only. Never add new entries; fix the code. Remove entries as v1 files are deleted (`reportUnmatchedIgnoredErrors` makes stale entries fail).
+- **Seeding:** `PlatformSeeder` creates what every install needs (system owner, platform ledger accounts, user types, plans, fee rules, categories) and is safe to re-run. `DemoSeeder` adds staff, five companies, twelve buyers and auctions in every status; it is skipped in production and when companies already exist. Logins: `admin@auction.com` / `admin` (system owner; override with `AUCTION_OWNER_*`), and with password `password`: `staff@auction.com`, `owner@dhaka-antiques.test` (seller), `buyer1@auction.com` … `buyer12@auction.com`.
+- **Static analysis has no baseline.** Larastan must pass clean; fix the code instead of ignoring an error. Run it from a shell whose working directory uses an upper-case drive letter (`D:\…`): with a lower-case one (Git Bash `/d/…`) Larastan wrongly reports every `env()` call in `config/`.
 - **Tests run on MySQL, in a separate database `auction_test`** (`phpunit.xml`), using the host and credentials from `.env`. Create it once: `CREATE DATABASE auction_test`. The dev database `auction` is never touched by tests. CI (`.github/workflows/ci.yml`) overrides the connection through real environment variables.
-- **The app database is MySQL 8.4** (`.env.example`, `config/database.php`). Sessions, cache and queue use the `database` driver, so their tables must be migrated.
+- **The app database is MySQL 8.4** (`.env.example`, `config/database.php`). Sessions, cache and queue use the `database` driver, so their tables must be migrated. The schema relies on MySQL generated columns (see below), so SQLite is not an option for tests.
 - **Broadcasting** is selected by `BROADCAST_CONNECTION` (`reverb` locally, `pusher` for hosting without long-running processes); `resources/js/echo.js` follows the same switch through `VITE_BROADCAST_CONNECTION`.
+- **Filament assets** in `public/css|js|fonts/filament` are gitignored and republished by `php artisan filament:upgrade`, which Composer runs after every install or update.
 - Treat the README as out of date; the code is the source of truth.
 
-## Architecture (v1 code still in place)
+## Architecture
 
-### Roles
+### Accounts and roles
 
-`users.role` is an integer, with no enum or constants; the literal values are compared throughout controllers and views:
+`users.role` is cast to `UserRole`: `system_owner` and `platform_staff` (platform side), `company_owner` and `company_member` (seller side, `company_id` set), `buyer`. A `saving` hook on `User` throws unless company roles have a company and every other role has none. A new `User` is a buyer by default, and `role`/`company_id` cannot be mass-assigned, so a sign-up form cannot choose its role. Users and companies are soft-deleted because bids, orders and ledger rows reference them.
 
-- `0` – regular user (sells products, bids, pays)
-- `1` – admin (created by another admin via `/add-admin`)
-- `2` – super admin (only from `DatabaseSeeder`; receives the commission on every payment)
+`User::canAccessPanel()` decides panel access: platform roles get `/admin`, company roles get `/seller`, inactive accounts get neither. The seller panel uses Filament tenancy with `Company` as the tenant (`/seller/{company-slug}`); `canAccessTenant()` allows only the user's own company, and resources added to that panel are scoped to it automatically. Both panels are empty shells (`app/Providers/Filament/`); resources go in `app/Filament/Admin/` and `app/Filament/Seller/`.
 
-The `admin` middleware alias (`app/Http/Middleware/Admin.php`, registered in `bootstrap/app.php`) lets through any `role != 0`. Super-admin-only UI is gated in Blade with `role == 2` (see `layouts/navigation.blade.php`), not by middleware. Only role-0 users who are not the host can bid.
+Login is still Breeze (`routes/auth.php`); it refuses inactive accounts and redirects by role. `User` implements `MustVerifyEmail`; with the default `MAIL_MAILER=log` the verification link is written to `storage/logs/laravel.log`.
 
-The `UserRole` enum describes the v2 roles and is not wired to this column yet.
+### Schema, by migration file
 
-`User` implements `MustVerifyEmail`, and nearly all routes carry `verified`. With the default `MAIL_MAILER=log`, the verification link is written to `storage/logs/laravel.log`.
+Each file under `database/migrations/` holds one domain:
 
-### Auction lifecycle
+- `0001_01_01_000000_create_users_table` — `user_types`, `users`, sessions, `otp_codes`, `trusted_devices`.
+- `…_000100_create_company_tables` — `plans`, `companies`, `company_invitations`, `subscriptions` (one row per company, updated in place), `company_agreements` (per-company commission set by the system owner).
+- `…_000200_create_catalogue_tables` — `categories` (nested), `products`, `product_images`.
+- `…_000300_create_auction_tables` — `auctions`, `bids` (append-only, `seq` unique per auction), `auto_bids`, `watchlists`, `idempotency_keys`.
+- `…_000400_create_wallet_tables` — `fee_rules`, `wallets`, `ledger_transactions`, `ledger_entries`, `deposits`, `withdrawal_requests`, `wallet_holds`, `subscription_invoices`.
+- `…_000500_create_order_tables` — `orders`, `shipments`, `order_events`, `reviews`, `disputes`.
+- `…_000600_create_communication_tables` — `conversations`, `conversation_participants`, `messages`, `notifications`, `notices`.
+- `…_000700_create_compliance_tables` — `kyc_requests`, `kyc_documents`, `settings`; `…_000800` is spatie's `activity_log`.
 
-Products, auctions and payments are all created in a single migration, `2024_04_04_141032_create_bidding_table.php`.
-
-`auctions.status` is the state machine (again bare integers):
-
-| status | meaning | set by |
-|---|---|---|
-| `0` | requested, awaiting admin review | `AuctionController@store` |
-| `1` | approved | `AdminController@accept` — sets `start_time = now + 30 min`, `end_time = now + 4 h` |
-| `2` | paid/completed | `PaymentController@pay` |
-| `3` | denied (reason stored in `massage`) | `AdminController@deny` |
+Tables for the later phases (social logins, fraud flags, invoices, tax, pages, coupons, API tokens, …) are added when those phases are built.
 
 Things that are not obvious from any single file:
 
-- **There is no bids table and no scheduler.** A bid is `AuctionController@update`, which overwrites `auctions.final_price` and `auctions.owner_id` (current highest bidder) and increments `no_of_bid`. `final_price` starts as the host's asking price at creation.
-- **"Upcoming", "ongoing" and "ended" are never stored.** They are derived at render time by comparing `start_time`/`end_time` with `date('Y-m-d H:i:s')` while status is `1`. The winner is whoever is `owner_id` once `end_time` has passed.
-- **Money is an internal wallet**, `users.asset` (integer, default 50). `ProfileController@fund` tops it up with no real gateway. `PaymentController@pay` debits the winner, credits the host with the amount minus commission, and credits the commission — 35% of `final_price - starting_price` — to role-2 users. `withdraw` then debits the host's wallet and records `payments.withdrawer`.
-- The column `auctions.massage` (sic) is overloaded: it holds the admin's denial reason for status 3 and the buyer's review for status 2. The spelling is used consistently in code and views, so keep it unless you migrate it everywhere.
-- Ownership columns `products.seller`, `auctions.host_id`, `auctions.owner_id`, `payments.payer` and `payments.withdrawer` are plain unsigned integers with no foreign keys or Eloquent relations to `User`. Only `Product hasOne Auction` and `Auction hasOne Payment` exist as relations.
+- **The wallet is a double-entry ledger.** A wallet belongs to a buyer, a company or a platform account (`SystemAccount`: escrow, gateway clearing, commission revenue, …). `ledger_entries.amount` is signed (positive credits the wallet) and the entries of one `ledger_transactions` row sum to zero. `wallets.balance` and `wallets.held` are caches of the entries and the active `wallet_holds`; nothing may write them except the ledger code, in the same transaction as the rows they summarise. `Wallet::available()` is balance minus held. Platform accounts run negative by design (gateway clearing mirrors money held at the gateway).
+- **Two rules are enforced by generated columns with unique indexes:** an auction has at most one active bid hold (`wallet_holds.active_bid_auction_id`) and an order at most one open dispute (`disputes.open_order_id`). The columns are null for every other row. Never write them.
+- **Auction state is cached on the row.** `current_price`, `bid_count`, `leader_id` and `reserve_met` are written only by the bidding actions under a row lock; `current_price` equals `starting_price` until the first bid (set by a `creating` hook). Anti-sniping settings and the commission (`fee_snapshot`) are copied onto the auction when it is approved, so later changes do not affect a running auction.
+- **A seller proposes a schedule, the platform approves the real one:** `proposed_starts_at/ends_at` versus `starts_at/ends_at`. `original_ends_at` and `extension_count` record anti-sniping extensions.
+- **Fees:** `fee_rules` are platform-wide charges per use case, optionally per user type and gateway; `company_agreements` override the sale commission for one company. Both have an `effectiveAt()` scope.
+- **There is no Ledger service yet.** `database/seeders/Support/DemoLedger.php` posts the demo money movements as real balanced entries, without locking or fee resolution; it is seed-only and is replaced by the real service in Phase 3.
 
-### Views do their own queries
+### What is left of v1
 
-Many Blade views query the database directly inside `@php` blocks with the `DB` facade rather than receiving data from a controller: `auction.blade.php`, `dashboard.blade.php`, `welcome.blade.php`, `admin.blade.php`, `ongoing.blade.php`, `payment.blade.php`, `users.blade.php`. Several routes (`/`, `/auctions`, `/dashboard`) are closures that only return a view. When changing how auctions are listed or filtered, look in the view as well as the controller; the "ongoing" query is duplicated across `AdminController@index` and several views.
-
-The public pages (`welcome`, `auction`, `ongoing`, `productview`) are standalone HTML documents that `@include('layouts.navigation')`; authenticated pages use the Breeze `<x-app-layout>` component. Views under `resources/views/profile/` hold most of the logged-in screens (product management, auction requests, payment history, contact inbox), not only profile editing.
-
-### Routing
-
-`routes/web.php` registers the same resource controller several times with different middleware and `only`/`except` lists, so that `show` is public while the rest needs auth (`product`, `auction`, `contact`). Auction creation is the nested route `product.auction.create` (`/product/{product}/auction/create`). `ContactController@show` is used as "mark as read" and redirects instead of rendering.
-
-### File uploads
-
-Product pictures and avatars are saved with `$request->file->move('storage', $name)`, which writes into `public/storage/` relative to the web root — not through Laravel's `Storage` disks. The stored DB value is the relative path (`storage/123.jpg`) and is rendered with `asset()`. `public/storage` is gitignored; do not run `php artisan storage:link`, since a symlink there would redirect these uploads.
+The Breeze auth controllers and views, `ProfileController` (name, email, password, delete), the Blade components in `resources/views/components/`, the two layouts and navigation, and the `welcome` and `aboutus` pages (standalone HTML documents that `@include('layouts.navigation')`). `/auctions` is a plain controller-rendered list (`AuctionListController`) standing in until the Livewire rebuild. Product images will use the `public` disk (`php artisan storage:link`); there is no upload code at the moment.
 
 ## Tests
 
-Feature tests are still the stock Breeze ones (`tests/Feature/Auth/*`, `ProfileTest`); there is no coverage of the v1 product, auction, payment or admin flows. New v2 code is covered as it is written (`tests/Unit/Support/MoneyTest.php`).
+`tests/Feature/Models/` covers the role rules, the database-enforced constraints and every factory; `tests/Feature/Seeders/DemoSeederTest.php` checks that the demo data covers every auction status and that its ledger balances; `tests/Feature/Panels/PanelAccessTest.php` covers who may open which panel. The Breeze auth and profile tests remain. When adding a model, add its factory to the data provider in `FactoryTest`.

@@ -34,7 +34,7 @@ class ProfileTest extends TestCase
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect(route('profile.view', $user->id));
+            ->assertRedirect('/profile');
 
         $user->refresh();
 
@@ -56,7 +56,7 @@ class ProfileTest extends TestCase
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect(route('profile.view', $user->id));
+            ->assertRedirect('/profile');
 
         $this->assertNotNull($user->refresh()->email_verified_at);
     }
@@ -76,7 +76,9 @@ class ProfileTest extends TestCase
             ->assertRedirect('/');
 
         $this->assertGuest();
-        $this->assertNull($user->fresh());
+        // The account is soft deleted: gone for sign-in, kept for its history.
+        $this->assertSoftDeleted($user);
+        $this->assertNull(User::query()->find($user->id));
     }
 
     public function test_correct_password_must_be_provided_to_delete_account(): void

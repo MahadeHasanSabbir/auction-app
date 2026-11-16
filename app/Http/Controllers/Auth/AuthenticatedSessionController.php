@@ -28,29 +28,17 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        Auth::user()->active_status = true;
-        Auth::user()->save();
+        $user = $request->user();
+        $user->forceFill(['last_login_at' => now()])->save();
 
-        $userRole = Auth::user()->role;
+        // Each kind of account lands in its own workspace.
+        $home = match (true) {
+            $user->isPlatform() => '/admin',
+            $user->isSeller() => '/seller',
+            default => route('dashboard', absolute: false),
+        };
 
-        switch ($userRole) {
-            case '0':
-                return redirect()->intended(route('dashboard', absolute: false));
-                break;
-
-            case '1':
-                return redirect()->intended(route('admin.index', absolute: false));
-                break;
-
-            case '2':
-                return redirect()->intended(route('admin.index', absolute: false));
-                break;
-
-            default:
-                return redirect()->intended(route('home', absolute: false));
-                break;
-        }
-
+        return redirect()->intended($home);
     }
 
     /**
@@ -58,10 +46,6 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        $request->user()->active_status = false;
-
-        $request->user()->save();
-
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

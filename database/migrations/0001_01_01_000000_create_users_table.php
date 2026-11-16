@@ -6,29 +6,48 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
+        // Admin-managed account types ("Standard buyer", "Premium seller", …).
+        // Fee rules can target one type.
+        Schema::create('user_types', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->string('account_kind', 16);
+            $table->string('description')->nullable();
+            $table->boolean('is_default')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+
+            $table->index(['account_kind', 'is_active']);
+        });
+
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('address')->nullable();
-            $table->string('avatar')->nullable();
-            $table->string('mobile')->uniqid()->nullable();
-            $table->integer('total_bid')->default(0);
-            $table->integer('total_sell')->default(0);
-            $table->integer('total_buy')->default(0);
-            $table->integer('role')->default(0);
-            $table->integer('asset')->default(50);
-            $table->bigInteger('card_no')->default(0);
             $table->string('password');
-            $table->boolean('active_status')->default(0);
+            $table->string('role', 32);
+            // Set for company owners and members only. The foreign key is
+            // added by the companies migration.
+            $table->unsignedBigInteger('company_id')->nullable();
+            $table->foreignId('user_type_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('kyc_status', 32)->default('not_required');
+            $table->boolean('is_active')->default(true);
+            $table->string('phone', 32)->nullable();
+            $table->string('address', 500)->nullable();
+            $table->string('avatar_path')->nullable();
+            $table->string('locale', 12)->nullable();
+            $table->string('timezone', 64)->nullable();
+            $table->dateTime('last_login_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
+
+            $table->index(['role', 'is_active']);
+            $table->index(['company_id', 'role']);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -45,15 +64,45 @@ return new class extends Migration
             $table->longText('payload');
             $table->integer('last_activity')->index();
         });
+
+        // Emailed one-time codes. Only a hash of the code is stored.
+        Schema::create('otp_codes', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('purpose', 32);
+            $table->string('code_hash');
+            $table->string('sent_to');
+            $table->unsignedTinyInteger('attempts')->default(0);
+            $table->dateTime('expires_at');
+            $table->dateTime('consumed_at')->nullable();
+            $table->string('ip_address', 45)->nullable();
+            $table->timestamps();
+
+            $table->index(['user_id', 'purpose', 'consumed_at']);
+        });
+
+        // Browsers that may skip the login code for a while.
+        Schema::create('trusted_devices', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->char('token_hash', 64)->unique();
+            $table->string('user_agent', 500)->nullable();
+            $table->string('ip_address', 45)->nullable();
+            $table->dateTime('last_used_at')->nullable();
+            $table->dateTime('expires_at');
+            $table->timestamps();
+
+            $table->index(['user_id', 'expires_at']);
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('trusted_devices');
+        Schema::dropIfExists('otp_codes');
         Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('users');
+        Schema::dropIfExists('user_types');
     }
 };
