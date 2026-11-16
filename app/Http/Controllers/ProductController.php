@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\View\View;
 
 class ProductController extends Controller
 {
@@ -17,6 +17,7 @@ class ProductController extends Controller
     public function index(): View
     {
         $products = Product::where('seller', Auth::user()->id)->get();
+
         return view('profile.manage', compact('products'));
     }
 
@@ -62,15 +63,17 @@ class ProductController extends Controller
     public function show(string $id): View
     {
         $product = Product::findorfail($id);
+
         return view('productview', compact('product'));
     }
 
     /**
      * Show the form for editing the specified product.
      */
-    public function edit(string $id): view
+    public function edit(string $id): View
     {
         $product = Product::findorfail($id);
+
         return view('profile.update', compact('product'));
     }
 

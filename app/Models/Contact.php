@@ -14,7 +14,5 @@ class Contact extends Model
      *
      * @var array<int, string>
      */
-    
     protected $guarded = [];
-
 }

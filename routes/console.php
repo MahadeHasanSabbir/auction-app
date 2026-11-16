@@ -7,7 +7,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
-Artisan::command('log:clear', function(){
+Artisan::command('log:clear', function () {
     exec('echo "" > '.storage_path('logs/laravel.log'));
 
     $this->comment('Log has been clear!');

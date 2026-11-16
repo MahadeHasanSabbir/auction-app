@@ -12,22 +12,21 @@ class Admin
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if(!Auth::check()){
+        if (! Auth::check()) {
             return redirect(route('login'));
         }
-        
+
         $userRole = Auth::user()->role;
 
-        if($userRole != 0){
+        if ($userRole != 0) {
             return $next($request);
-        }
-        else{
+        } else {
             return redirect(route('dashboard'));
         }
-        
+
     }
 }

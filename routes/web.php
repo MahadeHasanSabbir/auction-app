@@ -1,12 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuctionController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
@@ -26,7 +26,7 @@ Route::resource('auction', AuctionController::class)->middleware(['auth', 'verif
 Route::resource('product.auction', AuctionController::class)->middleware(['auth', 'verified'])->only('create');
 Route::resource('auction', AuctionController::class)->only('show');
 
-Route::get('/auctions', function(){
+Route::get('/auctions', function () {
     return view('auction');
 })->name('auction.view');
 

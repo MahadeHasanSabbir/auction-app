@@ -16,7 +16,8 @@ class Product extends Model
      */
     protected $guarded = [];
 
-    public function auction(){
+    public function auction()
+    {
         return $this->hasOne(Auction::class);
     }
 }

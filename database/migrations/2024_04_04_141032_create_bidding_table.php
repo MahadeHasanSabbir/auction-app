@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('products', function (Blueprint $table) {
-            $table->id()->primary()->index();
+            $table->id();
             $table->string('name');
             $table->string('category');
             $table->longText('description');
@@ -23,7 +23,7 @@ return new class extends Migration
         });
 
         Schema::create('auctions', function (Blueprint $table) {
-            $table->id()->primary()->index();
+            $table->id();
             $table->foreignId('product_id')->constrained('products')->cascadeOnUpdate()->cascadeOnDelete();
             $table->unsignedBigInteger('host_id');
             $table->string('name');
@@ -40,7 +40,7 @@ return new class extends Migration
         });
 
         Schema::create('payments', function (Blueprint $table) {
-            $table->id()->primary();
+            $table->id();
             $table->foreignId('auction_id')->constrained('auctions')->cascadeOnUpdate()->cascadeOnDelete();
             $table->unsignedBigInteger('payer');
             $table->unsignedBigInteger('withdrawer')->default(0);

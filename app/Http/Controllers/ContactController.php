@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contact;
-use Illuminate\View\View;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\View\View;
 
 class ContactController extends Controller
 {
@@ -18,14 +18,6 @@ class ContactController extends Controller
         $contacts = Contact::get();
 
         return view('profile.contact', compact('contacts'));
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
     }
 
     /**
@@ -48,7 +40,7 @@ class ContactController extends Controller
             'number' => $request->number,
             'message' => $request->message,
         ]);
-        
+
         return Redirect::route('home')->with('status', 'Message sent successfully');
     }
 
@@ -65,22 +57,6 @@ class ContactController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id): RedirectResponse
-    {
-        //
-    }
-
-    /**
      * Remove the specified message from storage.
      */
     public function destroy(string $id): RedirectResponse
@@ -89,5 +65,4 @@ class ContactController extends Controller
 
         return Redirect::route('contact.index')->with('status', 'Massage delete successfully');
     }
-    
 }

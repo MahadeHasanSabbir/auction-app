@@ -2,50 +2,52 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
-use App\Models\User;
 use App\Models\Auction;
-use Illuminate\View\View;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\View\View;
 
 class AdminController extends Controller
 {
     /**
-    * function for show ongoing auction
-    */
+     * function for show ongoing auction
+     */
     public function index(): View
     {
         $auctions = Auction::where('status', '1')
-                            ->where('start_time', '<=', date('Y-m-d H:i:s'))
-                            ->where('end_time', '>=', date('Y-m-d H:i:s'))
-                            ->get();
+            ->where('start_time', '<=', date('Y-m-d H:i:s'))
+            ->where('end_time', '>=', date('Y-m-d H:i:s'))
+            ->get();
+
         return view('admin', compact('auctions'));
     }
 
     /**
-    * function for show auction request
-    */
+     * function for show auction request
+     */
     public function auction(): View
     {
         $auctions = Auction::where('status', '0')->get();
+
         return view('profile.requestauction', compact('auctions'));
     }
 
     /**
-    * function for show create a new admin form
-    */
+     * function for show create a new admin form
+     */
     public function create(): View
     {
         return view('profile.add');
     }
 
     /**
-    * function for store new admin data
-    */
+     * function for store new admin data
+     */
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
@@ -62,28 +64,29 @@ class AdminController extends Controller
         ]);
 
         event(new Registered($user));
-        
+
         return Redirect::route('admin.create')->with('status', 'New admin created successfully');
     }
-    
+
     /**
-    * function for show all users
-    */
+     * function for show all users
+     */
     public function users(): View
     {
         $users = User::paginate(10);
+
         return view('viewusers', compact('users'));
     }
 
     /**
-    * function for accept new auction request
-    */
+     * function for accept new auction request
+     */
     public function accept(string $id): RedirectResponse
     {
         $timezone = config('app.timezone');
         $start = Carbon::now($timezone)->addMinutes(30);
         $end = Carbon::now($timezone)->addHours(4);
-        //$end = Carbon::now($timezone)->addMinutes(30);
+        // $end = Carbon::now($timezone)->addMinutes(30);
         $auctions = Auction::where('id', $id)->update([
             'start_time' => $start,
             'end_time' => $end,
@@ -94,8 +97,8 @@ class AdminController extends Controller
     }
 
     /**
-    * function for deny a auction request
-    */
+     * function for deny a auction request
+     */
     public function deny(Request $request, string $id): RedirectResponse
     {
         $auctions = Auction::where('id', $id)->update([

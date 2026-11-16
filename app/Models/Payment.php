@@ -16,7 +16,8 @@ class Payment extends Model
      */
     protected $guarded = [];
 
-    public function auction(){
+    public function auction()
+    {
         return $this->belongsTo(Auction::class);
     }
 }

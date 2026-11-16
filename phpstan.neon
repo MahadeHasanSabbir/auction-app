@@ -1,0 +1,16 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    level: 6
+
+    paths:
+        - app
+        - config
+        - database
+        - routes
+
+    # Errors in the legacy v1 code are recorded in phpstan-baseline.neon.
+    # That code is replaced phase by phase; the baseline must only shrink.
+    reportUnmatchedIgnoredErrors: true

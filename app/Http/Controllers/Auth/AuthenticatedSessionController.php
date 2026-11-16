@@ -37,20 +37,20 @@ class AuthenticatedSessionController extends Controller
             case '0':
                 return redirect()->intended(route('dashboard', absolute: false));
                 break;
-            
+
             case '1':
                 return redirect()->intended(route('admin.index', absolute: false));
                 break;
-            
+
             case '2':
                 return redirect()->intended(route('admin.index', absolute: false));
                 break;
-            
+
             default:
                 return redirect()->intended(route('home', absolute: false));
                 break;
         }
-        
+
     }
 
     /**
@@ -67,7 +67,6 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
-
 
         return redirect('/');
     }

@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Auction;
 use App\Models\Payment;
 use App\Models\Product;
-use Illuminate\View\View;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class PaymentController extends Controller
 {
@@ -30,13 +30,15 @@ class PaymentController extends Controller
         $auction = Auction::find($id);
         $product = Product::find($auction->product_id);
 
-        if($auction->payment == 1){
+        if ($auction->payment == 1) {
             session()->flash('status', 'You already pay for this product.');
+
             return view('payment', compact('auction'));
         }
 
-        if(Auth::user()->asset <= $auction->final_price + 50){
+        if (Auth::user()->asset <= $auction->final_price + 50) {
             session()->flash('status', 'Sorry, you have insufficient balance for payment');
+
             return view('payment', compact('auction'));
         }
 
@@ -62,6 +64,7 @@ class PaymentController extends Controller
         ]);
 
         session()->flash('status', 'Congratulation! your payment is successful.');
+
         return view('payment', compact('auction'));
     }
 
@@ -72,24 +75,27 @@ class PaymentController extends Controller
     {
         $auction = Auction::find($id);
         $payment = Payment::find($auction->payment_id);
-        
-        if($payment->withdrawer > 0){
+
+        if ($payment->withdrawer > 0) {
             session()->flash('status', 'You already withdraw for this product');
+
             return view('payment', compact('auction'));
         }
-        
-        if($auction->payment == 0){
+
+        if ($auction->payment == 0) {
             session()->flash('status', 'Buyer did not payed yet. Wait for bayer payment.');
+
             return view('payment', compact('auction'));
         }
 
         $user = Auth::user()->decrement('asset', $payment->amount - $payment->commission);
 
-        $payment = Payment::where('id',$payment->id)->update([
+        $payment = Payment::where('id', $payment->id)->update([
             'withdrawer' => Auth::user()->id,
         ]);
 
         session()->flash('status', 'Congratulation! withdraw is in process. You will get your money soon');
+
         return view('payment', compact('auction'));
     }
 
@@ -101,8 +107,9 @@ class PaymentController extends Controller
         $auctions = Auction::where('id', $id)->update([
             'massage' => $request->message,
         ]);
-        
+
         $auction = Auction::find($id);
+
         return view('ongoing', compact('auction'));
     }
 }
