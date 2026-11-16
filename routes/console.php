@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -12,3 +13,6 @@ Artisan::command('log:clear', function () {
 
     $this->comment('Log has been clear!');
 })->describe('Clear log file');
+
+// Logs a critical error when the books do not add up.
+Schedule::command('ledger:verify')->dailyAt('03:00')->withoutOverlapping();

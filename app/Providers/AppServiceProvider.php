@@ -18,6 +18,7 @@ use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\User;
 use App\Models\WithdrawalRequest;
+use App\Services\Ledger\Ledger;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -34,7 +35,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Remembers the platform accounts it has looked up; scoped so a queue
+        // worker starts every job with a fresh copy.
+        $this->app->scoped(Ledger::class);
     }
 
     /**

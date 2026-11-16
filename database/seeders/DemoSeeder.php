@@ -2,16 +2,22 @@
 
 namespace Database\Seeders;
 
+use App\Actions\Wallet\CompleteDeposit;
 use App\Enums\AuctionCloseReason;
 use App\Enums\AuctionStatus;
 use App\Enums\BidType;
-use App\Enums\CommissionBasis;
 use App\Enums\CompanyStatus;
+use App\Enums\DepositStatus;
+use App\Enums\HoldType;
 use App\Enums\KycStatus;
+use App\Enums\LedgerComponent;
+use App\Enums\LedgerTransactionType;
 use App\Enums\NoticeAudience;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentOutcome;
 use App\Enums\ProductCondition;
 use App\Enums\ShipmentStatus;
+use App\Enums\SystemAccount;
 use App\Enums\UserRole;
 use App\Models\Auction;
 use App\Models\AutoBid;
@@ -20,6 +26,7 @@ use App\Models\Category;
 use App\Models\Company;
 use App\Models\CompanyAgreement;
 use App\Models\CompanyInvitation;
+use App\Models\Deposit;
 use App\Models\KycRequest;
 use App\Models\Notice;
 use App\Models\Order;
@@ -32,9 +39,12 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Models\UserType;
 use App\Models\Wallet;
+use App\Services\Fees\CommissionTerms;
+use App\Services\Fees\FeeResolver;
+use App\Services\Ledger\Ledger;
+use App\Services\Payments\PaymentResult;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
-use Database\Seeders\Support\DemoLedger;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -48,10 +58,7 @@ use Illuminate\Support\Str;
  */
 class DemoSeeder extends Seeder
 {
-    /** Commission taken when a company has no agreement of its own. */
-    private const DEFAULT_COMMISSION_BPS = 1_000;
-
-    private DemoLedger $ledger;
+    private Ledger $ledger;
 
     private User $owner;
 
@@ -76,7 +83,7 @@ class DemoSeeder extends Seeder
             return;
         }
 
-        $this->ledger = new DemoLedger;
+        $this->ledger = app(Ledger::class);
         $this->owner = User::query()->where('role', UserRole::SystemOwner)->firstOrFail();
         $this->categories = Category::query()->pluck('id', 'slug')->all();
 
@@ -129,7 +136,7 @@ class DemoSeeder extends Seeder
         // Everyone but the last buyer starts with BDT 300,000; the last one
         // has an empty wallet, to show what a new account looks like.
         foreach (array_slice($this->buyers, 0, -1) as $buyer) {
-            $this->ledger->deposit($this->wallets[$buyer->id], Money::minor(30_000_000), $buyer->id);
+            $this->deposit($buyer, Money::minor(30_000_000));
         }
     }
 
@@ -269,13 +276,15 @@ class DemoSeeder extends Seeder
             'price' => $plan->price_monthly,
         ]);
 
-        $agreement = $definition['commission_bps'] === null ? null : CompanyAgreement::factory()->create([
-            'company_id' => $company->id,
-            'rate_bps' => $definition['commission_bps'],
-            'effective_from' => now()->subMonths(2),
-            'note' => 'Launch partner rate agreed for the first year.',
-            'created_by' => $this->owner->id,
-        ]);
+        if ($definition['commission_bps'] !== null) {
+            CompanyAgreement::factory()->create([
+                'company_id' => $company->id,
+                'rate_bps' => $definition['commission_bps'],
+                'effective_from' => now()->subMonths(2),
+                'note' => 'Launch partner rate agreed for the first year.',
+                'created_by' => $this->owner->id,
+            ]);
+        }
 
         if ($definition['status'] === CompanyStatus::Pending) {
             $company->forceFill(['kyc_status' => KycStatus::Requested])->save();
@@ -298,14 +307,14 @@ class DemoSeeder extends Seeder
 
         foreach ($definition['auctions'] as $index => $row) {
             // Listings are spread over the team.
-            $this->auction($company, $wallet, $agreement, $team[$index % count($team)], $row);
+            $this->auction($company, $wallet, $team[$index % count($team)], $row);
         }
     }
 
     /**
      * @param  array{0: string, 1: string, 2: int, 3: string, 4?: int}  $row
      */
-    private function auction(Company $company, Wallet $companyWallet, ?CompanyAgreement $agreement, User $member, array $row): void
+    private function auction(Company $company, Wallet $companyWallet, User $member, array $row): void
     {
         [$title, $categorySlug, $startingBdt, $scenario] = $row;
         $bidCount = $row[4] ?? 0;
@@ -340,7 +349,8 @@ class DemoSeeder extends Seeder
             'proposed_ends_at' => now()->addDays(4)->startOfHour(),
         ];
 
-        $commissionBps = $agreement === null ? self::DEFAULT_COMMISSION_BPS : $agreement->rate_bps;
+        // The company's agreement, else the platform's default commission.
+        $commission = app(FeeResolver::class)->saleCommission($company);
 
         // What the platform fixes when it approves an auction.
         $approved = fn (CarbonImmutable $startsAt, CarbonImmutable $endsAt): array => [
@@ -355,13 +365,7 @@ class DemoSeeder extends Seeder
             'anti_snipe_window_seconds' => config('auction.bidding.anti_snipe_window_seconds'),
             'anti_snipe_extend_seconds' => config('auction.bidding.anti_snipe_extend_seconds'),
             'anti_snipe_max_extensions' => config('auction.bidding.anti_snipe_max_extensions'),
-            'fee_snapshot' => [
-                'sale_commission' => [
-                    'rate_bps' => $commissionBps,
-                    'basis' => CommissionBasis::FinalPrice->value,
-                    'company_agreement_id' => $agreement?->id,
-                ],
-            ],
+            'fee_snapshot' => ['sale_commission' => $commission->toSnapshot()],
         ];
 
         $ended = fn (int $daysAgo): array => $approved(now()->subDays($daysAgo + 3), now()->subDays($daysAgo))
@@ -421,7 +425,7 @@ class DemoSeeder extends Seeder
             }
 
             $this->fund($leader, $hold);
-            $this->ledger->holdForBid($this->wallets[$leader->id], $auction, $hold);
+            $this->ledger->hold($this->wallets[$leader->id], $hold, HoldType::Bid, $auction);
 
             // A couple of other buyers keep an eye on it.
             $auction->watchers()->attach([
@@ -435,7 +439,7 @@ class DemoSeeder extends Seeder
         if ($auction->status === AuctionStatus::Sold) {
             $auction->forceFill(['winner_id' => $leader->id, 'final_price' => $price])->save();
 
-            $this->order($auction, $leader, $companyWallet, $agreement, $commissionBps, $scenario);
+            $this->order($auction, $leader, $companyWallet, $commission, $scenario);
         }
     }
 
@@ -493,13 +497,33 @@ class DemoSeeder extends Seeder
         // Round the top-up to whole BDT 10,000.
         $topUp = (int) ceil(($needed - $wallet->available()->amount) / 1_000_000) * 1_000_000;
 
-        $this->ledger->deposit($wallet, Money::minor($topUp), $buyer->id);
+        $this->deposit($buyer, Money::minor($topUp));
     }
 
-    private function order(Auction $auction, User $buyer, Wallet $companyWallet, ?CompanyAgreement $agreement, int $commissionBps, string $scenario): void
+    /** A top-up through the fake gateway, completed by the real deposit action. */
+    private function deposit(User $buyer, Money $amount): void
+    {
+        $deposit = new Deposit;
+        $deposit->forceFill([
+            'wallet_id' => $this->wallets[$buyer->id]->id,
+            'user_id' => $buyer->id,
+            'gateway' => 'fake',
+            'tran_id' => 'DEMO'.Str::upper((string) Str::ulid()),
+            'amount' => $amount,
+            'net_amount' => $amount,
+            'currency' => $amount->currency,
+            'status' => DepositStatus::Pending,
+        ])->save();
+
+        app(CompleteDeposit::class)->handle(new PaymentResult('fake', $deposit->tran_id, PaymentOutcome::Succeeded, $amount));
+
+        $this->wallets[$buyer->id]->refresh();
+    }
+
+    private function order(Auction $auction, User $buyer, Wallet $companyWallet, CommissionTerms $terms, string $scenario): void
     {
         $price = $auction->final_price ?? $auction->current_price;
-        $commission = $price->basisPoints($commissionBps);
+        $commission = $terms->apply($price, $auction->starting_price);
         $closedAt = $auction->closed_at ?? now();
 
         $this->fund($buyer, $price);
@@ -520,7 +544,17 @@ class DemoSeeder extends Seeder
             'created_at' => $closedAt,
         ]);
 
-        $this->ledger->capture($order, $this->wallets[$buyer->id]);
+        // Closing captures the winner's hold into escrow.
+        $buyerWallet = $this->wallets[$buyer->id];
+        $hold = $this->ledger->hold($buyerWallet, $price, HoldType::Bid, $auction);
+
+        $this->ledger->transaction(LedgerTransactionType::SaleCapture)
+            ->reference($order)
+            ->describe("Order {$order->number} paid into escrow")
+            ->capturing($hold)
+            ->debit($buyerWallet, $price)
+            ->credit($this->ledger->system(SystemAccount::Escrow), $price)
+            ->post();
         $this->event($order, 'created', null, OrderStatus::InEscrow, null, 'Auction won; payment is held in escrow.', $closedAt);
 
         if ($scenario === 'sold_in_escrow') {
@@ -558,7 +592,13 @@ class DemoSeeder extends Seeder
             'completed_at' => $completedAt,
         ])->save();
 
-        $this->ledger->release($order, $companyWallet, $agreement?->id);
+        $this->ledger->transaction(LedgerTransactionType::EscrowRelease)
+            ->reference($order)
+            ->describe("Order {$order->number} released to the seller")
+            ->debit($this->ledger->system(SystemAccount::Escrow), $order->amount)
+            ->credit($companyWallet, $order->seller_payout)
+            ->credit($this->ledger->system(SystemAccount::CommissionRevenue), $order->commission, LedgerComponent::Commission, $terms)
+            ->post();
         $this->event($order, 'completed', OrderStatus::Shipped, OrderStatus::Completed, $buyer->id, 'Buyer confirmed delivery; payment released to the seller.', $completedAt);
 
         $rating = 4 + $order->id % 2;

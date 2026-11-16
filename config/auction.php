@@ -53,6 +53,17 @@ return [
         'trusted_device_days' => 30,
     ],
 
+    'payments' => [
+        // Gateways offered to payers, comma separated: fake, sslcommerz,
+        // stripe. The fake one pays at once and is never offered in
+        // production.
+        'gateways' => array_filter(explode(',', (string) env('PAYMENT_GATEWAYS', 'fake'))),
+
+        // Limits on one deposit, in minor units (10_000 is BDT 100.00).
+        'deposit_min' => (int) env('AUCTION_DEPOSIT_MIN', 10_000),
+        'deposit_max' => (int) env('AUCTION_DEPOSIT_MAX', 100_000_000),
+    ],
+
     'bidding' => [
         // Share of a buyer's available balance that may be committed to bids.
         'biddable_share_bps' => 8000,

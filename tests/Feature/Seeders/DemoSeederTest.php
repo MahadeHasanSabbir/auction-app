@@ -18,10 +18,12 @@ use Database\Seeders\PlatformSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Tests\Support\InteractsWithLedger;
 use Tests\TestCase;
 
 class DemoSeederTest extends TestCase
 {
+    use InteractsWithLedger;
     use RefreshDatabase;
 
     public function test_the_platform_seeder_creates_the_essentials_and_can_run_twice(): void
@@ -101,6 +103,9 @@ class DemoSeederTest extends TestCase
         // Commission earned equals the commission of the completed orders.
         $commission = (int) Order::query()->where('status', OrderStatus::Completed)->sum('commission');
         $this->assertSame($commission, Wallet::forSystem(SystemAccount::CommissionRevenue)->balance->amount);
+
+        // And everything ledger:verify checks.
+        $this->assertLedgerBalanced();
     }
 
     public function test_live_auctions_have_a_leader_with_a_hold_and_sold_ones_an_order(): void

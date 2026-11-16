@@ -91,6 +91,9 @@ return new class extends Migration
             $table->unsignedBigInteger('gateway_charge')->default(0);
             $table->unsignedBigInteger('service_charge')->default(0);
             $table->unsignedBigInteger('net_amount');
+            // The rules the charges were quoted from, credited with them.
+            $table->foreignId('gateway_fee_rule_id')->nullable()->constrained('fee_rules');
+            $table->foreignId('service_fee_rule_id')->nullable()->constrained('fee_rules');
             $table->char('currency', 3);
             $table->string('status', 16)->default('pending');
             $table->foreignId('ledger_transaction_id')->nullable()->constrained();
@@ -112,6 +115,8 @@ return new class extends Migration
             $table->unsignedBigInteger('gateway_charge')->default(0);
             $table->unsignedBigInteger('service_charge')->default(0);
             $table->unsignedBigInteger('net_amount');
+            $table->foreignId('gateway_fee_rule_id')->nullable()->constrained('fee_rules');
+            $table->foreignId('service_fee_rule_id')->nullable()->constrained('fee_rules');
             $table->char('currency', 3);
             $table->string('method', 32);
             // Bank or mobile-wallet details, encrypted by the model.

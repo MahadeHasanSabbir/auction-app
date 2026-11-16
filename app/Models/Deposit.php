@@ -9,12 +9,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Deposit extends Model
 {
-    /** @var list<string> */
-    protected $fillable = [
-        'wallet_id', 'user_id', 'gateway', 'tran_id', 'gateway_reference',
-        'amount', 'gateway_charge', 'service_charge', 'net_amount', 'currency',
-        'status', 'ledger_transaction_id', 'gateway_payload', 'failure_reason', 'completed_at',
-    ];
+    /**
+     * Every column is money or gateway state, set only by the deposit actions
+     * (App\Actions\Wallet) with forceFill().
+     *
+     * @var list<string>
+     */
+    protected $fillable = [];
 
     /** @var list<string> */
     protected $hidden = ['gateway_payload'];
@@ -43,6 +44,18 @@ class Deposit extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** @return BelongsTo<FeeRule, $this> */
+    public function gatewayFeeRule(): BelongsTo
+    {
+        return $this->belongsTo(FeeRule::class, 'gateway_fee_rule_id');
+    }
+
+    /** @return BelongsTo<FeeRule, $this> */
+    public function serviceFeeRule(): BelongsTo
+    {
+        return $this->belongsTo(FeeRule::class, 'service_fee_rule_id');
     }
 
     /** @return BelongsTo<LedgerTransaction, $this> */
