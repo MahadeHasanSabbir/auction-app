@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -43,6 +44,13 @@ class Bids extends Component
     public function updatedTab(): void
     {
         $this->resetPage();
+    }
+
+    /** Sent by the live account listener when the viewer's wallet changes (a bid, being outbid, a payment). */
+    #[On('wallet-updated')]
+    public function walletUpdated(): void
+    {
+        // Nothing to do: the call itself re-renders the figures.
     }
 
     public function render(): View

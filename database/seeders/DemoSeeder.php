@@ -26,6 +26,7 @@ use App\Enums\ShipmentStatus;
 use App\Enums\SubscriptionStatus;
 use App\Enums\SystemAccount;
 use App\Enums\UserRole;
+use App\Events\Account\WalletUpdated;
 use App\Models\Auction;
 use App\Models\AutoBid;
 use App\Models\Bid;
@@ -54,6 +55,7 @@ use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 
 /**
@@ -94,7 +96,8 @@ class DemoSeeder extends Seeder
         $this->owner = User::query()->where('role', UserRole::SystemOwner)->firstOrFail();
         $this->categories = Category::query()->pluck('id', 'slug')->all();
 
-        DB::transaction(function (): void {
+        // Demo money moves through the real ledger; nobody is watching, so nothing is broadcast.
+        Event::fakeFor(fn () => DB::transaction(function (): void {
             $this->staff();
             $this->buyers();
 
@@ -104,7 +107,7 @@ class DemoSeeder extends Seeder
 
             $this->withdrawals();
             $this->notices();
-        });
+        }), [WalletUpdated::class]);
     }
 
     /** One withdrawal already paid out and one waiting for staff. */

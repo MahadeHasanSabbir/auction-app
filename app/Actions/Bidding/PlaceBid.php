@@ -5,6 +5,8 @@ namespace App\Actions\Bidding;
 use App\Actions\Bidding\Concerns\BidsOnAuctions;
 use App\Enums\AuctionStatus;
 use App\Enums\HoldType;
+use App\Events\Account\Outbid;
+use App\Events\Auctions\BidPlaced;
 use App\Models\Auction;
 use App\Models\AutoBid;
 use App\Models\Bid;
@@ -96,11 +98,21 @@ final class PlaceBid
         $this->checkFunds($wallet->available(), $hold !== null && $hold->wallet_id === $wallet->id ? $hold->amount : null, $max);
 
         $resolution = $this->resolver->resolve($state, $bidder->id, $max, $auto);
+        $previousLeader = $locked->leader_id;
 
         $this->writeBids($locked, $resolution);
         $this->moveHold($locked, $resolution, $hold, $wallet);
         $this->updateAutoBids($locked, $resolution, $bidder, $max, $auto);
         $extended = $this->updateAuction($locked, $resolution);
+
+        // Sent after commit. A leader raising their own hidden maximum changes nothing anyone sees.
+        if ($resolution->bids !== []) {
+            BidPlaced::dispatch($locked);
+        }
+
+        if ($previousLeader !== null && $previousLeader !== $resolution->leaderId) {
+            Outbid::dispatch($previousLeader, $locked);
+        }
 
         $result = new BidResult(
             leading: $resolution->leaderId === $bidder->id,

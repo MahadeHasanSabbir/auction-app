@@ -6,6 +6,8 @@ use App\Actions\Orders\OpenOrder;
 use App\Enums\AuctionCloseReason;
 use App\Enums\AuctionStatus;
 use App\Enums\HoldType;
+use App\Events\Account\AuctionWon;
+use App\Events\Auctions\AuctionClosed;
 use App\Models\Auction;
 use App\Models\AutoBid;
 use App\Models\User;
@@ -51,7 +53,9 @@ final class CloseAuction
                     'closed_at' => now(),
                 ])->save();
 
-                $this->openOrder->handle($locked, $leader, $locked->current_price, $hold, 'Auction won; payment is held in escrow.');
+                $order = $this->openOrder->handle($locked, $leader, $locked->current_price, $hold, 'Auction won; payment is held in escrow.');
+
+                AuctionWon::dispatch($locked, $order);
             } else {
                 $locked->transitionTo(AuctionStatus::Unsold);
                 $locked->forceFill([
@@ -65,6 +69,8 @@ final class CloseAuction
             }
 
             AutoBid::query()->where('auction_id', $locked->id)->update(['is_active' => false]);
+
+            AuctionClosed::dispatch($locked);
 
             $auction->setRawAttributes($locked->getAttributes(), true);
 

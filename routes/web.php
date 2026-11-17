@@ -7,6 +7,7 @@ use App\Livewire\Account\Overview;
 use App\Livewire\Auctions\Index as AuctionIndex;
 use App\Livewire\Auctions\Show as AuctionShow;
 use App\Livewire\Home;
+use App\Livewire\Sellers\Show as SellerShow;
 use App\Livewire\Wallet\Show as WalletShow;
 use App\Livewire\Wallet\Withdraw;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,7 @@ Route::get('/', Home::class)->name('home');
 Route::view('/about', 'about')->name('about');
 Route::get('/auctions', AuctionIndex::class)->name('auctions.index');
 Route::get('/auctions/{auction}', AuctionShow::class)->name('auctions.show');
+Route::get('/sellers/{company:slug}', SellerShow::class)->name('sellers.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', Overview::class)->name('dashboard');

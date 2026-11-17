@@ -7,10 +7,27 @@
     $live = $auction->status === AuctionStatus::Live;
     $scheduled = $auction->status === AuctionStatus::Scheduled;
     $sold = $auction->status === AuctionStatus::Sold;
+    $bids = $snapshot['bids'];
+    $leading = $viewerId !== null && $auction->leader_id === $viewerId;
+    $outbid = $viewer !== null && $viewer['hasBid'] && ! $leading;
 @endphp
 
-{{-- Until live updates arrive (Phase 6), a live auction refreshes itself while the tab is visible. --}}
-<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" @if ($live) wire:poll.10s.visible @endif>
+{{--
+    The live bidding room (auctionRoom in resources/js/live.js): price, time
+    left, bids and viewers follow the auction's channel. Without a websocket
+    connection it refreshes itself every few seconds instead.
+--}}
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
+     x-data="auctionRoom(@js([
+         'id' => $auction->id,
+         'me' => $me,
+         'hasBid' => $viewer['hasBid'] ?? false,
+         'pollSeconds' => (int) config('auction.realtime.fallback_poll_seconds'),
+         'timezone' => auth()->user()?->displayTimezone() ?? config('auction.display_timezone'),
+     ]))">
+    {{-- The server's snapshot, applied again after every render: the new key makes Alpine run it. --}}
+    <div hidden wire:key="snapshot-{{ $snapshot['server_time'] }}" x-init="apply(@js($snapshot))"></div>
+
     <nav aria-label="{{ __('Breadcrumb') }}" class="flex flex-wrap items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
         <a href="{{ route('auctions.index') }}" class="hover:text-brand-700 dark:hover:text-brand-300">{{ __('Auctions') }}</a>
         @if ($category?->parent)
@@ -55,6 +72,11 @@
                     @if ($product?->condition)
                         <x-badge>{{ $product->condition->label() }}</x-badge>
                     @endif
+                    @if ($open)
+                        <span x-show="viewers" x-cloak class="inline-flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
+                            <x-app-icon name="eye" class="size-4" /> <span x-text="viewersLabel"></span>
+                        </span>
+                    @endif
                 </div>
                 <h1 class="mt-3 text-2xl font-semibold text-slate-900 dark:text-slate-50 sm:text-3xl">{{ $auction->title }}</h1>
             </div>
@@ -68,14 +90,14 @@
             <section aria-labelledby="bid-history">
                 <h2 id="bid-history" class="font-sans text-lg font-semibold tracking-normal text-slate-900 dark:text-slate-50">
                     {{ __('Bid history') }}
-                    <span class="font-normal text-slate-500 dark:text-slate-400">({{ $auction->bid_count }})</span>
+                    <span class="font-normal text-slate-500 dark:text-slate-400">(<span x-text="bidCount">{{ $auction->bid_count }}</span>)</span>
                 </h2>
 
-                @if ($bids->isEmpty())
-                    <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">
-                        {{ $scheduled ? __('Bidding has not started yet.') : __('No bids were placed.') }}
-                    </p>
-                @else
+                <p class="mt-3 text-sm text-slate-600 dark:text-slate-400" x-show="feed.length === 0" @if ($bids !== []) style="display: none" @endif>
+                    {{ $scheduled ? __('Bidding has not started yet.') : __('No bids were placed.') }}
+                </p>
+
+                <div x-show="feed.length > 0" @if ($bids === []) style="display: none" @endif>
                     <x-card :padding="false" class="mt-3 overflow-hidden">
                         <table class="w-full text-left text-sm">
                             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
@@ -85,27 +107,39 @@
                                     <th scope="col" class="px-4 py-2.5 text-right font-semibold">{{ __('When') }}</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                            {{-- Other bidders only ever see a masked name. The server renders the first paint; Alpine takes over from the snapshot. --}}
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800" x-show="false">
                                 @foreach ($bids as $bid)
-                                    <tr wire:key="bid-{{ $bid->id }}" @class(['bg-brand-50/60 dark:bg-brand-950/40' => $loop->first])>
+                                    <tr @class(['bg-brand-50/60 dark:bg-brand-950/40' => $loop->first])>
                                         <td class="px-4 py-2.5 text-slate-800 dark:text-slate-200">
-                                            {{-- Other bidders only ever see a masked name. --}}
-                                            {{ $bid->user_id === $viewerId ? __('You') : $bid->bidder->maskedName() }}
+                                            {{ $bid['ref'] === $me ? __('You') : $bid['bidder'] }}
                                             @if ($loop->first)
                                                 <x-badge color="brand" class="ml-2">{{ $live ? __('Leading') : __('Highest') }}</x-badge>
                                             @endif
                                         </td>
-                                        <td class="px-4 py-2.5 text-right font-semibold text-slate-900 dark:text-slate-50"><x-money :amount="$bid->amount" /></td>
-                                        <td class="px-4 py-2.5 text-right text-slate-500 dark:text-slate-400"><x-datetime :value="$bid->created_at" format="j M, g:i A" /></td>
+                                        <td class="px-4 py-2.5 text-right font-semibold text-slate-900 dark:text-slate-50"><span class="tabular whitespace-nowrap">{{ $bid['amount'] }}</span></td>
+                                        <td class="px-4 py-2.5 text-right text-slate-500 dark:text-slate-400"><x-datetime :value="\Illuminate\Support\Carbon::createFromTimestampMs($bid['at'])" format="j M, g:i A" /></td>
                                     </tr>
                                 @endforeach
                             </tbody>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800" x-cloak>
+                                <template x-for="(bid, index) in feed" :key="bid.seq">
+                                    <tr :class="index === 0 && 'bg-brand-50/60 dark:bg-brand-950/40'">
+                                        <td class="px-4 py-2.5 text-slate-800 dark:text-slate-200">
+                                            <span x-text="bidder(bid)"></span>
+                                            <x-badge color="brand" class="ml-2" x-show="index === 0"><span x-text="final ? @js(__('Highest')) : @js(__('Leading'))"></span></x-badge>
+                                        </td>
+                                        <td class="px-4 py-2.5 text-right font-semibold text-slate-900 dark:text-slate-50"><span class="tabular whitespace-nowrap" x-text="bid.amount"></span></td>
+                                        <td class="px-4 py-2.5 text-right text-slate-500 dark:text-slate-400" x-text="time(bid.at)"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
                         </table>
                     </x-card>
-                    @if ($auction->bid_count > $bids->count())
-                        <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">{{ __('Showing the latest :count bids.', ['count' => $bids->count()]) }}</p>
-                    @endif
-                @endif
+                    <p class="mt-2 text-xs text-slate-500 dark:text-slate-400" x-show="bidCount > feed.length" @if ($auction->bid_count <= count($bids)) style="display: none" @endif>
+                        {{ __('Showing the latest :count bids.', ['count' => config('auction.realtime.feed_size')]) }}
+                    </p>
+                </div>
             </section>
         </div>
 
@@ -117,31 +151,32 @@
                         <dt class="text-sm text-slate-500 dark:text-slate-400">
                             @if ($sold)
                                 {{ __('Sold for') }}
+                            @elseif ($live)
+                                <span x-text="priceLabel">{{ $auction->bid_count > 0 ? __('Current bid') : __('Starting price') }}</span>
                             @elseif ($auction->bid_count > 0)
-                                {{ $live ? __('Current bid') : __('Highest bid') }}
+                                {{ __('Highest bid') }}
                             @else
                                 {{ __('Starting price') }}
                             @endif
                         </dt>
                         <dd class="mt-1 font-display text-3xl font-bold text-slate-900 dark:text-slate-50">
-                            <x-money :amount="$auction->final_price ?? $auction->current_price" />
+                            <x-money :amount="$auction->final_price ?? $auction->current_price" :x-text="$live ? 'price' : null" />
                         </dd>
                         @if ($auction->reserve_price !== null && ! $sold)
                             {{-- The reserve amount itself is never shown. --}}
-                            <p class="mt-2 text-sm {{ $auction->reserve_met ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400' }}">
-                                {{ $auction->reserve_met ? __('Reserve price met') : __('Reserve price not yet met') }}
-                            </p>
+                            <p class="mt-2 text-sm text-emerald-700 dark:text-emerald-400" x-show="reserveMet" @unless ($auction->reserve_met) style="display: none" @endunless>{{ __('Reserve price met') }}</p>
+                            <p class="mt-2 text-sm text-amber-700 dark:text-amber-400" x-show="! reserveMet" @if ($auction->reserve_met) style="display: none" @endif>{{ __('Reserve price not yet met') }}</p>
                         @endif
                     </div>
 
                     @if ($live && $auction->ends_at)
                         <div class="flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
                             <dt class="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400"><x-app-icon name="clock" class="size-4" /> {{ __('Time left') }}</dt>
-                            <dd class="text-lg font-semibold text-slate-900 dark:text-slate-50"><x-countdown :to="$auction->ends_at" /></dd>
+                            <dd class="text-lg font-semibold text-slate-900 dark:text-slate-50"><x-countdown :to="$auction->ends_at" x-effect="retarget(endsAt)" /></dd>
                         </div>
                         <div class="flex items-center justify-between">
                             <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Next bid from') }}</dt>
-                            <dd class="font-semibold text-slate-900 dark:text-slate-50"><x-money :amount="$auction->minimumNextBid()" /></dd>
+                            <dd class="font-semibold text-slate-900 dark:text-slate-50"><x-money :amount="$auction->minimumNextBid()" x-text="nextMinimum" /></dd>
                         </div>
                     @elseif ($scheduled && $auction->starts_at)
                         <div class="flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
@@ -151,7 +186,7 @@
                     @endif
 
                     @if ($auction->buy_now_price !== null && ! $auction->status->isFinal() && $auction->bid_count === 0)
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between" x-show="buyNow">
                             <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Buy now price') }}</dt>
                             <dd class="font-semibold text-slate-900 dark:text-slate-50"><x-money :amount="$auction->buy_now_price" /></dd>
                         </div>
@@ -177,8 +212,14 @@
                     </div>
                 </dl>
 
+                @if ($open)
+                    <p class="mt-6 rounded-md bg-slate-100 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300" x-show="status === 'cancelled'" x-cloak>
+                        {{ __('This auction was cancelled.') }}
+                    </p>
+                @endif
+
                 {{-- Where the visitor stands, and the bid form for a buyer. --}}
-                <div class="mt-6 space-y-4">
+                <div class="mt-6 space-y-4" x-show="status !== 'cancelled'">
                     @if ($sold)
                         <p class="rounded-md bg-slate-100 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                             @if ($auction->winner_id === $viewerId)
@@ -207,18 +248,16 @@
                             <a href="{{ route('verification.notice') }}" class="font-semibold underline">{{ __('Confirm now') }}</a>
                         </p>
                     @elseif ($live && $canBid)
-                        @if ($auction->leader_id === $viewerId)
-                            <p class="rounded-md bg-brand-50 px-4 py-3 text-sm font-medium text-brand-800 dark:bg-brand-950 dark:text-brand-200">
-                                {{ __('You are the highest bidder.') }}
-                                @if ($viewer['autoMax'])
-                                    <span class="block font-normal">{{ __('Your automatic maximum: :amount (only you see this).', ['amount' => $viewer['autoMax']->format()]) }}</span>
-                                @endif
-                            </p>
-                        @elseif ($viewer['hasBid'])
-                            <p class="rounded-md bg-red-50 px-4 py-3 text-sm font-medium text-red-800 dark:bg-red-950/60 dark:text-red-200">
-                                {{ __('You have been outbid.') }}
-                            </p>
-                        @endif
+                        {{-- Both are rendered; the live state decides which one shows. --}}
+                        <p class="rounded-md bg-brand-50 px-4 py-3 text-sm font-medium text-brand-800 dark:bg-brand-950 dark:text-brand-200" x-show="leading" @unless ($leading) style="display: none" @endunless>
+                            {{ __('You are the highest bidder.') }}
+                            @if ($leading && $viewer['autoMax'])
+                                <span class="block font-normal">{{ __('Your automatic maximum: :amount (only you see this).', ['amount' => $viewer['autoMax']->format()]) }}</span>
+                            @endif
+                        </p>
+                        <p class="rounded-md bg-red-50 px-4 py-3 text-sm font-medium text-red-800 dark:bg-red-950/60 dark:text-red-200" x-show="outbid" @unless ($outbid) style="display: none" @endunless>
+                            {{ __('You have been outbid.') }}
+                        </p>
 
                         <form wire:submit="placeBid" class="space-y-3">
                             <div>
@@ -227,7 +266,7 @@
                                 </label>
                                 <div class="mt-1 flex gap-2">
                                     <input id="bid-amount" type="text" inputmode="decimal" autocomplete="off" wire:model="amount"
-                                           placeholder="{{ $auction->minimumNextBid()->toDecimal() }}"
+                                           placeholder="{{ $auction->minimumNextBid()->toDecimal() }}" :placeholder="nextMinimumInput"
                                            class="form-control tabular min-w-0 flex-1" aria-describedby="bid-help">
                                     <x-button wire:loading.attr="disabled" wire:target="placeBid">
                                         {{ $auto ? __('Set maximum') : __('Place bid') }}
@@ -252,7 +291,7 @@
                         </form>
 
                         @if ($auction->buy_now_price !== null && $auction->bid_count === 0)
-                            <div class="border-t border-slate-100 pt-4 dark:border-slate-800">
+                            <div class="border-t border-slate-100 pt-4 dark:border-slate-800" x-show="buyNow">
                                 <x-button type="button" variant="secondary" class="w-full"
                                           wire:click="buyNow" wire:loading.attr="disabled" wire:target="buyNow"
                                           wire:confirm="{{ __('Buy it now for :amount? The amount is paid from your wallet into escrow at once.', ['amount' => $auction->buy_now_price->format()]) }}">
@@ -284,7 +323,7 @@
                         <x-app-icon name="building" />
                     </span>
                     <div class="min-w-0">
-                        <p class="font-semibold text-slate-900 dark:text-slate-50">{{ $auction->company->name }}</p>
+                        <a href="{{ route('sellers.show', $auction->company) }}" class="font-semibold text-slate-900 hover:text-brand-700 dark:text-slate-50 dark:hover:text-brand-300">{{ $auction->company->name }}</a>
                         <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
                             @if ($auction->company->verified_at)
                                 <span class="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400"><x-app-icon name="shield" class="size-4" /> {{ __('Verified') }}</span>
@@ -299,8 +338,8 @@
                         </div>
                     </div>
                 </div>
-                <a href="{{ route('auctions.index', ['company' => $auction->company->slug]) }}" class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">
-                    {{ __('More from this seller') }} <x-app-icon name="arrow-right" class="size-4" />
+                <a href="{{ route('sellers.show', $auction->company) }}" class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">
+                    {{ __('View seller profile') }} <x-app-icon name="arrow-right" class="size-4" />
                 </a>
             </x-card>
 

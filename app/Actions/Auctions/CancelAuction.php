@@ -6,6 +6,7 @@ use App\Actions\Auctions\Concerns\AuctionRules;
 use App\Enums\AuctionCloseReason;
 use App\Enums\AuctionStatus;
 use App\Enums\HoldType;
+use App\Events\Auctions\AuctionClosed;
 use App\Models\Auction;
 use App\Models\AutoBid;
 use App\Models\User;
@@ -63,6 +64,8 @@ final class CancelAuction
                 AutoBid::query()->where('auction_id', $locked->id)->update(['is_active' => false]);
             }
 
+            $wasPublic = $locked->status->isPublic();
+
             $locked->transitionTo(AuctionStatus::Cancelled);
             $locked->forceFill([
                 'close_reason' => $byPlatform ? AuctionCloseReason::CancelledByPlatform : AuctionCloseReason::CancelledBySeller,
@@ -71,6 +74,11 @@ final class CancelAuction
             ])->save();
 
             $this->record($user, $locked, 'cancelled', ['reason' => $reason]);
+
+            // Open pages of a scheduled or live auction learn it is gone.
+            if ($wasPublic) {
+                AuctionClosed::dispatch($locked);
+            }
 
             return $auction->setRawAttributes($locked->getAttributes(), true);
         });

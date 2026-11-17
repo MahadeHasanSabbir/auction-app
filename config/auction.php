@@ -114,4 +114,18 @@ return [
         'auto_release_days' => 7,
     ],
 
+    'realtime' => [
+        // Broadcasts go through their own queue, so a busy default queue never delays them.
+        'queue' => env('BROADCAST_QUEUE', 'broadcasts'),
+
+        // How long the guests' viewer count (read from the websocket server) is cached.
+        'viewer_count_seconds' => 5,
+
+        // Without a websocket connection, an open auction page refreshes this often.
+        'fallback_poll_seconds' => 15,
+
+        // Bids sent with each update of an auction page.
+        'feed_size' => 15,
+    ],
+
 ];

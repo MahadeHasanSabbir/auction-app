@@ -171,6 +171,16 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
      * How this user appears to other bidders: "Ayesha R." becomes "A****a R.".
      * Full names are only ever shown to the user and to staff.
      */
+    /**
+     * How this user is known to the other members of a presence channel (the
+     * auction viewer count): a stable reference, not the id. Laravel's
+     * broadcaster uses it in place of getAuthIdentifier() for presence data.
+     */
+    public function getAuthIdentifierForBroadcasting(): string
+    {
+        return substr(hash_hmac('sha256', 'viewer:'.$this->id, (string) config('app.key')), 0, 16);
+    }
+
     public function maskedName(): string
     {
         $parts = preg_split('/\s+/u', trim($this->name)) ?: [];

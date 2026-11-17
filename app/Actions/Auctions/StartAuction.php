@@ -3,6 +3,7 @@
 namespace App\Actions\Auctions;
 
 use App\Enums\AuctionStatus;
+use App\Events\Auctions\AuctionStarted;
 use App\Models\Auction;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +22,8 @@ final class StartAuction
 
             $locked->transitionTo(AuctionStatus::Live);
             $locked->save();
+
+            AuctionStarted::dispatch($locked);
 
             $auction->setRawAttributes($locked->getAttributes(), true);
 

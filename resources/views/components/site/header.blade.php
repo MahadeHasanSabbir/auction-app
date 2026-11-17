@@ -38,7 +38,7 @@
                     <a href="{{ route('wallet') }}" class="hidden items-center gap-2 rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 sm:inline-flex" title="{{ __('Available balance') }}">
                         <x-app-icon name="wallet" class="size-4 text-slate-500 dark:text-slate-400" />
                         <span class="sr-only">{{ __('Available balance') }}</span>
-                        <x-money :amount="$balance" class="font-semibold text-slate-900 dark:text-slate-100" />
+                        <x-money :amount="$balance" data-live="wallet-available" class="font-semibold text-slate-900 dark:text-slate-100" />
                     </a>
                 @endif
 
@@ -87,7 +87,7 @@
                             <p class="truncate text-xs text-slate-500 dark:text-slate-400">{{ $user->email }}</p>
                             @if ($balance)
                                 <p class="mt-2 text-xs text-slate-500 dark:text-slate-400 sm:hidden">
-                                    {{ __('Available balance') }}: <x-money :amount="$balance" class="font-semibold text-slate-900 dark:text-slate-100" />
+                                    {{ __('Available balance') }}: <x-money :amount="$balance" data-live="wallet-available" class="font-semibold text-slate-900 dark:text-slate-100" />
                                 </p>
                             @endif
                         </div>

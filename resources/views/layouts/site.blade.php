@@ -37,6 +37,23 @@
 
     <x-flash />
 
+    {{-- Words the live updates write into the page (resources/js/live.js). --}}
+    <script>
+        window.liveText = @js([
+            'bids' => ['zero' => __('No bids yet'), 'one' => __(':count bid'), 'other' => __(':count bids')],
+            'currentBid' => __('Current bid'),
+            'startingPrice' => __('Starting price'),
+            'you' => __('You'),
+            'viewers' => __(':count watching now'),
+            'extended' => __('A late bid extended the auction.'),
+        ]);
+    </script>
+
+    @auth
+        {{-- The signed-in user's private channel: outbid and won toasts, the live balance. --}}
+        <div x-data="liveAccount({{ auth()->id() }})" hidden></div>
+    @endauth
+
     @livewireScripts
 </body>
 </html>

@@ -7,6 +7,7 @@ use App\Actions\Orders\OpenOrder;
 use App\Enums\AuctionCloseReason;
 use App\Enums\AuctionStatus;
 use App\Enums\BidType;
+use App\Events\Auctions\AuctionClosed;
 use App\Models\Auction;
 use App\Models\Bid;
 use App\Models\Order;
@@ -100,6 +101,8 @@ final class BuyNow
         }
 
         $claim?->forceFill(['response' => ['order_id' => $order->id]])->save();
+
+        AuctionClosed::dispatch($locked);
         $auction->setRawAttributes($locked->getAttributes(), true);
 
         return $order;

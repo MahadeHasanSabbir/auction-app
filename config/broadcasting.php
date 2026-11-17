@@ -43,6 +43,9 @@ return [
             ],
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
+                // Short, so a websocket server that is down cannot hold up a page.
+                'connect_timeout' => 2,
+                'timeout' => 3,
             ],
         ],
 
@@ -61,6 +64,8 @@ return [
             ],
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
+                'connect_timeout' => 2,
+                'timeout' => 3,
             ],
         ],
 

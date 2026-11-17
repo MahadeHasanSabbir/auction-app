@@ -45,15 +45,16 @@
 
                     <ul class="divide-y divide-slate-100 dark:divide-slate-800">
                         @foreach ($endingSoon->take(4) as $auction)
-                            <li class="relative flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60" wire:key="closing-{{ $auction->id }}">
+                            <li class="relative flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60" wire:key="closing-{{ $auction->id }}"
+                                x-data="liveAuction(@js(\App\Services\Realtime\AuctionSnapshot::card($auction)))">
                                 <div class="min-w-0">
                                     <a href="{{ route('auctions.show', $auction) }}" class="block truncate text-sm font-medium text-slate-900 after:absolute after:inset-0 dark:text-slate-100">{{ $auction->title }}</a>
                                     <p class="truncate text-xs text-slate-500 dark:text-slate-400">{{ $auction->company->name }}</p>
                                 </div>
                                 <div class="shrink-0 text-right">
-                                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100"><x-money :amount="$auction->current_price" /></p>
+                                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100"><x-money :amount="$auction->current_price" x-text="price" /></p>
                                     @if ($auction->ends_at)
-                                        <p class="text-xs text-slate-500 dark:text-slate-400"><x-countdown :to="$auction->ends_at" /></p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400"><x-countdown :to="$auction->ends_at" x-effect="retarget(endsAt)" /></p>
                                     @endif
                                 </div>
                             </li>

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\MoneyCast;
 use App\Enums\SystemAccount;
 use App\Enums\WalletType;
+use App\Events\Account\WalletUpdated;
 use App\Support\Money;
 use Database\Factories\WalletFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,6 +33,16 @@ class Wallet extends Model
         'balance' => 0,
         'held' => 0,
     ];
+
+    protected static function booted(): void
+    {
+        // A buyer's open pages show the new balance (sent after the transaction commits).
+        static::updated(function (Wallet $wallet): void {
+            if ($wallet->user_id !== null && $wallet->wasChanged(['balance', 'held'])) {
+                WalletUpdated::dispatch($wallet);
+            }
+        });
+    }
 
     /** @return array<string, string> */
     protected function casts(): array

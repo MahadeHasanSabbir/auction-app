@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
 use InvalidArgumentException;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -104,6 +105,13 @@ class Show extends Component
         $cancel->handle($this->user(), $withdrawal);
 
         $this->dispatch('toast', message: __('Withdrawal cancelled. The money is available again.'));
+    }
+
+    /** Sent by the live account listener when the viewer's wallet changes (a bid, being outbid, a payment). */
+    #[On('wallet-updated')]
+    public function walletUpdated(): void
+    {
+        // Nothing to do: the call itself re-renders the figures.
     }
 
     public function render(PaymentGateways $gateways, FeeResolver $fees): View

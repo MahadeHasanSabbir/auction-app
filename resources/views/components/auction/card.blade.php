@@ -6,13 +6,16 @@
 --}}
 @php
     use App\Enums\AuctionStatus;
+    use App\Services\Realtime\AuctionSnapshot;
 
     $live = $auction->status === AuctionStatus::Live;
     $scheduled = $auction->status === AuctionStatus::Scheduled;
     $category = $auction->product?->category?->name;
 @endphp
 
-<article {{ $attributes->class('group relative flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white transition-colors hover:border-brand-400 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-500') }}>
+{{-- An open auction keeps its price, bid count and end time current (liveAuction in resources/js/live.js). --}}
+
+<article @if ($live || $scheduled) x-data="liveAuction(@js(AuctionSnapshot::card($auction)))" @endif {{ $attributes->class('group relative flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white transition-colors hover:border-brand-400 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-500') }}>
     <div class="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-800">
         <x-product-image :image="$auction->product?->coverImage" :seed="$auction->id" :label="$category" :alt="$auction->title"
                          class="transition duration-300 group-hover:scale-105" />
@@ -32,21 +35,19 @@
                 <dt class="text-xs text-slate-500 dark:text-slate-400">
                     @if ($auction->status === AuctionStatus::Sold)
                         {{ __('Sold for') }}
-                    @elseif ($auction->bid_count > 0)
-                        {{ __('Current bid') }}
                     @else
-                        {{ __('Starting price') }}
+                        <span @if ($live) x-text="priceLabel" @endif>{{ $auction->bid_count > 0 ? __('Current bid') : __('Starting price') }}</span>
                     @endif
                 </dt>
                 <dd class="font-semibold text-slate-900 dark:text-slate-50">
-                    <x-money :amount="$auction->final_price ?? $auction->current_price" />
+                    <x-money :amount="$auction->final_price ?? $auction->current_price" :x-text="$live ? 'price' : null" />
                 </dd>
             </div>
 
             <div class="text-right">
                 @if ($live && $auction->ends_at)
                     <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('Ends in') }}</dt>
-                    <dd class="font-semibold text-slate-900 dark:text-slate-50"><x-countdown :to="$auction->ends_at" /></dd>
+                    <dd class="font-semibold text-slate-900 dark:text-slate-50"><x-countdown :to="$auction->ends_at" x-effect="retarget(endsAt)" /></dd>
                 @elseif ($scheduled && $auction->starts_at)
                     <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('Starts in') }}</dt>
                     <dd class="font-semibold text-slate-900 dark:text-slate-50"><x-countdown :to="$auction->starts_at" :done-label="__('Starting')" /></dd>
@@ -57,7 +58,7 @@
             </div>
         </dl>
 
-        <p class="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+        <p class="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400" @if ($live) x-text="bidCountLabel" @endif>
             {{ trans_choice('{0} No bids yet|{1} :count bid|[2,*] :count bids', $auction->bid_count) }}
         </p>
     </div>

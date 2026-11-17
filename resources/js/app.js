@@ -1,6 +1,7 @@
 // Alpine is bundled with Livewire and started by it; do not import or start it here.
 // Components are registered on Alpine's own init event instead.
 import './bootstrap';
+import { registerLive } from './live';
 
 document.addEventListener('alpine:init', () => {
     const Alpine = window.Alpine;
@@ -9,23 +10,38 @@ document.addEventListener('alpine:init', () => {
      * Counts down to a moment. Both timestamps are epoch milliseconds from
      * the server, so a wrong clock on the visitor's device does not shift the
      * countdown: only the time elapsed since page load is measured locally.
+     * A live auction moves the target with retarget() when a late bid
+     * extends it (x-effect="retarget(endsAt)").
      */
     Alpine.data('countdown', (target, serverNow) => ({
+        target,
         remaining: Math.max(0, target - serverNow),
         startedAt: performance.now(),
         timer: null,
 
         init() {
-            this.tick();
-            this.timer = setInterval(() => this.tick(), 1000);
+            this.start();
         },
 
         destroy() {
             clearInterval(this.timer);
         },
 
+        start() {
+            clearInterval(this.timer);
+            this.tick();
+            this.timer = setInterval(() => this.tick(), 1000);
+        },
+
+        retarget(next) {
+            if (next && next !== this.target) {
+                this.target = next;
+                this.start();
+            }
+        },
+
         tick() {
-            this.remaining = Math.max(0, target - serverNow - (performance.now() - this.startedAt));
+            this.remaining = Math.max(0, this.target - serverNow - (performance.now() - this.startedAt));
 
             if (this.remaining === 0) {
                 clearInterval(this.timer);
@@ -69,6 +85,8 @@ document.addEventListener('alpine:init', () => {
             }, 1000);
         },
     }));
+
+    registerLive(Alpine);
 
     /** Light and dark theme, remembered on this device. */
     Alpine.store('theme', {
