@@ -83,6 +83,9 @@ return new class extends Migration
             $table->foreignId('plan_id')->constrained();
             $table->string('status', 32);
             $table->string('billing_interval', 16)->default('monthly');
+            // A downgrade chosen mid-period; applied when the period ends.
+            $table->foreignId('pending_plan_id')->nullable()->constrained('plans')->nullOnDelete();
+            $table->string('pending_billing_interval', 16)->nullable();
             // Price of one billing period, fixed when the period starts.
             $table->unsignedBigInteger('price');
             // Custom limits agreed with the system owner; null means "use the plan".

@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Support\BrandAvatarProvider;
+use App\Http\Middleware\RequirePlan;
 use App\Models\Company;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -11,7 +13,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -35,9 +37,19 @@ class SellerPanelProvider extends PanelProvider
             ->path('seller')
             ->tenant(Company::class, slugAttribute: 'slug')
             ->brandName(config('app.name').' Seller')
+            // The site's brand blue, slate neutrals and fonts, and our compiled
+            // theme (resources/css/filament/panels/theme.css).
             ->colors([
-                'primary' => Color::Emerald,
+                'primary' => Color::Blue,
+                'gray' => Color::Slate,
             ])
+            ->font('Inter', url: 'https://fonts.bunny.net/css?family=inter:400,500,600,700|space-grotesk:500,600,700&display=swap')
+            ->viteTheme('resources/css/filament/panels/theme.css')
+            ->sidebarCollapsibleOnDesktop()
+            ->defaultAvatarProvider(BrandAvatarProvider::class)
+            // A new company is sent to the billing page to choose its plan.
+            ->tenantMiddleware([RequirePlan::class], isPersistent: true)
+            ->renderHook(PanelsRenderHook::CONTENT_START, fn () => view('filament.seller.status-banner'))
             ->discoverResources(in: app_path('Filament/Seller/Resources'), for: 'App\Filament\Seller\Resources')
             ->discoverPages(in: app_path('Filament/Seller/Pages'), for: 'App\Filament\Seller\Pages')
             ->pages([
@@ -45,7 +57,6 @@ class SellerPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Seller/Widgets'), for: 'App\Filament\Seller\Widgets')
             ->widgets([
-                AccountWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

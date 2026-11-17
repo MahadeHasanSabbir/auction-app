@@ -4,6 +4,8 @@ namespace App\Enums;
 
 enum SubscriptionStatus: string
 {
+    /** A plan was chosen but its first invoice is not paid yet. */
+    case Incomplete = 'incomplete';
     case Trialing = 'trialing';
     case Active = 'active';
     case PastDue = 'past_due';
@@ -13,6 +15,7 @@ enum SubscriptionStatus: string
     public function label(): string
     {
         return match ($this) {
+            self::Incomplete => __('Awaiting first payment'),
             self::Trialing => __('Trial'),
             self::Active => __('Active'),
             self::PastDue => __('Payment overdue'),

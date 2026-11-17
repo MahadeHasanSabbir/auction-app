@@ -16,3 +16,6 @@ Artisan::command('log:clear', function () {
 
 // Logs a critical error when the books do not add up.
 Schedule::command('ledger:verify')->dailyAt('03:00')->withoutOverlapping();
+
+// Renews plans that are due, retries unpaid ones and expires lapsed ones.
+Schedule::command('subscriptions:renew')->hourly()->withoutOverlapping();

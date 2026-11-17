@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 
 /**
  * Where each kind of account works: platform roles in the admin panel,
@@ -16,6 +17,34 @@ final class Home
             $user->isPlatform() => '/admin',
             $user->isSeller() => '/seller',
             default => route('dashboard', absolute: false),
+        };
+    }
+
+    /**
+     * After signing in or confirming the email: back to the page the user
+     * was stopped at, unless that page is in a panel their role cannot open
+     * (a seller page left in the session, then an admin signs in), in which
+     * case to their own workspace.
+     */
+    public static function redirect(User $user): RedirectResponse
+    {
+        $intended = session()->get('url.intended');
+
+        if (is_string($intended) && ! self::canOpen($user, $intended)) {
+            session()->forget('url.intended');
+        }
+
+        return redirect()->intended(self::pathFor($user));
+    }
+
+    private static function canOpen(User $user, string $url): bool
+    {
+        $path = '/'.ltrim((string) parse_url($url, PHP_URL_PATH), '/');
+
+        return match (true) {
+            $path === '/admin' || str_starts_with($path, '/admin/') => $user->isPlatform(),
+            $path === '/seller' || str_starts_with($path, '/seller/') => $user->isSeller(),
+            default => true,
         };
     }
 

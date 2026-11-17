@@ -24,7 +24,7 @@ class EmailVerificationController extends Controller
         $user = $request->user();
 
         if ($user->hasVerifiedEmail()) {
-            return redirect()->intended(Home::pathFor($user));
+            return Home::redirect($user);
         }
 
         return view('auth.verify-email', [
@@ -38,7 +38,7 @@ class EmailVerificationController extends Controller
         $user = $request->user();
 
         if ($user->hasVerifiedEmail()) {
-            return redirect()->intended(Home::pathFor($user));
+            return Home::redirect($user);
         }
 
         $request->validate(['code' => ['required', 'string', 'max:12']]);
@@ -55,7 +55,7 @@ class EmailVerificationController extends Controller
 
         EnsureOtpConfirmed::markConfirmed($request);
 
-        return redirect()->intended(Home::pathFor($user))
+        return Home::redirect($user)
             ->with('status', __('Your email address is confirmed.'));
     }
 
@@ -64,7 +64,7 @@ class EmailVerificationController extends Controller
         $user = $request->user();
 
         if ($user->hasVerifiedEmail()) {
-            return redirect()->intended(Home::pathFor($user));
+            return Home::redirect($user);
         }
 
         try {

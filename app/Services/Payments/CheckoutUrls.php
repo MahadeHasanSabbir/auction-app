@@ -12,4 +12,15 @@ final readonly class CheckoutUrls
         /** Server-to-server notification (SSLCommerz IPN); Stripe uses its webhook instead. */
         public ?string $notify = null,
     ) {}
+
+    /** The callback routes of one gateway (routes/payments.php). */
+    public static function forGateway(string $gateway): self
+    {
+        return new self(
+            success: route('payments.return', ['gateway' => $gateway]),
+            fail: route('payments.return', ['gateway' => $gateway, 'outcome' => 'failed']),
+            cancel: route('payments.return', ['gateway' => $gateway, 'outcome' => 'cancelled']),
+            notify: route('payments.notify', ['gateway' => $gateway]),
+        );
+    }
 }

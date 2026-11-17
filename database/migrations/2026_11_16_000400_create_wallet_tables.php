@@ -162,8 +162,11 @@ return new class extends Migration
             $table->foreignId('company_id')->constrained();
             $table->foreignId('plan_id')->constrained();
             $table->string('number', 32)->nullable()->unique();
+            // Our reference at the gateway; replaced on every payment attempt.
+            $table->string('tran_id', 64)->nullable()->unique();
             $table->unsignedBigInteger('amount');
             $table->char('currency', 3);
+            $table->string('billing_interval', 16)->default('monthly');
             $table->string('status', 16)->default('open');
             $table->dateTime('period_start');
             $table->dateTime('period_end');

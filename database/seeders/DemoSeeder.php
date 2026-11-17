@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Actions\Billing\IssueInvoice;
 use App\Actions\Wallet\ApproveWithdrawal;
 use App\Actions\Wallet\CompleteDeposit;
 use App\Actions\Wallet\PayWithdrawal;
@@ -12,6 +13,7 @@ use App\Enums\BidType;
 use App\Enums\CompanyStatus;
 use App\Enums\DepositStatus;
 use App\Enums\HoldType;
+use App\Enums\InvoiceStatus;
 use App\Enums\KycStatus;
 use App\Enums\LedgerComponent;
 use App\Enums\LedgerTransactionType;
@@ -21,6 +23,7 @@ use App\Enums\PaymentOutcome;
 use App\Enums\PayoutMethod;
 use App\Enums\ProductCondition;
 use App\Enums\ShipmentStatus;
+use App\Enums\SubscriptionStatus;
 use App\Enums\SystemAccount;
 use App\Enums\UserRole;
 use App\Models\Auction;
@@ -295,11 +298,11 @@ class DemoSeeder extends Seeder
             'past_due' => $subscription->pastDue(),
             default => $subscription,
         };
-        $subscription->create([
+        $this->billing($subscription->create([
             'company_id' => $company->id,
             'plan_id' => $plan->id,
             'price' => $plan->price_monthly,
-        ]);
+        ]), $plan);
 
         if ($definition['commission_bps'] !== null) {
             CompanyAgreement::factory()->create([
@@ -333,6 +336,41 @@ class DemoSeeder extends Seeder
         foreach ($definition['auctions'] as $index => $row) {
             // Listings are spread over the team.
             $this->auction($company, $wallet, $team[$index % count($team)], $row);
+        }
+    }
+
+    /**
+     * Billing history for the plan: an active company has paid its current
+     * period at a gateway; a company that missed a payment has an open invoice
+     * for the next one. Trials have not been billed yet.
+     */
+    private function billing(Subscription $subscription, Plan $plan): void
+    {
+        $invoices = app(IssueInvoice::class);
+
+        if ($subscription->status === SubscriptionStatus::Active) {
+            $invoice = $invoices->handle($subscription, $plan, $subscription->billing_interval, $subscription->price, $subscription->current_period_start, $subscription->current_period_end);
+
+            $transaction = $this->ledger->transaction(LedgerTransactionType::SubscriptionPayment)
+                ->reference($invoice)
+                ->idempotent("invoice:{$invoice->id}")
+                ->describe("Plan invoice {$invoice->number}")
+                ->debit($this->ledger->system(SystemAccount::GatewayClearing), $invoice->amount)
+                ->credit($this->ledger->system(SystemAccount::SubscriptionRevenue), $invoice->amount)
+                ->post();
+
+            $invoice->forceFill([
+                'status' => InvoiceStatus::Paid,
+                'paid_at' => $subscription->current_period_start,
+                'gateway' => 'sslcommerz',
+                'ledger_transaction_id' => $transaction->id,
+            ])->save();
+        }
+
+        if ($subscription->status === SubscriptionStatus::PastDue) {
+            $start = $subscription->current_period_end;
+
+            $invoices->handle($subscription, $plan, $subscription->billing_interval, $subscription->price, $start, $subscription->billing_interval->endFrom($start));
         }
     }
 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\MoneyCast;
+use App\Enums\BillingInterval;
 use App\Enums\InvoiceStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,7 @@ class SubscriptionInvoice extends Model
 {
     /** @var list<string> */
     protected $fillable = [
-        'subscription_id', 'company_id', 'plan_id', 'number', 'amount', 'currency', 'status',
+        'subscription_id', 'company_id', 'plan_id', 'number', 'tran_id', 'amount', 'currency', 'billing_interval', 'status',
         'period_start', 'period_end', 'due_at', 'paid_at', 'gateway', 'gateway_reference', 'ledger_transaction_id',
     ];
 
@@ -20,6 +21,7 @@ class SubscriptionInvoice extends Model
     {
         return [
             'amount' => MoneyCast::class,
+            'billing_interval' => BillingInterval::class,
             'status' => InvoiceStatus::class,
             'period_start' => 'datetime',
             'period_end' => 'datetime',

@@ -70,6 +70,17 @@ return [
         'deposits_per_hour' => 10,
     ],
 
+    'billing' => [
+        // Days a company whose plan payment failed can keep selling before
+        // the subscription expires.
+        'grace_days' => 7,
+
+        // Days an invoice stays payable, and how long an emailed team
+        // invitation stays valid.
+        'invoice_due_days' => 7,
+        'invitation_days' => 7,
+    ],
+
     'bidding' => [
         // Share of a buyer's available balance that may be committed to bids.
         'biddable_share_bps' => 8000,

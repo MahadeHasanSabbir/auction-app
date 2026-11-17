@@ -129,6 +129,17 @@ class Company extends Model
         return $this->hasMany(KycRequest::class);
     }
 
+    /** Seats taken: everyone on the team plus invitations still waiting to be accepted. */
+    public function seatsUsed(): int
+    {
+        return $this->users()->count() + $this->invitations()->pending()->count();
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->status === CompanyStatus::Suspended;
+    }
+
     /** Average rating to one decimal; null before the first review. */
     public function averageRating(): ?float
     {

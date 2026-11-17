@@ -22,6 +22,6 @@ trait SignsUsersIn
 
         $user->forceFill(['last_login_at' => now()])->save();
 
-        return redirect()->intended(Home::pathFor($user));
+        return Home::redirect($user);
     }
 }

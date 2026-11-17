@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Models\WithdrawalRequest;
 use App\Services\Ledger\Ledger;
 use Carbon\CarbonImmutable;
+use Filament\Support\Facades\FilamentTimezone;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
@@ -75,6 +76,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Dates are immutable everywhere, so passing one around cannot change it.
         Date::use(CarbonImmutable::class);
+
+        // Panel tables and infolists show times in the marketplace's display
+        // timezone; they are stored in UTC.
+        FilamentTimezone::set((string) config('auction.display_timezone'));
 
         // Refuse `migrate:fresh`, `db:wipe` and friends against production data.
         DB::prohibitDestructiveCommands($production);

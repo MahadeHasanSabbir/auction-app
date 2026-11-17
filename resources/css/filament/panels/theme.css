@@ -1,0 +1,21 @@
+/*
+ * The admin and seller panels share this theme. Filament's prebuilt CSS only
+ * holds the classes Filament itself uses, so the Tailwind classes in our own
+ * panel views must be compiled here: every folder with panel markup is a
+ * @source below.
+ */
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+@theme {
+    --font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Headings in our panel pages use the site's display face. */
+.fi-header-heading,
+.fi-section-header-heading {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+}

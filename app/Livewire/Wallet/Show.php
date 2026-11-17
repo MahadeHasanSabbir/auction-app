@@ -85,15 +85,8 @@ class Show extends Component
 
         RateLimiter::hit($key, 3600);
 
-        $urls = new CheckoutUrls(
-            success: route('payments.return', ['gateway' => $this->gateway]),
-            fail: route('payments.return', ['gateway' => $this->gateway, 'outcome' => 'failed']),
-            cancel: route('payments.return', ['gateway' => $this->gateway, 'outcome' => 'cancelled']),
-            notify: route('payments.notify', ['gateway' => $this->gateway]),
-        );
-
         try {
-            ['checkout' => $checkout] = $start->handle($user, $amount, $this->gateway, $urls);
+            ['checkout' => $checkout] = $start->handle($user, $amount, $this->gateway, CheckoutUrls::forGateway($this->gateway));
         } catch (PaymentGatewayException $e) {
             report($e);
             $this->addError('gateway', __('This payment method is not available right now. Try again later or choose another one.'));

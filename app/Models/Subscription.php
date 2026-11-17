@@ -18,7 +18,7 @@ class Subscription extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'company_id', 'plan_id', 'status', 'billing_interval', 'price',
+        'company_id', 'plan_id', 'status', 'billing_interval', 'price', 'pending_plan_id', 'pending_billing_interval',
         'max_users_override', 'max_active_auctions_override',
         'trial_ends_at', 'current_period_start', 'current_period_end', 'grace_ends_at',
         'cancelled_at', 'ended_at', 'gateway', 'gateway_customer_id', 'gateway_payment_method_id',
@@ -33,6 +33,7 @@ class Subscription extends Model
         return [
             'status' => SubscriptionStatus::class,
             'billing_interval' => BillingInterval::class,
+            'pending_billing_interval' => BillingInterval::class,
             'price' => MoneyCast::class,
             'trial_ends_at' => 'datetime',
             'current_period_start' => 'datetime',
@@ -55,10 +56,28 @@ class Subscription extends Model
         return $this->belongsTo(Plan::class);
     }
 
+    /** @return BelongsTo<Plan, $this> */
+    public function pendingPlan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class, 'pending_plan_id');
+    }
+
     /** @return HasMany<SubscriptionInvoice, $this> */
     public function invoices(): HasMany
     {
         return $this->hasMany(SubscriptionInvoice::class);
+    }
+
+    /** The company may create listings and invite members. */
+    public function allowsSelling(): bool
+    {
+        return $this->status->allowsSelling();
+    }
+
+    /** A trial was started once, even if it has ended; each company gets one. */
+    public function hadTrial(): bool
+    {
+        return $this->trial_ends_at !== null;
     }
 
     /** Seats the company may fill: the custom limit if one was agreed, else the plan limit. */

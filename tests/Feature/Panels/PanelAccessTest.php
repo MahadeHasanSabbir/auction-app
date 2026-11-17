@@ -3,6 +3,7 @@
 namespace Tests\Feature\Panels;
 
 use App\Models\Company;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -51,10 +52,19 @@ class PanelAccessTest extends TestCase
         $company = Company::factory()->create();
         $owner = User::factory()->companyOwner($company)->create();
         $member = User::factory()->companyMember($company)->create();
+        Subscription::factory()->create(['company_id' => $company->id]);
 
         $this->actingAs($owner)->get('/seller')->assertRedirect("/seller/{$company->slug}");
         $this->actingAs($owner)->get("/seller/{$company->slug}")->assertOk();
         $this->actingAs($member)->get("/seller/{$company->slug}")->assertOk();
+    }
+
+    public function test_a_company_without_a_plan_is_sent_to_choose_one(): void
+    {
+        $company = Company::factory()->create();
+        $owner = User::factory()->companyOwner($company)->create();
+
+        $this->actingAs($owner)->get("/seller/{$company->slug}")->assertRedirect("/seller/{$company->slug}/billing");
     }
 
     public function test_a_member_cannot_open_another_company(): void

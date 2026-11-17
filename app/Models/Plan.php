@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Casts\MoneyCast;
+use App\Enums\BillingInterval;
+use App\Support\Money;
 use Database\Factories\PlanFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -29,6 +31,26 @@ class Plan extends Model
             'is_public' => 'boolean',
             'is_active' => 'boolean',
         ];
+    }
+
+    /** The price of one period, or null when the plan is not sold for that interval. */
+    public function priceFor(BillingInterval $interval): ?Money
+    {
+        return match ($interval) {
+            BillingInterval::Monthly => $this->price_monthly,
+            BillingInterval::Yearly => $this->price_yearly,
+        };
+    }
+
+    /**
+     * Cost per month in minor units whichever way it is billed, to tell an
+     * upgrade from a downgrade.
+     */
+    public function monthlyRate(BillingInterval $interval): ?int
+    {
+        $price = $this->priceFor($interval);
+
+        return $price === null ? null : intdiv($price->amount, $interval === BillingInterval::Yearly ? 12 : 1);
     }
 
     /** @return HasMany<Subscription, $this> */

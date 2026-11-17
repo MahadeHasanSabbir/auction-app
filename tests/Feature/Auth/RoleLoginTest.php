@@ -58,6 +58,28 @@ class RoleLoginTest extends TestCase
             ->assertRedirect('/profile');
     }
 
+    public function test_a_page_left_from_another_role_does_not_redirect_the_next_sign_in(): void
+    {
+        $admin = User::factory()->systemOwner()->create();
+        $seller = User::factory()->companyOwner()->create();
+
+        // Someone opened a seller page signed out, then the system owner signs in.
+        $this->withSession(['url.intended' => url('/seller/some-company/billing')]);
+
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password']);
+        $this->post('/login/code', ['code' => $this->emailedCode($admin, OtpPurpose::Login)])
+            ->assertRedirect('/admin');
+
+        $this->post('/logout');
+
+        // The other way round too.
+        $this->withSession(['url.intended' => url('/admin/companies')]);
+
+        $this->post('/login', ['email' => $seller->email, 'password' => 'password']);
+        $this->post('/login/code', ['code' => $this->emailedCode($seller, OtpPurpose::Login)])
+            ->assertRedirect('/seller');
+    }
+
     public function test_staff_and_sellers_who_open_the_buyer_page_are_sent_to_their_panel(): void
     {
         $this->actingAs(User::factory()->platformStaff()->create())->get('/dashboard')->assertRedirect('/admin');

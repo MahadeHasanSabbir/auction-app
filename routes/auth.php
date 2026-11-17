@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Auth\LoginCodeController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\OtpConfirmationController;
@@ -9,6 +10,11 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
+
+// A team invitation from an email. Open to anyone with the link; the page
+// itself says what to do when someone is already signed in.
+Route::get('invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');
+Route::post('invitations/{token}', [InvitationController::class, 'store'])->middleware(['guest', 'throttle:10,1'])->name('invitations.store');
 
 Route::middleware('guest')->group(function () {
     // Sign-up: a buyer account, or a seller company with its owner.
