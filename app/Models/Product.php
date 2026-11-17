@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\AuctionStatus;
 use App\Enums\ProductCondition;
 use Database\Factories\ProductFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -66,5 +68,33 @@ class Product extends Model
     public function auctions(): HasMany
     {
         return $this->hasMany(Auction::class);
+    }
+
+    /**
+     * One of its auctions is under review or approved, so its details cannot
+     * change. A list can preload this as `is_locked` with withExists().
+     */
+    public function isLocked(): bool
+    {
+        if (array_key_exists('is_locked', $this->attributes)) {
+            return (bool) $this->attributes['is_locked'];
+        }
+
+        return $this->auctions()->whereIn('status', AuctionStatus::active())->exists();
+    }
+
+    /** An auction of it that has not finished (a draft counts): a product is listed once at a time. */
+    public function hasOpenAuction(?Auction $except = null): bool
+    {
+        return $this->auctions()
+            ->whereNotIn('status', [AuctionStatus::Sold, AuctionStatus::Unsold, AuctionStatus::Cancelled])
+            ->when($except, fn (Builder $query) => $query->whereKeyNot($except->id))
+            ->exists();
+    }
+
+    /** It was sold, so it cannot be listed again. */
+    public function isSold(): bool
+    {
+        return $this->auctions()->where('status', AuctionStatus::Sold)->exists();
     }
 }

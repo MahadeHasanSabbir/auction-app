@@ -41,4 +41,44 @@ class Category extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    /**
+     * Active categories a product can be filed under, for a select field:
+     * sub-categories grouped by their parent, and top-level categories that
+     * have no sub-categories of their own.
+     *
+     * @return array<string, string|array<int, string>>
+     */
+    public static function selectOptions(): array
+    {
+        $all = self::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'parent_id', 'name']);
+        $children = $all->whereNotNull('parent_id')->groupBy('parent_id');
+        $options = [];
+
+        foreach ($all->whereNull('parent_id') as $parent) {
+            $group = $children->get($parent->id);
+
+            if ($group === null) {
+                $options[(string) $parent->id] = $parent->name;
+            } else {
+                $options[$parent->name] = $group->pluck('name', 'id')->all();
+            }
+        }
+
+        return $options;
+    }
+
+    /** Whether a product may be filed here: active, and a leaf (or a parent without children). */
+    public function acceptsProducts(): bool
+    {
+        if (! $this->is_active) {
+            return false;
+        }
+
+        if ($this->parent_id !== null) {
+            return self::query()->whereKey($this->parent_id)->where('is_active', true)->exists();
+        }
+
+        return ! $this->children()->where('is_active', true)->exists();
+    }
 }

@@ -50,6 +50,7 @@ return new class extends Migration
             $table->foreignId('reviewed_by')->nullable()->constrained('users');
             $table->dateTime('reviewed_at')->nullable();
             $table->text('rejection_reason')->nullable();
+            $table->text('cancellation_reason')->nullable();
 
             // Outcome.
             $table->foreignId('winner_id')->nullable()->constrained('users');

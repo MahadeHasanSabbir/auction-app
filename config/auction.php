@@ -81,9 +81,24 @@ return [
         'invitation_days' => 7,
     ],
 
+    'listing' => [
+        // How long an auction may run, and how far ahead it may be scheduled.
+        'min_duration_minutes' => 60,
+        'max_duration_days' => 30,
+        'max_lead_days' => 90,
+
+        // Pictures per product; each is stored full size and as a thumbnail.
+        'max_images' => 10,
+        'image_max_side' => 1600,
+        'thumbnail_max_side' => 640,
+    ],
+
     'bidding' => [
         // Share of a buyer's available balance that may be committed to bids.
         'biddable_share_bps' => 8000,
+
+        // Bids (and buy-now attempts) one buyer may make per minute.
+        'bids_per_minute' => 20,
 
         // A bid placed within this many seconds of the end extends the auction.
         'anti_snipe_window_seconds' => 120,

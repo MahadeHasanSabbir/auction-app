@@ -19,3 +19,6 @@ Schedule::command('ledger:verify')->dailyAt('03:00')->withoutOverlapping();
 
 // Renews plans that are due, retries unpaid ones and expires lapsed ones.
 Schedule::command('subscriptions:renew')->hourly()->withoutOverlapping();
+
+// Opens scheduled auctions and queues the closing of ended ones.
+Schedule::command('auctions:sweep')->everyFiveSeconds()->withoutOverlapping();

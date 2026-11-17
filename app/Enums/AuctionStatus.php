@@ -27,10 +27,47 @@ enum AuctionStatus: string
         };
     }
 
+    /** Badge colour in the panels. */
+    public function color(): string
+    {
+        return match ($this) {
+            self::Draft, self::Cancelled => 'gray',
+            self::PendingReview => 'warning',
+            self::Rejected => 'danger',
+            self::Scheduled => 'info',
+            self::Live => 'success',
+            self::Sold => 'primary',
+            self::Unsold => 'gray',
+        };
+    }
+
     /** No further transition is possible. */
     public function isFinal(): bool
     {
         return in_array($this, [self::Sold, self::Unsold, self::Cancelled], true);
+    }
+
+    /** The seller may still change it (a rejected one goes back to draft when edited). */
+    public function isEditable(): bool
+    {
+        return in_array($this, [self::Draft, self::Rejected], true);
+    }
+
+    /**
+     * Sent for review or approved, and not finished: it counts against the
+     * plan's active-auction allowance and freezes its product's details,
+     * since the platform reviewed what it saw.
+     *
+     * @return list<self>
+     */
+    public static function active(): array
+    {
+        return [self::PendingReview, self::Scheduled, self::Live];
+    }
+
+    public function isActive(): bool
+    {
+        return in_array($this, self::active(), true);
     }
 
     /** Visible to the public on listing pages. */
@@ -49,7 +86,8 @@ enum AuctionStatus: string
     {
         return match ($this) {
             self::Draft => [self::PendingReview, self::Cancelled],
-            self::PendingReview => [self::Scheduled, self::Rejected, self::Cancelled],
+            // Back to draft when the seller withdraws it from review.
+            self::PendingReview => [self::Draft, self::Scheduled, self::Rejected, self::Cancelled],
             self::Rejected => [self::Draft, self::Cancelled],
             self::Scheduled => [self::Live, self::Cancelled],
             self::Live => [self::Sold, self::Unsold, self::Cancelled],

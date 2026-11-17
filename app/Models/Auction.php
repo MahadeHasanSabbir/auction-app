@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use LogicException;
 
 class Auction extends Model
 {
@@ -163,6 +164,16 @@ class Auction extends Model
             'product.category:id,name',
             'product.coverImage',
         ]);
+    }
+
+    /** Sets the next status, refusing any move AuctionStatus does not allow. */
+    public function transitionTo(AuctionStatus $next): void
+    {
+        if (! $this->status->canTransitionTo($next)) {
+            throw new LogicException("Auction {$this->id} cannot go from {$this->status->value} to {$next->value}.");
+        }
+
+        $this->status = $next;
     }
 
     public function isLive(): bool

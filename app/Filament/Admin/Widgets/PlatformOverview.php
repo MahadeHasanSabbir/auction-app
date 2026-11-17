@@ -2,11 +2,14 @@
 
 namespace App\Filament\Admin\Widgets;
 
+use App\Enums\AuctionStatus;
 use App\Enums\CompanyStatus;
 use App\Enums\SubscriptionStatus;
 use App\Enums\SystemAccount;
 use App\Enums\WithdrawalStatus;
+use App\Filament\Admin\Resources\Auctions\AuctionResource;
 use App\Filament\Admin\Resources\Companies\CompanyResource;
+use App\Models\Auction;
 use App\Models\Company;
 use App\Models\Subscription;
 use App\Models\Wallet;
@@ -22,13 +25,25 @@ class PlatformOverview extends StatsOverviewWidget
 
     protected static bool $isLazy = false;
 
+    protected function getColumns(): int
+    {
+        return 3;
+    }
+
     protected function getStats(): array
     {
         $pending = Company::query()->where('status', CompanyStatus::Pending)->count();
         $owner = auth()->user()?->isSystemOwner() ?? false;
         $revenue = Wallet::query()->where('system_account', SystemAccount::SubscriptionRevenue)->first();
 
+        $toReview = Auction::query()->where('status', AuctionStatus::PendingReview)->count();
+
         return [
+            Stat::make(__('Auctions to review'), (string) $toReview)
+                ->description($toReview > 0 ? __('Sellers are waiting') : __('All caught up'))
+                ->descriptionColor($toReview > 0 ? 'warning' : 'success')
+                ->icon(Heroicon::OutlinedMegaphone)
+                ->url(AuctionResource::getUrl('index')),
             Stat::make(__('Companies to verify'), (string) $pending)
                 ->description($pending > 0 ? __('Waiting for review') : __('All caught up'))
                 ->descriptionColor($pending > 0 ? 'warning' : 'success')

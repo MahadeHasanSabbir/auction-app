@@ -2,17 +2,31 @@
 
 namespace App\Livewire\Auctions;
 
+use App\Actions\Bidding\BuyNow;
+use App\Actions\Bidding\PlaceBid;
+use App\Actions\Bidding\ToggleWatchlist;
+use App\Enums\HoldType;
 use App\Models\Auction;
+use App\Models\AutoBid;
+use App\Models\User;
+use App\Models\Wallet;
+use App\Models\WalletHold;
+use App\Support\Money;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
- * One auction: pictures, description, price, time left and the bid history.
- *
- * Read-only for now. Placing bids, the watchlist and live updates are added
- * with the auction engine and real-time phases.
+ * One auction: pictures, description, price, time left, the bid history,
+ * and for a signed-in buyer the bid form (by hand or automatic up to a
+ * private maximum), buy now and the watchlist button. Every action calls
+ * the same action class as any other caller. Until the real-time phase the
+ * page refreshes itself every few seconds while the auction is live.
  */
 #[Layout('layouts.site')]
 class Show extends Component
@@ -20,12 +34,108 @@ class Show extends Component
     #[Locked]
     public int $auctionId;
 
+    public string $amount = '';
+
+    public bool $auto = false;
+
+    /** Minted with the form, so a double submit places one bid. */
+    #[Locked]
+    public string $formKey = '';
+
     public function mount(Auction $auction): void
     {
         // Drafts, rejected and cancelled auctions do not exist for the public.
         abort_unless($auction->status->isPublic(), 404);
 
         $this->auctionId = $auction->id;
+        $this->formKey = (string) Str::uuid();
+    }
+
+    public function placeBid(PlaceBid $placeBid): void
+    {
+        $user = $this->buyer();
+
+        if ($user === null) {
+            return;
+        }
+
+        try {
+            $result = $placeBid->handle($user, $this->auction(), $this->amount, $this->auto, $this->formKey);
+        } catch (ValidationException $e) {
+            $this->addError('amount', (string) collect($e->errors())->flatten()->first());
+
+            return;
+        } catch (AuthorizationException) {
+            $this->addError('amount', __('This account cannot bid.'));
+
+            return;
+        }
+
+        $this->reset('amount');
+        $this->formKey = (string) Str::uuid();
+
+        $message = $result->message().($result->extended ? ' '.__('The auction was extended.') : '');
+        $this->dispatch('toast', message: $message, type: $result->leading ? 'success' : 'error');
+    }
+
+    public function buyNow(BuyNow $buyNow): void
+    {
+        $user = $this->buyer();
+
+        if ($user === null) {
+            return;
+        }
+
+        try {
+            $order = $buyNow->handle($user, $this->auction(), $this->formKey);
+        } catch (ValidationException $e) {
+            $this->addError('buy_now', (string) collect($e->errors())->flatten()->first());
+
+            return;
+        } catch (AuthorizationException) {
+            $this->addError('buy_now', __('This account cannot buy.'));
+
+            return;
+        }
+
+        $this->formKey = (string) Str::uuid();
+        $this->dispatch('toast', message: __('It is yours. Order :number is paid into escrow.', ['number' => $order->number]));
+    }
+
+    public function toggleWatch(ToggleWatchlist $toggle): void
+    {
+        $user = $this->buyer();
+
+        if ($user === null) {
+            return;
+        }
+
+        try {
+            $watching = $toggle->handle($user, $this->auction());
+        } catch (ValidationException|AuthorizationException) {
+            return;
+        }
+
+        $this->dispatch('toast', message: $watching ? __('Added to your watchlist.') : __('Removed from your watchlist.'));
+    }
+
+    /** The signed-in user, or a redirect to sign in. */
+    private function buyer(): ?User
+    {
+        $user = Auth::user();
+
+        if (! $user instanceof User) {
+            $this->redirectRoute('login');
+
+            return null;
+        }
+
+        return $user;
+    }
+
+    private function auction(): Auction
+    {
+        return Auction::query()->findOrFail($this->auctionId);
     }
 
     public function render(): View
@@ -43,6 +153,8 @@ class Show extends Component
 
         abort_unless($auction->status->isPublic(), 404);
 
+        $user = Auth::user();
+
         return view('livewire.auctions.show', [
             'auction' => $auction,
             'bids' => $auction->bids()
@@ -50,7 +162,37 @@ class Show extends Component
                 ->orderByDesc('seq')
                 ->limit(15)
                 ->get(),
-            'viewerId' => auth()->id(),
+            'viewerId' => $user?->id,
+            'canBid' => $user instanceof User && $user->can('bid', $auction),
+            'viewer' => $user instanceof User ? $this->viewerState($user, $auction) : null,
         ])->title($auction->title);
+    }
+
+    /**
+     * Where the signed-in viewer stands: their maximum (private to them),
+     * how much they can bid, and whether they watch the auction.
+     *
+     * @return array{isBuyer: bool, verified: bool, watching: bool, hasBid: bool, autoMax: ?Money, biddable: ?Money, available: ?Money}
+     */
+    private function viewerState(User $user, Auction $auction): array
+    {
+        $wallet = $user->isBuyer() ? Wallet::query()->where('user_id', $user->id)->first() : null;
+        $autoBid = AutoBid::query()->where('auction_id', $auction->id)->where('user_id', $user->id)->where('is_active', true)->first();
+        $ownHold = $wallet === null ? null : WalletHold::query()->active()
+            ->where('auction_id', $auction->id)
+            ->where('type', HoldType::Bid)
+            ->where('wallet_id', $wallet->id)
+            ->first()?->amount;
+        $base = $ownHold === null ? $wallet?->available() : $wallet->available()->plus($ownHold);
+
+        return [
+            'isBuyer' => $user->isBuyer(),
+            'verified' => $user->hasVerifiedEmail(),
+            'watching' => $user->watchedAuctions()->whereKey($auction->id)->exists(),
+            'hasBid' => $auction->bids()->where('user_id', $user->id)->exists(),
+            'autoMax' => $autoBid?->max_amount,
+            'biddable' => $base?->basisPointsFloor((int) config('auction.bidding.biddable_share_bps')),
+            'available' => $wallet?->available(),
+        ];
     }
 }

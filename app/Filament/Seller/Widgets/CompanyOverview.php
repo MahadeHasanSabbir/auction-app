@@ -2,11 +2,13 @@
 
 namespace App\Filament\Seller\Widgets;
 
+use App\Enums\AuctionStatus;
 use App\Enums\InvoiceStatus;
 use App\Enums\SubscriptionStatus;
 use App\Filament\Seller\Pages\Billing;
 use App\Filament\Seller\Pages\CompanyWallet;
 use App\Filament\Seller\Pages\Team;
+use App\Filament\Seller\Resources\Auctions\AuctionResource;
 use App\Models\Company;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
@@ -16,12 +18,17 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
-/** The seller dashboard at a glance: money, plan and team. */
+/** The seller dashboard at a glance: auctions, money, plan and team. */
 class CompanyOverview extends StatsOverviewWidget
 {
     protected static ?int $sort = -1;
 
     protected static bool $isLazy = false;
+
+    protected function getColumns(): int
+    {
+        return 4;
+    }
 
     protected function getStats(): array
     {
@@ -38,7 +45,16 @@ class CompanyOverview extends StatsOverviewWidget
         $seats = $subscription?->maxUsers() ?? 0;
         $tz = auth()->user()?->displayTimezone();
 
+        $active = $company->auctions()->whereIn('status', AuctionStatus::active())->count();
+        $inReview = $company->auctions()->where('status', AuctionStatus::PendingReview)->count();
+        $limit = $subscription?->maxActiveAuctions();
+
         return [
+            Stat::make(__('Active auctions'), $limit === null ? (string) $active : "{$active} / {$limit}")
+                ->description($inReview > 0 ? trans_choice(':count awaiting review|:count awaiting review', $inReview) : __('In review, scheduled or live'))
+                ->descriptionColor($limit !== null && $active >= $limit ? 'warning' : 'gray')
+                ->icon(Heroicon::OutlinedMegaphone)
+                ->url(AuctionResource::getUrl('index')),
             Stat::make(__('Available balance'), $wallet?->available()->format() ?? '—')
                 ->description($wallet !== null && $wallet->held->isPositive() ? __(':amount on hold', ['amount' => $wallet->held->format()]) : __('Sale proceeds land here'))
                 ->icon(Heroicon::OutlinedBanknotes)

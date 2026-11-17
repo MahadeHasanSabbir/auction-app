@@ -9,7 +9,8 @@
     $sold = $auction->status === AuctionStatus::Sold;
 @endphp
 
-<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+{{-- Until live updates arrive (Phase 6), a live auction refreshes itself while the tab is visible. --}}
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" @if ($live) wire:poll.10s.visible @endif>
     <nav aria-label="{{ __('Breadcrumb') }}" class="flex flex-wrap items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
         <a href="{{ route('auctions.index') }}" class="hover:text-brand-700 dark:hover:text-brand-300">{{ __('Auctions') }}</a>
         @if ($category?->parent)
@@ -149,7 +150,7 @@
                         </div>
                     @endif
 
-                    @if ($auction->buy_now_price !== null && ! $auction->status->isFinal())
+                    @if ($auction->buy_now_price !== null && ! $auction->status->isFinal() && $auction->bid_count === 0)
                         <div class="flex items-center justify-between">
                             <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Buy now price') }}</dt>
                             <dd class="font-semibold text-slate-900 dark:text-slate-50"><x-money :amount="$auction->buy_now_price" /></dd>
@@ -176,8 +177,8 @@
                     </div>
                 </dl>
 
-                {{-- Bidding itself arrives with the auction engine; for now this states where the visitor stands. --}}
-                <div class="mt-6">
+                {{-- Where the visitor stands, and the bid form for a buyer. --}}
+                <div class="mt-6 space-y-4">
                     @if ($sold)
                         <p class="rounded-md bg-slate-100 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                             @if ($auction->winner_id === $viewerId)
@@ -190,20 +191,87 @@
                         <p class="rounded-md bg-slate-100 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                             {{ $auction->close_reason?->label() ?? __('This auction ended without a sale.') }}
                         </p>
-                    @elseif ($live && $auction->leader_id !== null && $auction->leader_id === $viewerId)
-                        <p class="rounded-md bg-brand-50 px-4 py-3 text-sm font-medium text-brand-800 dark:bg-brand-950 dark:text-brand-200">
-                            {{ __('You are the highest bidder.') }}
-                        </p>
                     @elseif (! $viewerId)
                         <x-button :href="route('login')" class="w-full" size="lg">{{ __('Sign in to bid') }}</x-button>
-                        <p class="mt-3 text-center text-sm text-slate-600 dark:text-slate-400">
+                        <p class="text-center text-sm text-slate-600 dark:text-slate-400">
                             {{ __('New here?') }}
                             <a href="{{ route('register') }}" class="font-semibold text-brand-700 hover:underline dark:text-brand-300">{{ __('Create a buyer account') }}</a>
                         </p>
-                    @else
-                        <p class="rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950/60 dark:text-amber-200">
-                            {{ __('Online bidding is being set up and will open here shortly.') }}
+                    @elseif (! $viewer['isBuyer'])
+                        <p class="rounded-md bg-slate-100 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            {{ __('Seller and staff accounts cannot bid. Use a buyer account.') }}
                         </p>
+                    @elseif (! $viewer['verified'])
+                        <p class="rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950/60 dark:text-amber-200">
+                            {{ __('Confirm your email address to bid.') }}
+                            <a href="{{ route('verification.notice') }}" class="font-semibold underline">{{ __('Confirm now') }}</a>
+                        </p>
+                    @elseif ($live && $canBid)
+                        @if ($auction->leader_id === $viewerId)
+                            <p class="rounded-md bg-brand-50 px-4 py-3 text-sm font-medium text-brand-800 dark:bg-brand-950 dark:text-brand-200">
+                                {{ __('You are the highest bidder.') }}
+                                @if ($viewer['autoMax'])
+                                    <span class="block font-normal">{{ __('Your automatic maximum: :amount (only you see this).', ['amount' => $viewer['autoMax']->format()]) }}</span>
+                                @endif
+                            </p>
+                        @elseif ($viewer['hasBid'])
+                            <p class="rounded-md bg-red-50 px-4 py-3 text-sm font-medium text-red-800 dark:bg-red-950/60 dark:text-red-200">
+                                {{ __('You have been outbid.') }}
+                            </p>
+                        @endif
+
+                        <form wire:submit="placeBid" class="space-y-3">
+                            <div>
+                                <label for="bid-amount" class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    {{ $auto ? __('Your maximum') : __('Your bid') }}
+                                </label>
+                                <div class="mt-1 flex gap-2">
+                                    <input id="bid-amount" type="text" inputmode="decimal" autocomplete="off" wire:model="amount"
+                                           placeholder="{{ $auction->minimumNextBid()->toDecimal() }}"
+                                           class="form-control tabular min-w-0 flex-1" aria-describedby="bid-help">
+                                    <x-button wire:loading.attr="disabled" wire:target="placeBid">
+                                        {{ $auto ? __('Set maximum') : __('Place bid') }}
+                                    </x-button>
+                                </div>
+                                <x-input-error :messages="$errors->get('amount')" class="mt-1.5" />
+                            </div>
+
+                            <label class="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                                <input type="checkbox" wire:model.live="auto" class="mt-0.5 rounded border-slate-300 text-brand-600 dark:border-slate-600 dark:bg-slate-800">
+                                <span>{{ __('Bid automatically up to this maximum') }}
+                                    <span class="block text-xs text-slate-500 dark:text-slate-400">{{ __('We bid for you, one increment at a time, only as far as needed. Your maximum is set aside from your balance and never shown to others.') }}</span>
+                                </span>
+                            </label>
+
+                            <p id="bid-help" class="text-xs text-slate-500 dark:text-slate-400">
+                                @if ($viewer['biddable'])
+                                    {{ __('You can bid up to :amount.', ['amount' => $viewer['biddable']->format()]) }}
+                                @endif
+                                <a href="{{ route('wallet') }}" class="font-semibold text-brand-700 hover:underline dark:text-brand-300">{{ __('Add money') }}</a>
+                            </p>
+                        </form>
+
+                        @if ($auction->buy_now_price !== null && $auction->bid_count === 0)
+                            <div class="border-t border-slate-100 pt-4 dark:border-slate-800">
+                                <x-button type="button" variant="secondary" class="w-full"
+                                          wire:click="buyNow" wire:loading.attr="disabled" wire:target="buyNow"
+                                          wire:confirm="{{ __('Buy it now for :amount? The amount is paid from your wallet into escrow at once.', ['amount' => $auction->buy_now_price->format()]) }}">
+                                    {{ __('Buy now for :amount', ['amount' => $auction->buy_now_price->format()]) }}
+                                </x-button>
+                                <x-input-error :messages="$errors->get('buy_now')" class="mt-1.5" />
+                            </div>
+                        @endif
+                    @elseif ($scheduled)
+                        <p class="rounded-md bg-slate-100 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            {{ __('Bidding opens when the auction starts.') }}
+                        </p>
+                    @endif
+
+                    @if ($viewer && $viewer['isBuyer'] && ! $auction->status->isFinal())
+                        <x-button type="button" variant="ghost" size="sm" class="w-full" wire:click="toggleWatch">
+                            <x-app-icon name="heart" @class(['size-4', 'fill-current text-red-500' => $viewer['watching']]) />
+                            {{ $viewer['watching'] ? __('Watching') : __('Add to watchlist') }}
+                        </x-button>
                     @endif
                 </div>
             </x-card>

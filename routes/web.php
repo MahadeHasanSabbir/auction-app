@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SecurityController;
+use App\Livewire\Account\Bids;
 use App\Livewire\Account\Overview;
 use App\Livewire\Auctions\Index as AuctionIndex;
 use App\Livewire\Auctions\Show as AuctionShow;
@@ -24,6 +25,7 @@ Route::get('/auctions/{auction}', AuctionShow::class)->name('auctions.show');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', Overview::class)->name('dashboard');
     Route::get('/wallet', WalletShow::class)->name('wallet');
+    Route::get('/my-bids', Bids::class)->name('bids');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

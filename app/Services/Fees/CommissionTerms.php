@@ -27,6 +27,20 @@ final readonly class CommissionTerms
         return new self(0, Money::zero(), null, null, CommissionBasis::FinalPrice);
     }
 
+    /** For people: "5% + ৳50.00 of the final price (min ৳100.00)". */
+    public function describe(): string
+    {
+        $rate = rtrim(rtrim(number_format($this->rateBps / 100, 2, '.', ''), '0'), '.').'%';
+        $parts = $this->fixed->isZero() ? $rate : $rate.' + '.$this->fixed->format();
+        $limits = array_filter([
+            $this->min ? __('min :amount', ['amount' => $this->min->format()]) : null,
+            $this->max ? __('max :amount', ['amount' => $this->max->format()]) : null,
+        ]);
+
+        return __(':terms of the :basis', ['terms' => $parts, 'basis' => mb_strtolower($this->basis->label())])
+            .($limits === [] ? '' : ' ('.implode(', ', $limits).')');
+    }
+
     /** The commission on a sale; never more than the price itself. */
     public function apply(Money $finalPrice, Money $startingPrice): Money
     {
