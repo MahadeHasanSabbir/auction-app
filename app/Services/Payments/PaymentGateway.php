@@ -19,9 +19,15 @@ interface PaymentGateway
     /** The name stored on deposits and used in fee rules, for example "sslcommerz". */
     public function name(): string;
 
+    /** What the payer sees when choosing how to pay. */
+    public function label(): string;
+
     /** @throws PaymentGatewayException when the gateway refuses or cannot be reached */
     public function checkout(CheckoutRequest $request): CheckoutSession;
 
-    /** @throws InvalidCallbackException when the request cannot be confirmed */
+    /**
+     * @throws InvalidCallbackException when the request cannot be confirmed
+     * @throws IgnoredCallbackException when it is genuine but says nothing to act on yet
+     */
     public function verify(Request $request): PaymentResult;
 }

@@ -3,18 +3,26 @@
 namespace App\Models;
 
 use App\Casts\MoneyCast;
+use App\Enums\PayoutMethod;
 use App\Enums\WithdrawalStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * A request to pay money out of a wallet. The amount is held while the
+ * request is open (pending or approved) and leaves the wallet when staff
+ * mark it paid. See App\Actions\Wallet\*Withdrawal.
+ */
 class WithdrawalRequest extends Model
 {
-    /** @var list<string> */
-    protected $fillable = [
-        'wallet_id', 'requested_by', 'amount', 'gateway_charge', 'service_charge', 'net_amount', 'currency',
-        'method', 'destination', 'status', 'reviewed_by', 'reviewed_at', 'rejection_reason',
-        'payout_reference', 'paid_at', 'ledger_transaction_id',
-    ];
+    /**
+     * Every column decides money or a review, so nothing is mass assignable;
+     * the withdrawal actions use forceFill().
+     *
+     * @var list<string>
+     */
+    protected $fillable = [];
 
     /** @var list<string> */
     protected $hidden = ['destination'];
@@ -27,6 +35,7 @@ class WithdrawalRequest extends Model
             'gateway_charge' => MoneyCast::class,
             'service_charge' => MoneyCast::class,
             'net_amount' => MoneyCast::class,
+            'method' => PayoutMethod::class,
             // Bank or mobile-wallet details, encrypted at rest.
             'destination' => 'encrypted:array',
             'status' => WithdrawalStatus::class,
@@ -57,5 +66,29 @@ class WithdrawalRequest extends Model
     public function ledgerTransaction(): BelongsTo
     {
         return $this->belongsTo(LedgerTransaction::class);
+    }
+
+    /** @return BelongsTo<FeeRule, $this> */
+    public function gatewayFeeRule(): BelongsTo
+    {
+        return $this->belongsTo(FeeRule::class, 'gateway_fee_rule_id');
+    }
+
+    /** @return BelongsTo<FeeRule, $this> */
+    public function serviceFeeRule(): BelongsTo
+    {
+        return $this->belongsTo(FeeRule::class, 'service_fee_rule_id');
+    }
+
+    /** @return HasMany<WalletHold, $this> */
+    public function holds(): HasMany
+    {
+        return $this->hasMany(WalletHold::class);
+    }
+
+    /** The payout destination in a form safe to show, for example "bKash ••5678". */
+    public function destinationSummary(): string
+    {
+        return $this->method->describe($this->destination);
     }
 }

@@ -2,7 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Actions\Wallet\ApproveWithdrawal;
 use App\Actions\Wallet\CompleteDeposit;
+use App\Actions\Wallet\PayWithdrawal;
+use App\Actions\Wallet\RequestWithdrawal;
 use App\Enums\AuctionCloseReason;
 use App\Enums\AuctionStatus;
 use App\Enums\BidType;
@@ -15,6 +18,7 @@ use App\Enums\LedgerTransactionType;
 use App\Enums\NoticeAudience;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentOutcome;
+use App\Enums\PayoutMethod;
 use App\Enums\ProductCondition;
 use App\Enums\ShipmentStatus;
 use App\Enums\SystemAccount;
@@ -95,8 +99,29 @@ class DemoSeeder extends Seeder
                 $this->company($definition);
             }
 
+            $this->withdrawals();
             $this->notices();
         });
+    }
+
+    /** One withdrawal already paid out and one waiting for staff. */
+    private function withdrawals(): void
+    {
+        $request = app(RequestWithdrawal::class);
+
+        $paid = $request->handle($this->buyers[0], $this->wallets[$this->buyers[0]->id], Money::minor(500_000), PayoutMethod::Bkash, [
+            'account_name' => $this->buyers[0]->name,
+            'account_number' => '01712345678',
+        ]);
+        app(ApproveWithdrawal::class)->handle($this->staff, $paid);
+        app(PayWithdrawal::class)->handle($this->staff, $paid, 'BKASH-8F3K2L9Q');
+
+        $request->handle($this->buyers[1], $this->wallets[$this->buyers[1]->id], Money::minor(1_200_000), PayoutMethod::Bank, [
+            'account_name' => $this->buyers[1]->name,
+            'account_number' => '1234567890123',
+            'bank_name' => 'Dutch-Bangla Bank',
+            'branch' => 'Gulshan',
+        ]);
     }
 
     private function staff(): void

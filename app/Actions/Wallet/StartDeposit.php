@@ -93,6 +93,7 @@ final class StartDeposit
                 customerName: $user->name,
                 customerEmail: $user->email,
                 urls: $urls,
+                customerPhone: $user->phone,
             ));
         } catch (PaymentGatewayException $e) {
             $deposit->forceFill([

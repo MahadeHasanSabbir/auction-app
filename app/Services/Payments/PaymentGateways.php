@@ -14,6 +14,8 @@ final class PaymentGateways
 {
     /** @var array<string, class-string<PaymentGateway>> */
     private array $drivers = [
+        'sslcommerz' => SslCommerzGateway::class,
+        'stripe' => StripeGateway::class,
         'fake' => FakeGateway::class,
     ];
 
@@ -29,6 +31,22 @@ final class PaymentGateways
             array_map(fn (mixed $name) => trim((string) $name), $configured),
             fn (string $name) => isset($this->drivers[$name]) && ! ($production && $name === 'fake'),
         ));
+    }
+
+    /**
+     * The enabled gateways keyed by name, for a payment form.
+     *
+     * @return array<string, PaymentGateway>
+     */
+    public function all(): array
+    {
+        $gateways = [];
+
+        foreach ($this->enabled() as $name) {
+            $gateways[$name] = $this->get($name);
+        }
+
+        return $gateways;
     }
 
     public function isEnabled(string $name): bool

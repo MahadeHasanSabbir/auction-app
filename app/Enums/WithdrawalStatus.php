@@ -20,4 +20,25 @@ enum WithdrawalStatus: string
             self::Cancelled => __('Cancelled'),
         };
     }
+
+    /** Pending and approved requests still have their money on hold. */
+    public function isOpen(): bool
+    {
+        return $this === self::Pending || $this === self::Approved;
+    }
+
+    /** @return list<self> */
+    public function transitions(): array
+    {
+        return match ($this) {
+            self::Pending => [self::Approved, self::Rejected, self::Cancelled],
+            self::Approved => [self::Paid, self::Rejected],
+            self::Paid, self::Rejected, self::Cancelled => [],
+        };
+    }
+
+    public function canTransitionTo(self $next): bool
+    {
+        return in_array($next, $this->transitions(), true);
+    }
 }

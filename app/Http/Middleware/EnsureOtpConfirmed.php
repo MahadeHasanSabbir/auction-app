@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Contracts\Session\Session;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -35,7 +36,13 @@ class EnsureOtpConfirmed
 
     public static function isConfirmed(Request $request): bool
     {
-        $confirmedAt = (int) $request->session()->get(self::SESSION_KEY, 0);
+        return self::confirmedIn($request->session());
+    }
+
+    /** The same check from code that has the session but not the request (Livewire actions). */
+    public static function confirmedIn(Session $session): bool
+    {
+        $confirmedAt = (int) $session->get(self::SESSION_KEY, 0);
 
         return now()->getTimestamp() - $confirmedAt < (int) config('auction.otp.confirm_minutes') * 60;
     }

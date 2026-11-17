@@ -15,5 +15,6 @@ final readonly class CheckoutRequest
         public string $customerName,
         public string $customerEmail,
         public CheckoutUrls $urls,
+        public ?string $customerPhone = null,
     ) {}
 }

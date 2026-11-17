@@ -8,6 +8,7 @@ use App\Enums\HoldType;
 use App\Enums\OrderStatus;
 use App\Enums\SystemAccount;
 use App\Enums\WalletType;
+use App\Enums\WithdrawalStatus;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -30,6 +31,7 @@ final class LedgerVerifier
             ...$this->foreignCurrencies(),
             ...$this->escrow(),
             ...$this->bidHolds(),
+            ...$this->withdrawalHolds(),
         ];
     }
 
@@ -179,6 +181,37 @@ final class LedgerVerifier
                 ->orWhereColumn('a.leader_id', '<>', 'w.user_id'))
             ->get(['h.id', 'h.auction_id'])
             ->map(fn (object $row) => "Hold {$row->id} on auction {$row->auction_id} does not belong to the leader of a live auction.")
+            ->all();
+    }
+
+    /**
+     * An open withdrawal request (pending or approved) has exactly one active
+     * hold for its amount on its wallet, and no other request has one.
+     *
+     * @return list<string>
+     */
+    private function withdrawalHolds(): array
+    {
+        $open = [WithdrawalStatus::Pending->value, WithdrawalStatus::Approved->value];
+
+        $holds = DB::table('wallet_holds')
+            ->where('status', HoldStatus::Active)
+            ->where('type', HoldType::Withdrawal)
+            ->select('withdrawal_request_id')
+            ->selectRaw('count(*) as holds, sum(amount) as total, min(wallet_id) as wallet_id')
+            ->groupBy('withdrawal_request_id');
+
+        return DB::table('withdrawal_requests as r')
+            ->leftJoinSub($holds, 'h', 'h.withdrawal_request_id', '=', 'r.id')
+            ->where(fn ($q) => $q
+                ->where(fn ($q) => $q->whereIn('r.status', $open)
+                    ->where(fn ($q) => $q->whereNull('h.holds')
+                        ->orWhere('h.holds', '<>', 1)
+                        ->orWhereColumn('h.total', '<>', 'r.amount')
+                        ->orWhereColumn('h.wallet_id', '<>', 'r.wallet_id')))
+                ->orWhere(fn ($q) => $q->whereNotIn('r.status', $open)->whereNotNull('h.holds')))
+            ->get(['r.id', 'r.status'])
+            ->map(fn (object $row) => "Withdrawal {$row->id} ({$row->status}) does not have exactly the hold it should.")
             ->all();
     }
 }

@@ -6,6 +6,7 @@
 
     $links = array_filter([
         $user->isBuyer() ? ['url' => route('dashboard'), 'label' => __('Overview'), 'icon' => 'home', 'active' => request()->routeIs('dashboard')] : null,
+        $user->isBuyer() ? ['url' => route('wallet'), 'label' => __('Wallet'), 'icon' => 'wallet', 'active' => request()->routeIs('wallet', 'wallet.*')] : null,
         ['url' => route('profile.edit'), 'label' => __('Profile'), 'icon' => 'user', 'active' => request()->routeIs('profile.edit')],
         ['url' => route('profile.security'), 'label' => __('Sign-in and security'), 'icon' => 'lock', 'active' => request()->routeIs('profile.security')],
     ]);

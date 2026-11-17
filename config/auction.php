@@ -62,6 +62,12 @@ return [
         // Limits on one deposit, in minor units (10_000 is BDT 100.00).
         'deposit_min' => (int) env('AUCTION_DEPOSIT_MIN', 10_000),
         'deposit_max' => (int) env('AUCTION_DEPOSIT_MAX', 100_000_000),
+
+        // Smallest withdrawal, in minor units (50_000 is BDT 500.00).
+        'withdrawal_min' => (int) env('AUCTION_WITHDRAWAL_MIN', 50_000),
+
+        // Deposits one buyer may start per hour.
+        'deposits_per_hour' => 10,
     ],
 
     'bidding' => [

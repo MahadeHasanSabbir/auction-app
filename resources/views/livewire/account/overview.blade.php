@@ -32,9 +32,15 @@
                 @endif
             </div>
 
-            <p class="mt-5 border-t border-slate-100 pt-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">
-                {{ __('You can commit up to :percent% of your available balance to bids. Deposits and withdrawals open here soon.', ['percent' => config('auction.bidding.biddable_share_bps') / 100]) }}
-            </p>
+            <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+                <p class="text-sm text-slate-600 dark:text-slate-400">
+                    {{ __('You can commit up to :percent% of your available balance to bids.', ['percent' => config('auction.bidding.biddable_share_bps') / 100]) }}
+                </p>
+                <div class="flex gap-2">
+                    <x-button :href="route('wallet')" size="sm">{{ __('Add money') }}</x-button>
+                    <x-button :href="route('wallet.withdraw')" variant="secondary" size="sm">{{ __('Withdraw') }}</x-button>
+                </div>
+            </div>
         </x-card>
 
         {{-- Numbers --}}

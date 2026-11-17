@@ -35,12 +35,11 @@
 
             @if ($user)
                 @if ($balance)
-                    {{-- Links to the wallet once it exists (Phase 3). --}}
-                    <span class="hidden items-center gap-2 rounded-md border border-slate-200 px-3 py-1.5 text-sm dark:border-slate-700 sm:inline-flex" title="{{ __('Available balance') }}">
+                    <a href="{{ route('wallet') }}" class="hidden items-center gap-2 rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 sm:inline-flex" title="{{ __('Available balance') }}">
                         <x-app-icon name="wallet" class="size-4 text-slate-500 dark:text-slate-400" />
                         <span class="sr-only">{{ __('Available balance') }}</span>
                         <x-money :amount="$balance" class="font-semibold text-slate-900 dark:text-slate-100" />
-                    </span>
+                    </a>
                 @endif
 
                 <x-dropdown width="w-80">

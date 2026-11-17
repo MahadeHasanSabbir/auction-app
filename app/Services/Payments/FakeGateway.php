@@ -25,6 +25,11 @@ final class FakeGateway implements PaymentGateway
         return 'fake';
     }
 
+    public function label(): string
+    {
+        return __('Test payment (no real money)');
+    }
+
     public function checkout(CheckoutRequest $request): CheckoutSession
     {
         $reference = 'FAKE-'.Str::upper(Str::random(12));
