@@ -92,9 +92,9 @@ class Product extends Model
             ->exists();
     }
 
-    /** It was sold, so it cannot be listed again. */
+    /** It was sold, so it cannot be listed again; a sale whose order was cancelled does not count. */
     public function isSold(): bool
     {
-        return $this->auctions()->where('status', AuctionStatus::Sold)->exists();
+        return $this->auctions()->sold()->exists();
     }
 }

@@ -51,7 +51,7 @@ class DemoSeederTest extends TestCase
 
         $this->assertSame($all, $seen);
         $this->assertSame(
-            [OrderStatus::Completed->value, OrderStatus::InEscrow->value, OrderStatus::Shipped->value],
+            [OrderStatus::Completed->value, OrderStatus::Disputed->value, OrderStatus::InEscrow->value, OrderStatus::Shipped->value],
             Order::query()->distinct()->orderBy('status')->pluck('status')->map->value->all(),
         );
     }
@@ -97,7 +97,7 @@ class DemoSeederTest extends TestCase
         }
 
         // Escrow holds exactly the orders that are not finished.
-        $inEscrow = (int) Order::query()->whereIn('status', [OrderStatus::InEscrow, OrderStatus::Shipped])->sum('amount');
+        $inEscrow = (int) Order::query()->whereIn('status', [OrderStatus::InEscrow, OrderStatus::Shipped, OrderStatus::Disputed])->sum('amount');
         $this->assertSame($inEscrow, Wallet::forSystem(SystemAccount::Escrow)->balance->amount);
 
         // Commission earned equals the commission of the completed orders.

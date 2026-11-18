@@ -97,6 +97,19 @@ final readonly class Money implements JsonSerializable, Stringable
         return new self(intdiv($this->amount * $bps, 10000), $this->currency);
     }
 
+    /**
+     * This amount times $numerator / $denominator, rounded towards zero.
+     * Exact for any size: the product goes through bcmath, never a float.
+     */
+    public function share(int $numerator, int $denominator): self
+    {
+        if ($denominator <= 0 || $numerator < 0) {
+            throw new InvalidArgumentException('A share needs a non-negative numerator and a positive denominator.');
+        }
+
+        return new self((int) bcdiv(bcmul((string) $this->amount, (string) $numerator), (string) $denominator, 0), $this->currency);
+    }
+
     public function clamp(?self $min, ?self $max): self
     {
         $value = $this;

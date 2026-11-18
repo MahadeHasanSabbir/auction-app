@@ -3,10 +3,12 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SecurityController;
 use App\Livewire\Account\Bids;
+use App\Livewire\Account\Orders;
 use App\Livewire\Account\Overview;
 use App\Livewire\Auctions\Index as AuctionIndex;
 use App\Livewire\Auctions\Show as AuctionShow;
 use App\Livewire\Home;
+use App\Livewire\Orders\Show as OrderShow;
 use App\Livewire\Sellers\Show as SellerShow;
 use App\Livewire\Wallet\Show as WalletShow;
 use App\Livewire\Wallet\Withdraw;
@@ -28,6 +30,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', Overview::class)->name('dashboard');
     Route::get('/wallet', WalletShow::class)->name('wallet');
     Route::get('/my-bids', Bids::class)->name('bids');
+    Route::get('/orders', Orders::class)->name('orders');
+    Route::get('/orders/{order}', OrderShow::class)->name('orders.show');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

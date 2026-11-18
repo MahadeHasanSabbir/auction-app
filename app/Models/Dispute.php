@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\MoneyCast;
+use App\Enums\DisputeReason;
 use App\Enums\DisputeResolution;
 use App\Enums\DisputeStatus;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +25,7 @@ class Dispute extends Model
     protected function casts(): array
     {
         return [
+            'reason' => DisputeReason::class,
             'status' => DisputeStatus::class,
             'resolution' => DisputeResolution::class,
             'refund_amount' => MoneyCast::class,

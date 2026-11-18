@@ -120,7 +120,8 @@ class AuctionResource extends Resource
     }
 
     /**
-     * Products of this company that can be listed: not sold, not deleted and
+     * Products of this company that can be listed: not sold (a cancelled
+     * order does not count), not deleted and
      * not in another auction that has not finished.
      *
      * @return array<int, string>
@@ -139,7 +140,7 @@ class AuctionResource extends Resource
             ->where('company_id', $tenant->id)
             ->where(fn (Builder $query) => $query
                 ->whereDoesntHave('auctions', fn (Builder $auctions) => $auctions
-                    ->where(fn (Builder $open) => $open->whereNotIn('status', $finished)->orWhere('status', AuctionStatus::Sold))
+                    ->where(fn (Builder $open) => $open->whereNotIn('status', $finished)->orWhere(fn (Builder $sold) => $sold->sold()))
                     ->when($record, fn (Builder $q) => $q->whereKeyNot($record->id)))
                 ->when($record, fn (Builder $q) => $q->orWhereKey($record->product_id)))
             ->orderBy('name')

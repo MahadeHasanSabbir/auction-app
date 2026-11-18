@@ -12,6 +12,8 @@ use App\Enums\AuctionStatus;
 use App\Enums\BidType;
 use App\Enums\CompanyStatus;
 use App\Enums\DepositStatus;
+use App\Enums\DisputeReason;
+use App\Enums\DisputeStatus;
 use App\Enums\HoldType;
 use App\Enums\InvoiceStatus;
 use App\Enums\KycStatus;
@@ -35,6 +37,7 @@ use App\Models\Company;
 use App\Models\CompanyAgreement;
 use App\Models\CompanyInvitation;
 use App\Models\Deposit;
+use App\Models\Dispute;
 use App\Models\KycRequest;
 use App\Models\Notice;
 use App\Models\Order;
@@ -212,6 +215,7 @@ class DemoSeeder extends Seeder
                     ['Mitsubishi Pajero Sport 2015', 'cars', 2_800_000, 'scheduled'],
                     ['Yamaha FZS V2, 2017', 'motorcycles', 110_000, 'sold_shipped', 6],
                     ['Suzuki Gixxer 2016', 'motorcycles', 95_000, 'rejected'],
+                    ['Bajaj Pulsar 150, 2018', 'motorcycles', 80_000, 'sold_disputed', 4],
                     ['Nissan Sunny 2008', 'cars', 520_000, 'cancelled'],
                     ['Toyota Noah 2014 hybrid', 'cars', 1_900_000, 'pending_review'],
                 ],
@@ -468,7 +472,7 @@ class DemoSeeder extends Seeder
                 'close_reason' => AuctionCloseReason::ReserveNotMet,
             ],
             'sold_in_escrow' => $ended(1) + $attributes + ['status' => AuctionStatus::Sold, 'close_reason' => AuctionCloseReason::Sold],
-            'sold_shipped' => $ended(3) + $attributes + ['status' => AuctionStatus::Sold, 'close_reason' => AuctionCloseReason::Sold],
+            'sold_shipped', 'sold_disputed' => $ended(3) + $attributes + ['status' => AuctionStatus::Sold, 'close_reason' => AuctionCloseReason::Sold],
             default => $ended(12) + $attributes + ['status' => AuctionStatus::Sold, 'close_reason' => AuctionCloseReason::Sold],
         };
 
@@ -633,9 +637,9 @@ class DemoSeeder extends Seeder
             'order_id' => $order->id,
             'courier' => 'Sundarban Courier',
             'tracking_number' => 'SCS'.str_pad((string) ($order->id * 7919), 9, '0', STR_PAD_LEFT),
-            'status' => $scenario === 'sold_shipped' ? ShipmentStatus::InTransit : ShipmentStatus::Delivered,
+            'status' => $scenario === 'sold_completed' ? ShipmentStatus::Delivered : ShipmentStatus::InTransit,
             'shipped_at' => $shippedAt,
-            'delivered_at' => $scenario === 'sold_shipped' ? null : $shippedAt->addDays(2),
+            'delivered_at' => $scenario === 'sold_completed' ? $shippedAt->addDays(2) : null,
             'created_by' => $auction->created_by,
         ]);
 
@@ -647,6 +651,24 @@ class DemoSeeder extends Seeder
         $this->event($order, 'shipped', OrderStatus::InEscrow, OrderStatus::Shipped, $auction->created_by, 'Handed to the courier.', $shippedAt);
 
         if ($scenario === 'sold_shipped') {
+            return;
+        }
+
+        if ($scenario === 'sold_disputed') {
+            $openedAt = $shippedAt->addDays(2);
+
+            Dispute::query()->forceCreate([
+                'order_id' => $order->id,
+                'opened_by' => $buyer->id,
+                'reason' => DisputeReason::NotAsDescribed,
+                'description' => 'The listing said 18,000 km but the meter shows over 40,000 km, and the rear tyre is worn out.',
+                'status' => DisputeStatus::Open,
+                'created_at' => $openedAt,
+                'updated_at' => $openedAt,
+            ]);
+            $order->forceFill(['status' => OrderStatus::Disputed])->save();
+            $this->event($order, 'disputed', OrderStatus::Shipped, OrderStatus::Disputed, $buyer->id, 'The buyer opened a dispute: The item is not as described', $openedAt);
+
             return;
         }
 

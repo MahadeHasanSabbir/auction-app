@@ -107,11 +107,18 @@ return [
     ],
 
     'orders' => [
-        // The company must ship within this many days or the order is cancelled.
+        // The company must ship within this many days of having the delivery
+        // address, or the order is cancelled and the buyer refunded. A buyer
+        // who gives no address within the same number of days of the sale
+        // has the order cancelled too.
         'ship_by_days' => 5,
 
         // Escrow is released automatically this many days after shipment.
+        // The buyer can open a dispute until then.
         'auto_release_days' => 7,
+
+        // A buyer can review the seller this many days after the order completed.
+        'review_days' => 60,
     ],
 
     'realtime' => [

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\MoneyCast;
 use App\Enums\AuctionCloseReason;
 use App\Enums\AuctionStatus;
+use App\Enums\OrderStatus;
 use App\Support\Money;
 use Database\Factories\AuctionFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -149,6 +150,18 @@ class Auction extends Model
             AuctionStatus::cases(),
             fn (AuctionStatus $status) => $status->isPublic(),
         ));
+    }
+
+    /**
+     * Sold and the sale stands: an order cancelled before shipping (and
+     * refunded) frees the product to be listed again.
+     *
+     * @param  Builder<$this>  $query
+     */
+    public function scopeSold(Builder $query): void
+    {
+        $query->where('status', AuctionStatus::Sold)
+            ->whereDoesntHave('order', fn (Builder $order) => $order->where('status', OrderStatus::Cancelled));
     }
 
     /**

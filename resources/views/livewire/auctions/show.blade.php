@@ -224,6 +224,9 @@
                         <p class="rounded-md bg-slate-100 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                             @if ($auction->winner_id === $viewerId)
                                 {{ __('You won this auction.') }}
+                                @if ($orderNumber = $auction->order()->value('number'))
+                                    <a href="{{ route('orders.show', $orderNumber) }}" class="font-medium text-brand-700 hover:underline dark:text-brand-300">{{ __('View your order') }}</a>
+                                @endif
                             @else
                                 {{ __('Won by :bidder.', ['bidder' => $auction->winner?->maskedName() ?? __('a bidder')]) }}
                             @endif

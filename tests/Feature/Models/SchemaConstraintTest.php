@@ -153,7 +153,7 @@ class SchemaConstraintTest extends TestCase
         return Dispute::query()->forceCreate([
             'order_id' => $order->id,
             'opened_by' => $order->buyer_id,
-            'reason' => 'Item not as described',
+            'reason' => 'not_as_described',
             'status' => DisputeStatus::Open,
         ]);
     }

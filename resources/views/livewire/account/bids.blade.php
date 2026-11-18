@@ -65,6 +65,9 @@
                                 @endif
                             @elseif ($auction->status === AuctionStatus::Sold && $auction->winner_id === $user->id)
                                 <x-badge color="green">{{ __('Won') }}</x-badge>
+                                @if ($auction->relationLoaded('order') && $auction->order)
+                                    <a href="{{ route('orders.show', $auction->order) }}" class="font-medium text-brand-700 hover:underline dark:text-brand-300">{{ __('Order') }}</a>
+                                @endif
                             @else
                                 <x-auction.status :auction="$auction" />
                             @endif

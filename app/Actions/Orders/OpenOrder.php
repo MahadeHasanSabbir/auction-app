@@ -21,7 +21,7 @@ use LogicException;
  * escrow (capturing the winning bid's hold, if there is one) and the order
  * records the commission fixed on the auction at approval. Runs inside the
  * caller's transaction, with the auction row already locked; the commission
- * is paid out of escrow when the order completes (Phase 7).
+ * is paid out of escrow when the order completes (SettleEscrow).
  */
 final class OpenOrder
 {
@@ -50,6 +50,10 @@ final class OpenOrder
             'status' => OrderStatus::InEscrow,
             'shipping_name' => $buyer->name,
             'shipping_phone' => $buyer->phone,
+            // The ship-by clock runs from here when the profile has an
+            // address; otherwise it is the buyer's deadline to give one, and
+            // restarts for the seller when they do (UpdateDeliveryAddress).
+            'shipping_address' => $buyer->address,
             'ship_by_at' => now()->addDays((int) config('auction.orders.ship_by_days')),
         ])->save();
         $order->forceFill(['number' => 'ORD-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT)])->save();

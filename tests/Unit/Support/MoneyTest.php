@@ -147,4 +147,16 @@ class MoneyTest extends TestCase
 
         $this->assertSame('USD', Money::minor(1)->currency);
     }
+
+    public function test_it_takes_an_exact_share_rounded_towards_zero(): void
+    {
+        $this->assertSame(14_000, Money::minor(20_000, 'BDT')->share(140_000, 200_000)->amount);
+        $this->assertSame(3, Money::minor(10, 'BDT')->share(1, 3)->amount);
+        $this->assertSame(0, Money::minor(10, 'BDT')->share(0, 3)->amount);
+        // No overflow where amount × numerator exceeds 64 bits.
+        $this->assertSame(4_000_000_000_000, Money::minor(8_000_000_000_000, 'BDT')->share(5_000_000_000_000, 10_000_000_000_000)->amount);
+
+        $this->expectException(InvalidArgumentException::class);
+        Money::minor(10, 'BDT')->share(1, 0);
+    }
 }

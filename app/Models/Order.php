@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\MoneyCast;
+use App\Enums\DisputeStatus;
 use App\Enums\OrderStatus;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -46,6 +47,31 @@ class Order extends Model
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
         ];
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'number';
+    }
+
+    /**
+     * The open dispute, if any (at most one, enforced by the database).
+     *
+     * @return HasOne<Dispute, $this>
+     */
+    public function openDispute(): HasOne
+    {
+        return $this->hasOne(Dispute::class)->where('status', DisputeStatus::Open);
+    }
+
+    /**
+     * The latest dispute, open or not.
+     *
+     * @return HasOne<Dispute, $this>
+     */
+    public function latestDispute(): HasOne
+    {
+        return $this->hasOne(Dispute::class)->latestOfMany();
     }
 
     /** @return BelongsTo<Auction, $this> */

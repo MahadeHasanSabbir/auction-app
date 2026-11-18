@@ -59,7 +59,7 @@ class Bids extends Component
         $mine = fn (Builder $query) => $query->where('user_id', $user->id);
 
         $query = match ($this->tab) {
-            'won' => Auction::query()->where('status', AuctionStatus::Sold)->where('winner_id', $user->id)->orderByDesc('closed_at'),
+            'won' => Auction::query()->where('status', AuctionStatus::Sold)->where('winner_id', $user->id)->with('order:id,auction_id,number')->orderByDesc('closed_at'),
             'lost' => Auction::query()
                 ->whereIn('status', [AuctionStatus::Sold, AuctionStatus::Unsold, AuctionStatus::Cancelled])
                 ->whereHas('bids', $mine)

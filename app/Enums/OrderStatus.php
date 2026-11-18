@@ -25,6 +25,24 @@ enum OrderStatus: string
         };
     }
 
+    /** Filament colour name; the site maps it to a badge colour. */
+    public function color(): string
+    {
+        return match ($this) {
+            self::InEscrow => 'warning',
+            self::Shipped => 'info',
+            self::Completed => 'success',
+            self::Disputed => 'danger',
+            self::Refunded, self::PartiallyRefunded, self::Cancelled => 'gray',
+        };
+    }
+
+    /** Nothing more happens to the order or its money. */
+    public function isFinal(): bool
+    {
+        return $this->transitions() === [];
+    }
+
     /** Money for this order is still held in escrow. */
     public function holdsEscrow(): bool
     {
@@ -37,7 +55,8 @@ enum OrderStatus: string
         return match ($this) {
             self::InEscrow => [self::Shipped, self::Cancelled],
             self::Shipped => [self::Completed, self::Disputed],
-            self::Disputed => [self::Completed, self::Refunded, self::PartiallyRefunded],
+            // Back to shipped when the buyer withdraws the dispute.
+            self::Disputed => [self::Shipped, self::Completed, self::Refunded, self::PartiallyRefunded],
             self::Completed, self::Refunded, self::PartiallyRefunded, self::Cancelled => [],
         };
     }
