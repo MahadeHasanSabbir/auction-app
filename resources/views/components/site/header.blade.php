@@ -47,11 +47,8 @@
                         <button type="button" class="relative rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                                 aria-label="{{ trans_choice('{0} Notifications, none unread|[1,*] Notifications, :count unread', $unreadCount) }}">
                             <x-app-icon name="bell" />
-                            @if ($unreadCount > 0)
-                                <span class="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
-                                    {{ $unreadCount > 9 ? '9+' : $unreadCount }}
-                                </span>
-                            @endif
+                            <span data-live="notification-count" data-count="{{ $unreadCount }}"
+                                  @class(['absolute right-1 top-1 h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white', 'flex' => $unreadCount > 0, 'hidden' => $unreadCount === 0])>{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>
                         </button>
                     </x-slot:trigger>
 
@@ -59,16 +56,17 @@
                         <p class="border-b border-slate-200 px-4 py-2 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:text-slate-100">{{ __('Notifications') }}</p>
 
                         @forelse ($notifications as $notification)
-                            <div class="px-4 py-3 text-sm">
+                            <a href="{{ route('notifications') }}" class="block px-4 py-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800">
                                 <p class="font-medium text-slate-900 dark:text-slate-100">{{ $notification->data['title'] ?? __('Notification') }}</p>
                                 @isset($notification->data['body'])
                                     <p class="mt-0.5 text-slate-600 dark:text-slate-400">{{ $notification->data['body'] }}</p>
                                 @endisset
                                 <p class="mt-1 text-xs text-slate-500">{{ $notification->created_at->diffForHumans() }}</p>
-                            </div>
+                            </a>
                         @empty
                             <p class="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-400">{{ __('You are all caught up.') }}</p>
                         @endforelse
+                        <a href="{{ route('notifications') }}" class="block border-t border-slate-200 px-4 py-2.5 text-center text-sm font-medium text-brand-700 hover:bg-slate-50 dark:border-slate-700 dark:text-brand-300 dark:hover:bg-slate-800">{{ __('See all notifications') }}</a>
                     </x-slot:content>
                 </x-dropdown>
 

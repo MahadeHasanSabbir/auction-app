@@ -41,6 +41,8 @@ return new class extends Migration
             $table->string('avatar_path')->nullable();
             $table->string('locale', 12)->nullable();
             $table->string('timezone', 64)->nullable();
+            // Which notifications the user wants, by category and channel; null means the defaults.
+            $table->json('notification_preferences')->nullable();
             $table->dateTime('last_login_at')->nullable();
             $table->rememberToken();
             $table->timestamps();

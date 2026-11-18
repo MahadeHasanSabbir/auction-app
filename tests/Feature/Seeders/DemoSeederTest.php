@@ -3,12 +3,14 @@
 namespace Tests\Feature\Seeders;
 
 use App\Enums\AuctionStatus;
+use App\Enums\ConversationType;
 use App\Enums\HoldStatus;
 use App\Enums\OrderStatus;
 use App\Enums\SystemAccount;
 use App\Enums\UserRole;
 use App\Models\Auction;
 use App\Models\Company;
+use App\Models\Conversation;
 use App\Models\LedgerEntry;
 use App\Models\Order;
 use App\Models\User;
@@ -16,6 +18,7 @@ use App\Models\Wallet;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\PlatformSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\Support\InteractsWithLedger;
@@ -134,6 +137,19 @@ class DemoSeederTest extends TestCase
             $this->assertTrue($auction->final_price->equals($auction->order->amount), $auction->title);
             $this->assertTrue($auction->order->amount->equals($auction->order->seller_payout->plus($auction->order->commission)), $auction->title);
         }
+    }
+
+    public function test_the_demo_has_chats_tickets_and_notifications(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertSame(2, Conversation::query()->where('type', ConversationType::Order)->whereHas('messages')->count());
+        $this->assertSame(2, Conversation::query()->where('type', ConversationType::Support)->count());
+        $this->assertSame(1, Conversation::query()->where('type', ConversationType::Support)->whereNull('opened_by')->count());
+
+        // Queued work was not left behind for a worker, and the withdrawal and ticket answers reached the bell.
+        $this->assertSame(0, DB::table('jobs')->count());
+        $this->assertGreaterThan(0, DatabaseNotification::query()->count());
     }
 
     public function test_seeding_again_does_not_duplicate_the_demo_data(): void

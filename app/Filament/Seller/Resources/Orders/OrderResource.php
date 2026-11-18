@@ -5,6 +5,7 @@ namespace App\Filament\Seller\Resources\Orders;
 use App\Enums\OrderStatus;
 use App\Filament\Seller\Resources\Orders\Pages\ListOrders;
 use App\Filament\Seller\Resources\Orders\Pages\ViewOrder;
+use App\Livewire\Messages\OrderChat;
 use App\Models\Company;
 use App\Models\Order;
 use BackedEnum;
@@ -14,6 +15,7 @@ use Filament\Facades\Filament;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -74,6 +76,7 @@ class OrderResource extends Resource
     {
         return $table
             ->defaultSort('id', 'desc')
+            ->poll('30s')
             ->columns([
                 ImageColumn::make('auction.product.coverImage.thumbnail_path')
                     ->label('')
@@ -208,6 +211,11 @@ class OrderResource extends Resource
                         TextEntry::make('review.rating')->label(__('Rating'))->formatStateUsing(fn ($state) => str_repeat('★', (int) $state).str_repeat('☆', 5 - (int) $state))->color('warning'),
                         TextEntry::make('review.comment')->label(__('Comment'))->placeholder('—'),
                         TextEntry::make('review.reply')->label(__('Your reply'))->placeholder(__('Not answered yet')),
+                    ]),
+                Section::make(__('Messages with the buyer'))
+                    ->columnSpanFull()
+                    ->schema([
+                        Livewire::make(OrderChat::class, fn (Order $record) => ['orderId' => $record->id, 'poll' => true]),
                     ]),
                 Section::make(__('History'))
                     ->columnSpanFull()

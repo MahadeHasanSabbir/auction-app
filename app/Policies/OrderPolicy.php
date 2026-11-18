@@ -65,6 +65,12 @@ final class OrderPolicy
         return $this->onTeam($user, $order);
     }
 
+    /** Buyer and the selling team talk about the order; staff can read it (see ConversationPolicy) but join through tickets. */
+    public function chat(User $user, Order $order): bool
+    {
+        return $this->isBuyer($user, $order) || $this->onTeam($user, $order);
+    }
+
     public function resolve(User $user, Order $order): bool
     {
         return $user->is_active && $user->isPlatform();

@@ -41,6 +41,7 @@ class AdminPanelProvider extends PanelProvider
             ->font('Inter', url: 'https://fonts.bunny.net/css?family=inter:400,500,600,700|space-grotesk:500,600,700&display=swap')
             ->viteTheme('resources/css/filament/panels/theme.css')
             ->sidebarCollapsibleOnDesktop()
+            ->databaseNotifications()
             ->defaultAvatarProvider(BrandAvatarProvider::class)
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\Filament\Admin\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\Filament\Admin\Pages')

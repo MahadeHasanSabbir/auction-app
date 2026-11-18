@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\KycStatus;
+use App\Enums\NotificationCategory;
 use App\Enums\OtpPurpose;
 use App\Enums\UserRole;
 use App\Services\Otp\OtpService;
@@ -75,6 +76,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
             'role' => UserRole::class,
             'kyc_status' => KycStatus::class,
             'is_active' => 'boolean',
+            'notification_preferences' => 'array',
         ];
     }
 
@@ -199,6 +201,24 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     public function avatarUrl(): ?string
     {
         return $this->avatar_path === null ? null : Storage::disk('public')->url($this->avatar_path);
+    }
+
+    /**
+     * Whether this user wants a category of notification on a channel: their
+     * own choice if they made one, else the default (the bell is on for
+     * everything; email only for the important categories).
+     *
+     * @param  'bell'|'mail'  $channel
+     */
+    public function wantsNotification(NotificationCategory $category, string $channel): bool
+    {
+        $chosen = $this->notification_preferences[$category->value][$channel] ?? null;
+
+        if (is_bool($chosen)) {
+            return $chosen;
+        }
+
+        return $channel === 'bell' ? true : $category->mailByDefault();
     }
 
     /** The timezone times are shown in for this user. */

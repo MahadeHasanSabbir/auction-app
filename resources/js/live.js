@@ -272,7 +272,26 @@ export function registerLive(Alpine) {
             client.private(`App.Models.User.${userId}`)
                 .listen('.bid.outbid', (event) => this.$dispatch('toast', { message: event.message, type: 'error' }))
                 .listen('.auction.won', (event) => this.$dispatch('toast', { message: event.message }))
-                .listen('.wallet.updated', (event) => this.wallet(event));
+                .listen('.wallet.updated', (event) => this.wallet(event))
+                .notification((notification) => this.notified(notification));
+        },
+
+        /** A stored notification arrived: the bell count goes up, and a toast shows unless the kind already had its own live toast. */
+        notified(notification) {
+            document.querySelectorAll('[data-live="notification-count"]').forEach((el) => {
+                const count = Number(el.dataset.count || 0) + 1;
+
+                el.dataset.count = String(count);
+                el.textContent = count > 9 ? '9+' : String(count);
+                el.classList.remove('hidden');
+                el.classList.add('flex');
+            });
+
+            if (!['outbid', 'auction_won'].includes(notification.kind)) {
+                this.$dispatch('toast', { message: notification.title });
+            }
+
+            window.Livewire?.dispatch('notification-received');
         },
 
         wallet(event) {

@@ -5,12 +5,14 @@ namespace App\Actions\Wallet;
 use App\Actions\Wallet\Concerns\ChangesWithdrawalStatus;
 use App\Enums\LedgerComponent;
 use App\Enums\LedgerTransactionType;
+use App\Enums\NotificationKind;
 use App\Enums\SystemAccount;
 use App\Enums\WithdrawalStatus;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WithdrawalRequest;
 use App\Services\Ledger\Ledger;
+use App\Services\Notifications\AccountAlerts;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -63,6 +65,8 @@ final class PayWithdrawal
             ])->save();
 
             $this->logReview($staff, $locked, 'paid', $reference);
+
+            app(AccountAlerts::class)->withdrawal($locked, NotificationKind::WithdrawalPaid, __('The payout was sent. Reference: :reference.', ['reference' => $reference]));
 
             return $this->syncFrom($withdrawal, $locked);
         });

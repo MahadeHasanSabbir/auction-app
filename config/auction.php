@@ -121,6 +121,18 @@ return [
         'review_days' => 60,
     ],
 
+    'messaging' => [
+        // Order chat and ticket replies a person can send per minute.
+        'messages_per_minute' => 20,
+
+        // Longest chat message, and longest ticket text, in characters.
+        'message_max' => 2000,
+        'ticket_max' => 5000,
+
+        // New tickets one person (or email address) can open per hour.
+        'tickets_per_hour' => 5,
+    ],
+
     'realtime' => [
         // Broadcasts go through their own queue, so a busy default queue never delays them.
         'queue' => env('BROADCAST_QUEUE', 'broadcasts'),

@@ -3,6 +3,9 @@
 namespace Database\Seeders;
 
 use App\Actions\Billing\IssueInvoice;
+use App\Actions\Messaging\PostOrderMessage;
+use App\Actions\Support\OpenTicket;
+use App\Actions\Support\ReplyToTicket;
 use App\Actions\Wallet\ApproveWithdrawal;
 use App\Actions\Wallet\CompleteDeposit;
 use App\Actions\Wallet\PayWithdrawal;
@@ -29,6 +32,7 @@ use App\Enums\SubscriptionStatus;
 use App\Enums\SystemAccount;
 use App\Enums\UserRole;
 use App\Events\Account\WalletUpdated;
+use App\Events\Messaging\MessagePosted;
 use App\Models\Auction;
 use App\Models\AutoBid;
 use App\Models\Bid;
@@ -57,6 +61,7 @@ use App\Services\Payments\PaymentResult;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
+use Illuminate\Notifications\Events\BroadcastNotificationCreated;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
@@ -95,6 +100,9 @@ class DemoSeeder extends Seeder
             return;
         }
 
+        // Notifications are sent now, not left in the queue for a worker that may not be running.
+        config(['queue.default' => 'sync']);
+
         $this->ledger = app(Ledger::class);
         $this->owner = User::query()->where('role', UserRole::SystemOwner)->firstOrFail();
         $this->categories = Category::query()->pluck('id', 'slug')->all();
@@ -109,8 +117,38 @@ class DemoSeeder extends Seeder
             }
 
             $this->withdrawals();
+            $this->communication();
             $this->notices();
-        }), [WalletUpdated::class]);
+        }), [WalletUpdated::class, MessagePosted::class, BroadcastNotificationCreated::class]);
+    }
+
+    /** A chat on an order in escrow and on a shipped one, a ticket staff answered and a visitor's message. */
+    private function communication(): void
+    {
+        $chat = app(PostOrderMessage::class);
+        $owner = fn (Order $order) => User::query()->where('company_id', $order->company_id)->where('role', UserRole::CompanyOwner)->firstOrFail();
+        $buyerOf = fn (Order $order) => User::query()->findOrFail($order->buyer_id);
+
+        $inEscrow = Order::query()->where('status', OrderStatus::InEscrow)->orderBy('id')->firstOrFail();
+        $chat->handle($buyerOf($inEscrow), $inEscrow, 'Hello! Could you ship it with a courier that delivers to Mirpur? Thanks.');
+        $chat->handle($owner($inEscrow), $inEscrow, 'Of course. We will use Sundarban Courier and send you the tracking number tomorrow.');
+
+        $shipped = Order::query()->where('status', OrderStatus::Shipped)->orderBy('id')->firstOrFail();
+        $chat->handle($buyerOf($shipped), $shipped, 'The parcel is marked delivered but I have not received anything yet.');
+
+        $tickets = app(OpenTicket::class);
+        $ticket = $tickets->handle($this->buyers[1], [
+            'subject' => 'When will my withdrawal arrive?',
+            'body' => 'I asked for a bank withdrawal two days ago and it still says pending. Is anything missing from my request?',
+        ]);
+        app(ReplyToTicket::class)->handle($this->staff, $ticket, 'Thanks for waiting. Bank withdrawals are reviewed within one working day; yours is next in the queue and nothing is missing.');
+
+        $tickets->handle(null, [
+            'name' => 'Nasrin Akter',
+            'email' => 'nasrin@example.com',
+            'subject' => 'Can I sell used books?',
+            'body' => 'I have a collection of old Bengali books and would like to know whether a company account can list them.',
+        ]);
     }
 
     /** One withdrawal already paid out and one waiting for staff. */

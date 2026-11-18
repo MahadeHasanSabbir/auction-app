@@ -3,10 +3,12 @@
 namespace App\Actions\Wallet;
 
 use App\Actions\Wallet\Concerns\ChangesWithdrawalStatus;
+use App\Enums\NotificationKind;
 use App\Enums\WithdrawalStatus;
 use App\Models\User;
 use App\Models\WithdrawalRequest;
 use App\Services\Ledger\Ledger;
+use App\Services\Notifications\AccountAlerts;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -41,6 +43,8 @@ final class RejectWithdrawal
             ])->save();
 
             $this->logReview($staff, $locked, 'rejected', $reason);
+
+            app(AccountAlerts::class)->withdrawal($locked, NotificationKind::WithdrawalRejected, __('The money is back in your wallet. Reason: :reason', ['reason' => $reason]));
 
             return $this->syncFrom($withdrawal, $locked);
         });

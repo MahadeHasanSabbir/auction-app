@@ -13,6 +13,7 @@
                 <li><a class="hover:text-brand-700 dark:hover:text-brand-300" href="{{ route('auctions.index') }}">{{ __('Browse auctions') }}</a></li>
                 <li><a class="hover:text-brand-700 dark:hover:text-brand-300" href="{{ route('auctions.index', ['status' => 'upcoming']) }}">{{ __('Opening soon') }}</a></li>
                 <li><a class="hover:text-brand-700 dark:hover:text-brand-300" href="{{ route('about') }}">{{ __('How it works') }}</a></li>
+                <li><a class="hover:text-brand-700 dark:hover:text-brand-300" href="{{ route('contact') }}">{{ __('Contact us') }}</a></li>
             </ul>
         </nav>
 

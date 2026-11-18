@@ -4,6 +4,7 @@ namespace App\Actions\Orders;
 
 use App\Models\Review;
 use App\Models\User;
+use App\Services\Notifications\OrderAlerts;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -11,6 +12,8 @@ use Illuminate\Validation\ValidationException;
 /** Someone on the company's team answers a review, once. */
 final class ReplyToReview
 {
+    public function __construct(private readonly OrderAlerts $alerts) {}
+
     public function handle(User $member, Review $review, string $reply): Review
     {
         $review->loadMissing('order');
@@ -31,6 +34,10 @@ final class ReplyToReview
 
             $locked->forceFill(['reply' => $reply, 'replied_at' => now()])->save();
             $review->setRawAttributes($locked->getAttributes(), true);
+
+            if ($review->order !== null) {
+                $this->alerts->reviewReplied($review->order);
+            }
 
             return $review;
         });

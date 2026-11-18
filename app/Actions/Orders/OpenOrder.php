@@ -2,6 +2,7 @@
 
 namespace App\Actions\Orders;
 
+use App\Actions\Messaging\OpenOrderChat;
 use App\Enums\LedgerTransactionType;
 use App\Enums\OrderStatus;
 use App\Enums\SystemAccount;
@@ -13,6 +14,7 @@ use App\Models\Wallet;
 use App\Models\WalletHold;
 use App\Services\Fees\CommissionTerms;
 use App\Services\Ledger\Ledger;
+use App\Services\Notifications\OrderAlerts;
 use App\Support\Money;
 use LogicException;
 
@@ -25,7 +27,7 @@ use LogicException;
  */
 final class OpenOrder
 {
-    public function __construct(private readonly Ledger $ledger) {}
+    public function __construct(private readonly Ledger $ledger, private readonly OrderAlerts $alerts, private readonly OpenOrderChat $chat) {}
 
     public function handle(Auction $auction, User $buyer, Money $price, ?WalletHold $hold, string $description): Order
     {
@@ -83,6 +85,9 @@ final class OpenOrder
             'description' => $description,
             'created_at' => now(),
         ])->save();
+
+        $this->chat->handle($order);
+        $this->alerts->created($order);
 
         return $order;
     }

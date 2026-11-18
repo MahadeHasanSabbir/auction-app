@@ -3,9 +3,11 @@
 namespace App\Actions\Wallet;
 
 use App\Actions\Wallet\Concerns\ChangesWithdrawalStatus;
+use App\Enums\NotificationKind;
 use App\Enums\WithdrawalStatus;
 use App\Models\User;
 use App\Models\WithdrawalRequest;
+use App\Services\Notifications\AccountAlerts;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -28,6 +30,8 @@ final class ApproveWithdrawal
             ])->save();
 
             $this->logReview($staff, $locked, 'approved');
+
+            app(AccountAlerts::class)->withdrawal($locked, NotificationKind::WithdrawalApproved, __('Staff approved your request. The payout follows shortly.'));
 
             return $this->syncFrom($withdrawal, $locked);
         });

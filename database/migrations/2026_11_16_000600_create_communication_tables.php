@@ -36,6 +36,8 @@ return new class extends Migration
             $table->foreignId('conversation_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->dateTime('last_read_at')->nullable();
+            // When this person was last notified about the chat; a busy chat rings the bell once until they have read it.
+            $table->dateTime('notified_at')->nullable();
             $table->timestamps();
 
             $table->unique(['conversation_id', 'user_id']);

@@ -6,6 +6,7 @@ use App\Actions\Orders\OpenOrder;
 use App\Enums\AuctionCloseReason;
 use App\Enums\AuctionStatus;
 use App\Enums\HoldType;
+use App\Enums\NotificationKind;
 use App\Events\Account\AuctionWon;
 use App\Events\Auctions\AuctionClosed;
 use App\Models\Auction;
@@ -13,6 +14,7 @@ use App\Models\AutoBid;
 use App\Models\User;
 use App\Models\WalletHold;
 use App\Services\Ledger\Ledger;
+use App\Services\Notifications\AccountAlerts;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -66,6 +68,10 @@ final class CloseAuction
                 if ($hold !== null) {
                     $this->ledger->release($hold);
                 }
+
+                app(AccountAlerts::class)->listing($locked, NotificationKind::AuctionUnsold, $locked->bid_count === 0
+                    ? __('Nobody bid. You can list the product again.')
+                    : __('The reserve price was not met. You can list the product again.'));
             }
 
             AutoBid::query()->where('auction_id', $locked->id)->update(['is_active' => false]);

@@ -17,6 +17,7 @@ use App\Services\Bidding\BidState;
 use App\Services\Bidding\ProxyResolver;
 use App\Services\Bidding\Resolution;
 use App\Services\Ledger\Ledger;
+use App\Services\Notifications\AccountAlerts;
 use App\Support\Money;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -112,6 +113,7 @@ final class PlaceBid
 
         if ($previousLeader !== null && $previousLeader !== $resolution->leaderId) {
             Outbid::dispatch($previousLeader, $locked);
+            app(AccountAlerts::class)->outbid($previousLeader, $locked);
         }
 
         $result = new BidResult(

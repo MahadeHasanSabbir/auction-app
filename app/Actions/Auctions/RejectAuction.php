@@ -4,8 +4,10 @@ namespace App\Actions\Auctions;
 
 use App\Actions\Auctions\Concerns\AuctionRules;
 use App\Enums\AuctionStatus;
+use App\Enums\NotificationKind;
 use App\Models\Auction;
 use App\Models\User;
+use App\Services\Notifications\AccountAlerts;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -40,6 +42,8 @@ final class RejectAuction
             ])->save();
 
             $this->record($reviewer, $locked, 'rejected', ['reason' => $reason]);
+
+            app(AccountAlerts::class)->listing($locked, NotificationKind::AuctionRejected, __('Reviewer note: :reason', ['reason' => $reason]));
 
             return $auction->setRawAttributes($locked->getAttributes(), true);
         });

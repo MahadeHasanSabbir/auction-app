@@ -80,7 +80,7 @@
                             </div>
                             <div>
                                 <label for="description" class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ __('Tell us what happened') }}</label>
-                                <textarea id="description" wire:model="description" rows="4" class="form-control mt-1.5"></textarea>
+                                <textarea id="description" wire:model="description" rows="4" class="form-control mt-1.5 h-24 resize-none"></textarea>
                                 @error('description') <p class="mt-1.5 text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                             </div>
                             <div class="flex gap-2">
@@ -140,13 +140,21 @@
                             </fieldset>
                             <div>
                                 <label for="comment" class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ __('Comment (optional)') }}</label>
-                                <textarea id="comment" wire:model="comment" rows="3" class="form-control mt-1.5"></textarea>
+                                <textarea id="comment" wire:model="comment" rows="3" class="form-control mt-1.5 h-24 resize-none"></textarea>
                                 @error('comment') <p class="mt-1.5 text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                             </div>
                             <x-button>{{ __('Post review') }}</x-button>
                         </form>
                     </x-card>
                 @endif
+
+                {{-- Chat with the seller --}}
+                <x-card>
+                    <h2 class="font-semibold text-slate-900 dark:text-slate-50">{{ __('Messages with :seller', ['seller' => $order->company?->name]) }}</h2>
+                    <div class="mt-4">
+                        <livewire:messages.order-chat :order-id="$order->id" :key="'chat-'.$order->id" />
+                    </div>
+                </x-card>
 
                 {{-- Timeline --}}
                 <x-card>
@@ -199,7 +207,7 @@
                             <x-field :label="__('Phone')" name="shipping_phone" type="tel" wire:model="shipping_phone" autocomplete="tel" />
                             <div>
                                 <label for="shipping_address" class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ __('Address') }}</label>
-                                <textarea id="shipping_address" wire:model="shipping_address" rows="3" autocomplete="street-address" class="form-control mt-1.5"></textarea>
+                                <textarea id="shipping_address" wire:model="shipping_address" rows="3" autocomplete="street-address" class="form-control mt-1.5 h-24 resize-none"></textarea>
                                 @error('shipping_address') <p class="mt-1.5 text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                             </div>
                             <x-button>{{ __('Save address') }}</x-button>

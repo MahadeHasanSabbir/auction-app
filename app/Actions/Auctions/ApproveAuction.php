@@ -4,10 +4,12 @@ namespace App\Actions\Auctions;
 
 use App\Actions\Auctions\Concerns\AuctionRules;
 use App\Enums\AuctionStatus;
+use App\Enums\NotificationKind;
 use App\Models\Auction;
 use App\Models\Company;
 use App\Models\User;
 use App\Services\Fees\FeeResolver;
+use App\Services\Notifications\AccountAlerts;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -47,6 +49,8 @@ final class ApproveAuction
                 'starts_at' => $locked->starts_at?->toIso8601String(),
                 'ends_at' => $locked->ends_at?->toIso8601String(),
             ]);
+
+            app(AccountAlerts::class)->listing($locked, NotificationKind::AuctionApproved, __('Your auction is approved and scheduled.'));
 
             return $auction->setRawAttributes($locked->getAttributes(), true);
         });

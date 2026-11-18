@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Seller\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Support\BrandAvatarProvider;
 use App\Http\Middleware\RequirePlan;
 use App\Models\Company;
@@ -20,6 +21,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /**
@@ -46,10 +48,14 @@ class SellerPanelProvider extends PanelProvider
             ->font('Inter', url: 'https://fonts.bunny.net/css?family=inter:400,500,600,700|space-grotesk:500,600,700&display=swap')
             ->viteTheme('resources/css/filament/panels/theme.css')
             ->sidebarCollapsibleOnDesktop()
+            // Their bell: the team's alerts are in the notifications table (AppNotification).
+            ->databaseNotifications()
             ->defaultAvatarProvider(BrandAvatarProvider::class)
             // A new company is sent to the billing page to choose its plan.
             ->tenantMiddleware([RequirePlan::class], isPersistent: true)
             ->renderHook(PanelsRenderHook::CONTENT_START, fn () => view('filament.seller.status-banner'))
+            // An open order refreshes by itself, so a delivery confirmation or a dispute shows without a reload.
+            ->renderHook(PanelsRenderHook::CONTENT_START, fn () => new HtmlString('<div wire:poll.15s></div>'), scopes: ViewOrder::class)
             ->discoverResources(in: app_path('Filament/Seller/Resources'), for: 'App\Filament\Seller\Resources')
             ->discoverPages(in: app_path('Filament/Seller/Pages'), for: 'App\Filament\Seller\Pages')
             ->pages([

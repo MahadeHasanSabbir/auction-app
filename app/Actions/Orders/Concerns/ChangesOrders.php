@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\OrderEvent;
 use App\Models\User;
+use App\Services\Notifications\OrderAlerts;
 use Illuminate\Validation\ValidationException;
 
 /** The steps every order status change shares. */
@@ -60,6 +61,8 @@ trait ChangesOrders
             'meta' => $meta === [] ? null : $meta,
             'created_at' => now(),
         ])->save();
+
+        app(OrderAlerts::class)->announce($order, $event, $description, $actor);
     }
 
     /** Copies the locked row's state onto the caller's model. */
