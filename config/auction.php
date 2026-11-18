@@ -133,6 +133,19 @@ return [
         'tickets_per_hour' => 5,
     ],
 
+    'kyc' => [
+        // New buyers and companies must have their identity documents approved
+        // before they bid, list or withdraw. Accounts never asked count as cleared.
+        'required' => (bool) env('AUCTION_KYC_REQUIRED', true),
+
+        // Each uploaded document: largest size in kilobytes and the accepted types.
+        'max_kb' => 5120,
+        'mimes' => ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
+
+        // How long a staff member's link to a document works.
+        'link_minutes' => 10,
+    ],
+
     'realtime' => [
         // Broadcasts go through their own queue, so a busy default queue never delays them.
         'queue' => env('BROADCAST_QUEUE', 'broadcasts'),

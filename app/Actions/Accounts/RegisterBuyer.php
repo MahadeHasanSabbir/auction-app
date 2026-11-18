@@ -7,6 +7,7 @@ use App\Enums\WalletType;
 use App\Models\User;
 use App\Models\UserType;
 use App\Models\Wallet;
+use App\Support\Kyc;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -29,6 +30,7 @@ final class RegisterBuyer
                 'email' => $data['email'],
                 'password' => $data['password'],
             ]);
+            $user->kyc_status = Kyc::startingStatus();
             $user->user_type_id = UserType::query()
                 ->where('account_kind', AccountKind::Buyer)
                 ->where('is_default', true)

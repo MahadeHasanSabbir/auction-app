@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Auth\LoginCodeController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -29,6 +30,9 @@ Route::middleware('guest')->group(function () {
     Route::get('login/code', [LoginCodeController::class, 'create'])->name('login.code');
     Route::post('login/code', [LoginCodeController::class, 'store'])->middleware('throttle:10,1');
     Route::post('login/code/resend', [LoginCodeController::class, 'resend'])->middleware('throttle:6,1')->name('login.code.resend');
+
+    Route::get('auth/google/redirect', [GoogleController::class, 'redirect'])->middleware('throttle:20,1')->name('google.redirect');
+    Route::get('auth/google/callback', [GoogleController::class, 'callback'])->middleware('throttle:20,1')->name('google.callback');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');

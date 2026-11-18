@@ -18,6 +18,7 @@ use App\Services\Bidding\ProxyResolver;
 use App\Services\Bidding\Resolution;
 use App\Services\Ledger\Ledger;
 use App\Services\Notifications\AccountAlerts;
+use App\Support\Kyc;
 use App\Support\Money;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +47,7 @@ final class PlaceBid
     public function handle(User $bidder, Auction $auction, Money|string|null $amount, bool $auto = false, ?string $key = null): BidResult
     {
         Gate::forUser($bidder)->authorize('bid', $auction);
+        Kyc::ensureCleared($bidder, 'amount');
 
         $max = $this->amount($amount);
 

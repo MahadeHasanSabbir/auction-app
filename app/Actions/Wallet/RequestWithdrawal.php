@@ -14,6 +14,7 @@ use App\Services\Fees\Fee;
 use App\Services\Fees\FeeResolver;
 use App\Services\Ledger\InsufficientFundsException;
 use App\Services\Ledger\Ledger;
+use App\Support\Kyc;
 use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -43,6 +44,10 @@ final class RequestWithdrawal
     public function handle(User $user, Wallet $wallet, Money $amount, PayoutMethod $method, array $destination): WithdrawalRequest
     {
         Gate::forUser($user)->authorize('withdraw', $wallet);
+
+        if (($holder = Kyc::subjectOf($wallet)) !== null) {
+            Kyc::ensureCleared($holder, 'amount');
+        }
 
         /** @var array<string, string|null> $destination */
         $destination = Validator::make($destination, $method->destinationRules())->validate();

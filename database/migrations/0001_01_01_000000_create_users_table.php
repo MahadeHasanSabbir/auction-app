@@ -100,10 +100,26 @@ return new class extends Migration
 
             $table->index(['user_id', 'expires_at']);
         });
+
+        // Sign-in through another provider (Google for buyers): one row per
+        // provider account, linked to one user.
+        Schema::create('social_accounts', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('provider', 32);
+            $table->string('provider_id');
+            $table->string('email')->nullable();
+            $table->dateTime('last_used_at')->nullable();
+            $table->timestamps();
+
+            $table->unique(['provider', 'provider_id']);
+            $table->unique(['user_id', 'provider']);
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('social_accounts');
         Schema::dropIfExists('trusted_devices');
         Schema::dropIfExists('otp_codes');
         Schema::dropIfExists('sessions');

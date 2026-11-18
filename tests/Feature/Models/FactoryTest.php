@@ -15,12 +15,14 @@ use App\Models\Company;
 use App\Models\CompanyAgreement;
 use App\Models\CompanyInvitation;
 use App\Models\FeeRule;
+use App\Models\KycRequest;
 use App\Models\Notice;
 use App\Models\Order;
 use App\Models\Plan;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\Review;
+use App\Models\SocialAccount;
 use App\Models\Subscription;
 use App\Models\TrustedDevice;
 use App\Models\User;
@@ -54,7 +56,7 @@ class FactoryTest extends TestCase
             User::class, UserType::class, Plan::class, Company::class, Subscription::class,
             CompanyAgreement::class, CompanyInvitation::class, Category::class, Product::class,
             ProductImage::class, Auction::class, Bid::class, AutoBid::class, Wallet::class,
-            FeeRule::class, Order::class, Review::class, Notice::class, TrustedDevice::class,
+            FeeRule::class, Order::class, Review::class, Notice::class, TrustedDevice::class, SocialAccount::class, KycRequest::class,
         ])->mapWithKeys(fn (string $model) => [class_basename($model) => [$model]])->all();
     }
 

@@ -250,6 +250,11 @@
                             {{ __('Confirm your email address to bid.') }}
                             <a href="{{ route('verification.notice') }}" class="font-semibold underline">{{ __('Confirm now') }}</a>
                         </p>
+                    @elseif (! $viewer['identityCleared'] && ! $auction->status->isFinal())
+                        <p class="rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950/60 dark:text-amber-200">
+                            {{ __('Verify your identity to bid. It takes a minute to upload a document.') }}
+                            <a href="{{ route('verification') }}" class="font-semibold underline">{{ __('Verify now') }}</a>
+                        </p>
                     @elseif ($live && $canBid)
                         {{-- Both are rendered; the live state decides which one shows. --}}
                         <p class="rounded-md bg-brand-50 px-4 py-3 text-sm font-medium text-brand-800 dark:bg-brand-950 dark:text-brand-200" x-show="leading" @unless ($leading) style="display: none" @endunless>

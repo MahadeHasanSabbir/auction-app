@@ -219,6 +219,7 @@ class Show extends Component
         return [
             'isBuyer' => $user->isBuyer(),
             'verified' => $user->hasVerifiedEmail(),
+            'identityCleared' => $user->kyc_status->isCleared(),
             'watching' => $user->watchedAuctions()->whereKey($auction->id)->exists(),
             'hasBid' => $auction->bids()->where('user_id', $user->id)->exists(),
             'autoMax' => $autoBid?->max_amount,

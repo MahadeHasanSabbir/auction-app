@@ -9,6 +9,7 @@ use App\Models\Company;
 use App\Models\User;
 use App\Models\UserType;
 use App\Models\Wallet;
+use App\Support\Kyc;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -33,6 +34,7 @@ final class RegisterCompany
                 'email' => $data['email'],
                 'phone' => $data['phone'] ?? null,
             ]);
+            $company->kyc_status = Kyc::startingStatus();
             $company->user_type_id = UserType::query()
                 ->where('account_kind', AccountKind::Seller)
                 ->where('is_default', true)

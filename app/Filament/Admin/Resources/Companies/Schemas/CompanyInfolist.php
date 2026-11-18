@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources\Companies\Schemas;
 
 use App\Enums\CompanyStatus;
 use App\Enums\KycStatus;
+use App\Filament\Admin\Resources\Kyc\KycRequestResource;
 use App\Models\Company;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -52,6 +53,7 @@ class CompanyInfolist
                             ->label(__('Seats used'))
                             ->state(fn (Company $record) => $record->users_count.' / '.($record->subscription?->maxUsers() ?? '—')),
                     ]),
+                KycRequestResource::documentsSection(),
             ]);
     }
 }

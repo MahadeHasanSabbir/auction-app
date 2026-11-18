@@ -1,7 +1,9 @@
 @php
     use App\Enums\CompanyStatus;
     use App\Enums\SubscriptionStatus;
+    use App\Enums\KycStatus;
     use App\Filament\Seller\Pages\Billing;
+    use App\Filament\Seller\Pages\Verification;
     use App\Models\Company;
     use App\Models\Subscription;
 
@@ -19,6 +21,7 @@
             $subscription?->status === SubscriptionStatus::PastDue => ['warning', 'heroicon-o-exclamation-triangle', __('Your plan payment is overdue'), __('Pay the open invoice by :date to keep listing.', ['date' => $subscription->grace_ends_at?->timezone($tz)->format('j M Y') ?? '—']), [$billing, __('Pay now')]],
             $subscription?->status === SubscriptionStatus::Expired => ['danger', 'heroicon-o-x-circle', __('Your plan has ended'), __('You cannot create new listings. Running auctions and orders continue.'), [$billing, __('Choose a plan')]],
             $subscription?->status === SubscriptionStatus::Trialing && $subscription->trial_ends_at !== null && $subscription->trial_ends_at->diffInDays(now(), true) <= 3 => ['info', 'heroicon-o-clock', __('Your trial ends on :date', ['date' => $subscription->trial_ends_at->timezone($tz)->format('j M Y')]), __('Your plan is invoiced then. Pay it from the company wallet or online.'), [$billing, __('See plan')]],
+            in_array($company->kyc_status, [KycStatus::Requested, KycStatus::Rejected], true) && ! request()->routeIs(Verification::getRouteName(filament()->getPanel('seller'))) => ['warning', 'heroicon-o-shield-check', $company->kyc_status === KycStatus::Rejected ? __('Your documents were not accepted') : __('Verify your company'), __('Upload the owner’s ID and the trade licence. Until they are approved you cannot list or withdraw.'), [Verification::getUrl(panel: 'seller', tenant: $company), __('Upload documents')]],
             $company->status === CompanyStatus::Pending => ['info', 'heroicon-o-shield-check', __('Your company is being verified'), __('Set everything up now; you can list as soon as the platform has verified you.'), null],
             default => null,
         };

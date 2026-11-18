@@ -2,11 +2,15 @@
 
 namespace App\Services\Notifications;
 
+use App\Enums\KycStatus;
 use App\Enums\NotificationKind;
+use App\Filament\Admin\Resources\Kyc\KycRequestResource;
 use App\Filament\Seller\Pages\CompanyWallet;
+use App\Filament\Seller\Pages\Verification;
 use App\Filament\Seller\Resources\Auctions\AuctionResource;
 use App\Models\Auction;
 use App\Models\Company;
+use App\Models\KycRequest;
 use App\Models\User;
 use App\Models\WithdrawalRequest;
 
@@ -45,6 +49,50 @@ class AccountAlerts
             $requester->isSeller() && $requester->company_id !== null
                 ? CompanyWallet::getUrl(panel: 'seller', tenant: Company::query()->findOrFail($requester->company_id))
                 : route('wallet'));
+    }
+
+    /** Staff asked a buyer or a company for identity documents. */
+    public function kycRequested(User|Company $subject, ?string $note): void
+    {
+        $this->notifier->send($this->kycRecipients($subject), NotificationKind::KycRequested,
+            __('Please verify your identity'),
+            $note ?? __('Upload your documents to keep bidding, selling and withdrawing.'),
+            $this->kycUrl($subject));
+    }
+
+    /** Documents arrived for review: every platform account hears of it. */
+    public function kycSubmitted(KycRequest $request, User|Company $subject): void
+    {
+        $this->notifier->send($this->notifier->platformStaff(), NotificationKind::KycSubmitted,
+            __('Documents to check: :name', ['name' => $subject->name]),
+            $subject instanceof Company ? __('A company sent its verification documents.') : __('A buyer sent their verification documents.'),
+            KycRequestResource::getUrl('view', ['record' => $request], panel: 'admin'));
+    }
+
+    /** Staff approved or rejected the documents. */
+    public function kycReviewed(KycRequest $request, User|Company $subject): void
+    {
+        $approved = $request->status === KycStatus::Approved;
+
+        $this->notifier->send($this->kycRecipients($subject), $approved ? NotificationKind::KycApproved : NotificationKind::KycRejected,
+            $approved ? __('You are verified') : __('Your documents were not accepted'),
+            $approved
+                ? __('Your documents were approved. Everything is open to you now.')
+                : __('Reason: :reason Please upload them again.', ['reason' => $request->rejection_reason]),
+            $this->kycUrl($subject));
+    }
+
+    /** @return iterable<User>|User */
+    private function kycRecipients(User|Company $subject): iterable|User
+    {
+        return $subject instanceof Company ? $this->notifier->team($subject) : $subject;
+    }
+
+    private function kycUrl(User|Company $subject): string
+    {
+        return $subject instanceof Company
+            ? Verification::getUrl(panel: 'seller', tenant: $subject)
+            : route('verification');
     }
 
     /** Staff approved or rejected an auction, or it ended without a sale. */

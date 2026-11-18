@@ -19,6 +19,7 @@ use App\Enums\DisputeReason;
 use App\Enums\DisputeStatus;
 use App\Enums\HoldType;
 use App\Enums\InvoiceStatus;
+use App\Enums\KycDocumentType;
 use App\Enums\KycStatus;
 use App\Enums\LedgerComponent;
 use App\Enums\LedgerTransactionType;
@@ -42,6 +43,7 @@ use App\Models\CompanyAgreement;
 use App\Models\CompanyInvitation;
 use App\Models\Deposit;
 use App\Models\Dispute;
+use App\Models\KycDocument;
 use App\Models\KycRequest;
 use App\Models\Notice;
 use App\Models\Order;
@@ -64,6 +66,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Notifications\Events\BroadcastNotificationCreated;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -119,6 +122,7 @@ class DemoSeeder extends Seeder
             $this->withdrawals();
             $this->communication();
             $this->notices();
+            $this->verification();
         }), [WalletUpdated::class, MessagePosted::class, BroadcastNotificationCreated::class]);
     }
 
@@ -776,5 +780,46 @@ class DemoSeeder extends Seeder
             'published_at' => now()->subDays(2),
             'created_by' => $this->staff->id,
         ]);
+    }
+
+    /**
+     * Identity checks: active companies and the first ten buyers are
+     * verified; buyer11 has sent a document for staff to check and buyer12
+     * has not uploaded yet (pending companies were asked in company()).
+     */
+    private function verification(): void
+    {
+        Company::query()->where('status', '!=', CompanyStatus::Pending)->update(['kyc_status' => KycStatus::Approved]);
+
+        foreach (array_slice($this->buyers, 0, 10) as $buyer) {
+            $buyer->forceFill(['kyc_status' => KycStatus::Approved])->save();
+        }
+
+        [$submitted, $waiting] = array_slice($this->buyers, 10, 2);
+
+        $submitted->forceFill(['kyc_status' => KycStatus::Submitted])->save();
+        $request = KycRequest::query()->forceCreate([
+            'user_id' => $submitted->id,
+            'status' => KycStatus::Submitted,
+            'requested_by' => $submitted->id,
+            'submitted_at' => now()->subHours(3),
+        ]);
+
+        // A tiny placeholder PDF, so the desk has a file to open.
+        $pdf = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 300 200]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n";
+        $path = 'documents/demo-national-id-'.$submitted->id.'.pdf';
+        Storage::disk('kyc')->put($path, $pdf);
+
+        KycDocument::query()->forceCreate([
+            'kyc_request_id' => $request->id,
+            'type' => KycDocumentType::NationalId,
+            'path' => $path,
+            'original_name' => 'national-id.pdf',
+            'mime_type' => 'application/pdf',
+            'size' => strlen($pdf),
+            'uploaded_by' => $submitted->id,
+        ]);
+
+        $waiting->forceFill(['kyc_status' => KycStatus::Requested])->save();
     }
 }

@@ -53,6 +53,7 @@ class SellerPanelProvider extends PanelProvider
             ->defaultAvatarProvider(BrandAvatarProvider::class)
             // A new company is sent to the billing page to choose its plan.
             ->tenantMiddleware([RequirePlan::class], isPersistent: true)
+            ->renderHook(PanelsRenderHook::CONTENT_START, fn () => view('filament.notice-banner'))
             ->renderHook(PanelsRenderHook::CONTENT_START, fn () => view('filament.seller.status-banner'))
             // An open order refreshes by itself, so a delivery confirmation or a dispute shows without a reload.
             ->renderHook(PanelsRenderHook::CONTENT_START, fn () => new HtmlString('<div wire:poll.15s></div>'), scopes: ViewOrder::class)

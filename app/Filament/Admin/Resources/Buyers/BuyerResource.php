@@ -2,17 +2,21 @@
 
 namespace App\Filament\Admin\Resources\Buyers;
 
+use App\Enums\KycStatus;
 use App\Enums\UserRole;
 use App\Filament\Admin\Resources\AccountActions;
 use App\Filament\Admin\Resources\Buyers\Pages\ListBuyers;
 use App\Filament\Admin\Resources\Buyers\Pages\ViewBuyer;
 use App\Filament\Admin\Resources\Buyers\RelationManagers\OrdersRelationManager;
+use App\Filament\Admin\Resources\Kyc\KycRequestResource;
+use App\Filament\Admin\Resources\Kyc\KycRequestsRelationManager;
 use App\Models\User;
 use BackedEnum;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Resources\RelationManagers\RelationGroup;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -85,6 +89,8 @@ class BuyerResource extends Resource
                 TextColumn::make('phone')->label(__('Phone'))->searchable()->placeholder('—')->toggleable(),
                 IconColumn::make('email_verified_at')->label(__('Verified'))->boolean()
                     ->state(fn (User $record) => $record->email_verified_at !== null),
+                TextColumn::make('kyc_status')->label(__('Identity'))->badge()
+                    ->formatStateUsing(fn (KycStatus $state) => $state->label())->color(fn (KycStatus $state) => $state->color()),
                 TextColumn::make('wallet.balance')->label(__('Balance'))->formatStateUsing(fn ($state) => $state?->format())->alignEnd()->placeholder('—'),
                 TextColumn::make('bids_count')->label(__('Bids'))->alignEnd(),
                 TextColumn::make('orders_count')->label(__('Orders'))->alignEnd(),
@@ -128,24 +134,29 @@ class BuyerResource extends Resource
                             ->state(fn (User $record) => $record->email_verified_at !== null),
                         TextEntry::make('phone')->label(__('Phone'))->placeholder('—'),
                         TextEntry::make('address')->label(__('Address'))->placeholder('—')->columnSpan(2),
+                        TextEntry::make('kyc_status')->label(__('Identity'))->badge()
+                            ->formatStateUsing(fn (KycStatus $state) => $state->label())->color(fn (KycStatus $state) => $state->color()),
                         TextEntry::make('timezone')->label(__('Timezone'))->placeholder(__('Default')),
                         TextEntry::make('created_at')->label(__('Joined'))->dateTime('j M Y'),
                         TextEntry::make('last_login_at')->label(__('Last sign-in'))->dateTime('j M Y, H:i')->placeholder(__('Never')),
                     ]),
                 Section::make(__('Wallet'))
                     ->columnSpan(1)
+                    ->columns(2)
                     ->schema([
                         TextEntry::make('wallet.balance')->label(__('Balance'))->formatStateUsing($money)->placeholder('—'),
                         TextEntry::make('wallet.held')->label(__('On hold'))->formatStateUsing($money)->placeholder('—'),
                         TextEntry::make('bids_count')->label(__('Bids placed')),
                         TextEntry::make('orders_count')->label(__('Orders')),
                     ]),
+                KycRequestResource::documentsSection(),
             ]);
     }
 
     public static function getRelations(): array
     {
-        return [OrdersRelationManager::class];
+        // One group renders the tables one under the other instead of as tabs.
+        return [RelationGroup::make(__('Related'), [OrdersRelationManager::class, KycRequestsRelationManager::class])];
     }
 
     public static function getPages(): array

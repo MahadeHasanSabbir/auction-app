@@ -13,6 +13,7 @@
         "filament/filament": "^5.11",
         "laravel/framework": "^13.0",
         "laravel/reverb": "^1.13",
+        "laravel/socialite": "^5.33",
         "laravel/tinker": "^3.1",
         "livewire/livewire": "^4.4",
         "spatie/laravel-activitylog": "^5.1"

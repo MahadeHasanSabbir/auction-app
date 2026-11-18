@@ -145,6 +145,12 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
         return $this->hasMany(KycRequest::class);
     }
 
+    /** @return HasMany<SocialAccount, $this> */
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
+    }
+
     /** @return HasMany<OtpCode, $this> */
     public function otpCodes(): HasMany
     {

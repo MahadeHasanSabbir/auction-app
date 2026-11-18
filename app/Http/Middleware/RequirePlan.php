@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Enums\SubscriptionStatus;
 use App\Filament\Seller\Pages\Billing;
+use App\Filament\Seller\Pages\Verification;
 use App\Models\Company;
 use App\Models\Subscription;
 use Closure;
@@ -14,7 +15,8 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * A new company lands on the billing page until it has chosen a plan (and,
  * for a paid plan, paid its first invoice). Only page loads are redirected,
- * so Livewire's background requests and the billing page itself keep working.
+ * so Livewire's background requests, the billing page itself and the
+ * verification page keep working.
  * A company whose plan ended can still reach its panel: running auctions and
  * orders finish.
  */
@@ -24,7 +26,7 @@ class RequirePlan
     {
         $company = Filament::getTenant();
 
-        if (! $company instanceof Company || ! $request->isMethod('GET') || $request->routeIs(Billing::getRouteName(Filament::getPanel('seller')))) {
+        if (! $company instanceof Company || ! $request->isMethod('GET') || $request->routeIs(Billing::getRouteName(Filament::getPanel('seller')), Verification::getRouteName(Filament::getPanel('seller')))) {
             return $next($request);
         }
 

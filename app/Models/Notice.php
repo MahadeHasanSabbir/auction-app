@@ -44,4 +44,27 @@ class Notice extends Model
             ->where('published_at', '<=', now())
             ->where(fn (Builder $q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()));
     }
+
+    /**
+     * Notices meant for this viewer: everyone's, plus the sellers' for a
+     * seller account, the buyers' for buyers and visitors, all for staff.
+     *
+     * @param  Builder<$this>  $query
+     */
+    public function scopeFor(Builder $query, ?User $viewer): void
+    {
+        $audiences = match (true) {
+            $viewer?->isPlatform() ?? false => NoticeAudience::cases(),
+            $viewer?->isSeller() ?? false => [NoticeAudience::All, NoticeAudience::Sellers],
+            default => [NoticeAudience::All, NoticeAudience::Buyers],
+        };
+
+        $query->whereIn('audience', $audiences);
+    }
+
+    /** The newest current notice for the viewer, for the banner. */
+    public static function bannerFor(?User $viewer): ?self
+    {
+        return self::query()->current()->for($viewer)->latest('published_at')->latest('id')->first();
+    }
 }

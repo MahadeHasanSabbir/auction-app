@@ -14,6 +14,7 @@ enum NotificationCategory: string
     case Activity = 'activity';
     case Listings = 'listings';
     case Support = 'support';
+    case Account = 'account';
 
     public function label(): string
     {
@@ -24,6 +25,7 @@ enum NotificationCategory: string
             self::Activity => __('Messages and reviews'),
             self::Listings => __('Your auctions'),
             self::Support => __('Support'),
+            self::Account => __('Account verification'),
         };
     }
 
@@ -36,6 +38,7 @@ enum NotificationCategory: string
             self::Activity => __('New chat messages, delivery addresses, reviews and replies.'),
             self::Listings => __('Auctions approved, rejected or ended without a sale.'),
             self::Support => __('Replies to your support tickets.'),
+            self::Account => __('Documents asked for, approved or not accepted.'),
         };
     }
 
@@ -43,7 +46,7 @@ enum NotificationCategory: string
     public function mailByDefault(): bool
     {
         return match ($this) {
-            self::Orders, self::Money, self::Support => true,
+            self::Orders, self::Money, self::Support, self::Account => true,
             self::Bidding, self::Activity, self::Listings => false,
         };
     }

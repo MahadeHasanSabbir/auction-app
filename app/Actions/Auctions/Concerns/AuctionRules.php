@@ -62,6 +62,7 @@ trait AuctionRules
             $company->status === CompanyStatus::Suspended => __('The company is suspended and cannot list auctions.'),
             $company->status === CompanyStatus::Pending => __('The platform has not verified the company yet. You can prepare drafts in the meantime.'),
             ! ($company->subscription?->allowsSelling() ?? false) => __('The company’s plan does not allow selling right now. See Plan & billing.'),
+            ! $company->kyc_status->isCleared() => __('Verify the company first: upload its documents on the Verification page.'),
             default => null,
         };
 

@@ -11,6 +11,7 @@ use App\Actions\Auctions\WithdrawAuction;
 use App\Enums\AuctionCloseReason;
 use App\Enums\AuctionStatus;
 use App\Enums\CompanyStatus;
+use App\Enums\KycStatus;
 use App\Enums\SubscriptionStatus;
 use App\Models\Auction;
 use App\Models\Company;
@@ -165,6 +166,10 @@ class AuctionListingTest extends TestCase
             $this->company->forceFill(['status' => $status])->save();
             $this->refused(fn () => app(SubmitAuction::class)->handle($this->member, $auction), 'auction');
         }
+
+        // An active company still needs its documents approved.
+        $this->company->forceFill(['status' => CompanyStatus::Active, 'kyc_status' => KycStatus::Submitted])->save();
+        $this->refused(fn () => app(SubmitAuction::class)->handle($this->member, $auction), 'auction');
 
         $this->assertSame(AuctionStatus::Draft, $auction->refresh()->status);
     }

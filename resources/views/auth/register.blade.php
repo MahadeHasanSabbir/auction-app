@@ -60,6 +60,8 @@
         <p x-show="type === 'seller'" x-cloak class="text-center text-xs text-slate-500 dark:text-slate-400">
             {{ __('Your company can list auctions once the platform has verified it.') }}
         </p>
+
+        <x-google-button :label="__('Sign up with Google')" x-show="type !== 'seller'" />
     </form>
 
     <x-slot:below>

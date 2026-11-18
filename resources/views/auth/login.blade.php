@@ -29,6 +29,8 @@
         <x-button class="w-full" size="lg">{{ __('Continue') }}</x-button>
     </form>
 
+    <x-google-button />
+
     <x-slot:below>
         {{ __('New here?') }}
         <a href="{{ route('register') }}" class="font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">{{ __('Create an account') }}</a>

@@ -21,6 +21,30 @@ enum KycStatus: string
         };
     }
 
+    /** The colour on the site's badge component. */
+    public function badge(): string
+    {
+        return match ($this) {
+            self::NotRequired => 'slate',
+            self::Requested => 'amber',
+            self::Submitted => 'blue',
+            self::Approved => 'green',
+            self::Rejected => 'red',
+        };
+    }
+
+    /** The colour in the Filament panels. */
+    public function color(): string
+    {
+        return match ($this) {
+            self::NotRequired => 'gray',
+            self::Requested => 'warning',
+            self::Submitted => 'info',
+            self::Approved => 'success',
+            self::Rejected => 'danger',
+        };
+    }
+
     /** True when nothing is outstanding: never asked for, or approved. */
     public function isCleared(): bool
     {

@@ -29,6 +29,8 @@
 
     <x-site.header />
 
+    <x-site.notice-banner />
+
     <main id="content" class="flex-1">
         {{ $slot }}
     </main>

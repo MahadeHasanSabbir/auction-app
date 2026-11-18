@@ -86,6 +86,7 @@ class PublicPagesTest extends TestCase
 
             $this->get('/')->assertOk()->assertSee('Mughal-era brass water jug');
             $this->get('/about')->assertOk();
+            $this->get('/notices')->assertOk()->assertSee('Welcome to the marketplace');
             $this->get('/auctions')->assertOk();
             $this->get('/auctions?status=ended')->assertOk();
 
@@ -96,5 +97,11 @@ class PublicPagesTest extends TestCase
 
         $this->actingAs($visitors[1])->get('/dashboard')->assertOk();
         $this->get('/profile')->assertOk();
+        $this->get('/verification')->assertOk()->assertSee(__('Verified'));
+
+        $this->actingAs(User::query()->where('email', 'buyer12@auction.com')->sole())->get('/verification')->assertOk()->assertSee(__('Send for review'));
+        $this->actingAs($visitors[2])->get('/seller/dhaka-antiques/verification')->assertOk();
+        $this->actingAs($visitors[3])->get('/admin/verifications')->assertOk()->assertSee('Mou Saha');
+        $this->get('/admin/notices')->assertOk();
     }
 }

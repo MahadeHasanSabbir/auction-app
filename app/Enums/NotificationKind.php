@@ -26,6 +26,10 @@ enum NotificationKind: string
     case AuctionUnsold = 'auction_unsold';
     case TicketReply = 'ticket_reply';
     case NewTicket = 'new_ticket';
+    case KycRequested = 'kyc_requested';
+    case KycSubmitted = 'kyc_submitted';
+    case KycApproved = 'kyc_approved';
+    case KycRejected = 'kyc_rejected';
 
     public function category(): NotificationCategory
     {
@@ -37,6 +41,7 @@ enum NotificationKind: string
             self::WithdrawalApproved, self::WithdrawalPaid, self::WithdrawalRejected => NotificationCategory::Money,
             self::AuctionApproved, self::AuctionRejected, self::AuctionUnsold => NotificationCategory::Listings,
             self::TicketReply, self::NewTicket => NotificationCategory::Support,
+            self::KycRequested, self::KycSubmitted, self::KycApproved, self::KycRejected => NotificationCategory::Account,
         };
     }
 }

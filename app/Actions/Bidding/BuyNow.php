@@ -13,6 +13,7 @@ use App\Models\Bid;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\Ledger\InsufficientFundsException;
+use App\Support\Kyc;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -33,6 +34,7 @@ final class BuyNow
     public function handle(User $buyer, Auction $auction, ?string $key = null): Order
     {
         Gate::forUser($buyer)->authorize('bid', $auction);
+        Kyc::ensureCleared($buyer, 'buy_now');
 
         if (($stored = $this->remembered($buyer, $key, 'buy_now')) !== null) {
             return Order::query()->findOrFail($stored['order_id'] ?? 0);

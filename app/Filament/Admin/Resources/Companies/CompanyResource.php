@@ -7,8 +7,10 @@ use App\Filament\Admin\Resources\Companies\Pages\ViewCompany;
 use App\Filament\Admin\Resources\Companies\RelationManagers\AgreementsRelationManager;
 use App\Filament\Admin\Resources\Companies\Schemas\CompanyInfolist;
 use App\Filament\Admin\Resources\Companies\Tables\CompaniesTable;
+use App\Filament\Admin\Resources\Kyc\KycRequestsRelationManager;
 use App\Models\Company;
 use BackedEnum;
+use Filament\Resources\RelationManagers\RelationGroup;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -50,9 +52,8 @@ class CompanyResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            AgreementsRelationManager::class,
-        ];
+        // One group renders the tables one under the other instead of as tabs.
+        return [RelationGroup::make(__('Related'), [AgreementsRelationManager::class, KycRequestsRelationManager::class])];
     }
 
     public static function getPages(): array
