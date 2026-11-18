@@ -27,7 +27,12 @@ class PlanResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 22;
+
+    public static function getNavigationGroup(): string
+    {
+        return __('Marketplace');
+    }
 
     public static function getEloquentQuery(): Builder
     {

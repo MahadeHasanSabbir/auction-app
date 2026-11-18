@@ -18,16 +18,22 @@ use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\User;
 use App\Models\WithdrawalRequest;
+use App\Policies\ActivityPolicy;
 use App\Services\Ledger\Ledger;
+use App\Services\Settings\Settings;
 use Carbon\CarbonImmutable;
 use Filament\Support\Facades\FilamentTimezone;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Queue\Events\Looping;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Spatie\Activitylog\Models\Activity;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -73,6 +79,18 @@ class AppServiceProvider extends ServiceProvider
             'notice' => Notice::class,
             'setting' => Setting::class,
         ]);
+
+        // Values the system owner changed in the admin panel override the
+        // config defaults; a queue worker picks up changes between jobs.
+        $this->app->make(Settings::class)->apply();
+        Event::listen(Looping::class, fn () => $this->app->make(Settings::class)->apply());
+
+        Gate::policy(Activity::class, ActivityPolicy::class);
+
+        // Report pages: the marketplace figures for every platform account, the
+        // platform's revenue for the system owner only.
+        Gate::define('viewReports', fn (User $user) => $user->is_active && $user->isPlatform());
+        Gate::define('viewRevenue', fn (User $user) => $user->is_active && $user->isSystemOwner());
 
         // Dates are immutable everywhere, so passing one around cannot change it.
         Date::use(CarbonImmutable::class);

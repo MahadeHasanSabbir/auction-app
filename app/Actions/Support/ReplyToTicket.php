@@ -6,6 +6,7 @@ use App\Actions\Messaging\Concerns\PostsMessages;
 use App\Enums\ConversationStatus;
 use App\Enums\ConversationType;
 use App\Enums\NotificationKind;
+use App\Filament\Admin\Resources\Tickets\TicketResource;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -82,7 +83,7 @@ final class ReplyToTicket
             $this->notifier->send($ticket->assigned_to, NotificationKind::TicketReply,
                 __('New reply on ticket #:id', ['id' => $ticket->id]),
                 $subject,
-                route('support.show', $ticket));
+                TicketResource::getUrl('view', ['record' => $ticket], panel: 'admin'));
         }
     }
 }

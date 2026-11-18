@@ -5,8 +5,11 @@ namespace App\Actions\Support;
 use App\Actions\Messaging\Concerns\PostsMessages;
 use App\Enums\ConversationStatus;
 use App\Enums\ConversationType;
+use App\Enums\NotificationKind;
+use App\Filament\Admin\Resources\Tickets\TicketResource;
 use App\Models\Conversation;
 use App\Models\User;
+use App\Services\Notifications\Notifier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
@@ -20,6 +23,8 @@ use Illuminate\Validation\ValidationException;
 final class OpenTicket
 {
     use PostsMessages;
+
+    public function __construct(private readonly Notifier $notifier) {}
 
     /**
      * @param  array<string, mixed>  $input  subject, body and, without a user, name and email
@@ -46,7 +51,7 @@ final class OpenTicket
 
         RateLimiter::hit($key, 3600);
 
-        return DB::transaction(function () use ($user, $data): Conversation {
+        $ticket = DB::transaction(function () use ($user, $data): Conversation {
             $ticket = new Conversation;
             $ticket->forceFill([
                 'type' => ConversationType::Support,
@@ -61,5 +66,12 @@ final class OpenTicket
 
             return $ticket;
         });
+
+        $this->notifier->send($this->notifier->platformStaff(), NotificationKind::NewTicket,
+            __('New ticket #:id: :subject', ['id' => $ticket->id, 'subject' => $ticket->subject]),
+            __('From :name.', ['name' => $user->name ?? $ticket->guest_name]),
+            TicketResource::getUrl('view', ['record' => $ticket], panel: 'admin'));
+
+        return $ticket;
     }
 }

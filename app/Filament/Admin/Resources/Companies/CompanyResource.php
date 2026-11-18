@@ -26,7 +26,12 @@ class CompanyResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 11;
+
+    public static function getNavigationGroup(): string
+    {
+        return __('People');
+    }
 
     public static function getEloquentQuery(): Builder
     {

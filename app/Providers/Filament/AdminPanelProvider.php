@@ -3,10 +3,12 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Support\BrandAvatarProvider;
+use App\Http\Middleware\RequirePasswordChange;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -41,6 +43,13 @@ class AdminPanelProvider extends PanelProvider
             ->font('Inter', url: 'https://fonts.bunny.net/css?family=inter:400,500,600,700|space-grotesk:500,600,700&display=swap')
             ->viteTheme('resources/css/filament/panels/theme.css')
             ->sidebarCollapsibleOnDesktop()
+            ->navigationGroups([
+                NavigationGroup::make(fn () => __('Desk')),
+                NavigationGroup::make(fn () => __('People')),
+                NavigationGroup::make(fn () => __('Marketplace')),
+                NavigationGroup::make(fn () => __('Reports')),
+                NavigationGroup::make(fn () => __('System'))->collapsed(),
+            ])
             ->databaseNotifications()
             ->defaultAvatarProvider(BrandAvatarProvider::class)
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\Filament\Admin\Resources')
@@ -67,6 +76,7 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
                 EnsureEmailIsVerified::class,
+                RequirePasswordChange::class,
             ]);
     }
 }

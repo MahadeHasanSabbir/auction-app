@@ -36,6 +36,10 @@ return new class extends Migration
             $table->foreignId('user_type_id')->nullable()->constrained()->nullOnDelete();
             $table->string('kyc_status', 32)->default('not_required');
             $table->boolean('is_active')->default(true);
+            // Why platform staff suspended the account (for staff; sign-in fails like a wrong password).
+            $table->string('suspension_reason', 500)->nullable();
+            // Set when the system owner gave a temporary password; cleared by the first change.
+            $table->boolean('password_change_required')->default(false);
             $table->string('phone', 32)->nullable();
             $table->string('address', 500)->nullable();
             $table->string('avatar_path')->nullable();

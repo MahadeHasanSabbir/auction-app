@@ -7,6 +7,7 @@ use App\Livewire\Account\Notifications;
 use App\Livewire\Account\NotificationSettings;
 use App\Livewire\Account\Orders;
 use App\Livewire\Account\Overview;
+use App\Livewire\Account\Purchases;
 use App\Livewire\Auctions\Index as AuctionIndex;
 use App\Livewire\Auctions\Show as AuctionShow;
 use App\Livewire\Contact;
@@ -38,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/my-bids', Bids::class)->name('bids');
     Route::get('/orders', Orders::class)->name('orders');
     Route::get('/orders/{order}', OrderShow::class)->name('orders.show');
+    Route::get('/purchases', Purchases::class)->name('purchases');
     Route::get('/notifications', Notifications::class)->name('notifications');
     Route::get('/support', SupportIndex::class)->name('support.index');
     Route::get('/support/{conversation}', SupportShow::class)->name('support.show');

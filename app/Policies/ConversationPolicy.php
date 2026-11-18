@@ -48,6 +48,12 @@ final class ConversationPolicy
         return $conversation->type === ConversationType::Support && $this->post($user, $conversation);
     }
 
+    /** The admin panel's ticket desk. */
+    public function viewAny(User $user): bool
+    {
+        return $user->is_active && $user->isPlatform();
+    }
+
     public function assign(User $user, Conversation $conversation): bool
     {
         return $user->is_active && $user->isPlatform() && $conversation->type === ConversationType::Support;

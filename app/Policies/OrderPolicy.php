@@ -15,6 +15,12 @@ use App\Models\User;
  */
 final class OrderPolicy
 {
+    /** Order lists: the seller panel shows the company's own, the admin panel every order. */
+    public function viewAny(User $user): bool
+    {
+        return $user->is_active && ($user->isPlatform() || $user->isSeller());
+    }
+
     public function view(User $user, Order $order): bool
     {
         return $user->is_active && ($this->isBuyer($user, $order) || $this->onTeam($user, $order) || $user->isPlatform());

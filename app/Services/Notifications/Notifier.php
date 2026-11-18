@@ -3,6 +3,7 @@
 namespace App\Services\Notifications;
 
 use App\Enums\NotificationKind;
+use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\User;
 use App\Notifications\AppNotification;
@@ -16,6 +17,16 @@ use Illuminate\Support\Facades\Notification;
  */
 class Notifier
 {
+    /**
+     * Platform staff and the system owner who can still sign in.
+     *
+     * @return Collection<int, User>
+     */
+    public function platformStaff(): Collection
+    {
+        return User::query()->whereIn('role', UserRole::platform())->where('is_active', true)->get();
+    }
+
     /**
      * @param  User|int|iterable<User|int|null>|null  $recipients
      */

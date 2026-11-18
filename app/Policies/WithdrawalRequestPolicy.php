@@ -8,6 +8,12 @@ use App\Models\WithdrawalRequest;
 
 final class WithdrawalRequestPolicy
 {
+    /** The admin panel's payout desk. */
+    public function viewAny(User $user): bool
+    {
+        return $user->is_active && $user->isPlatform();
+    }
+
     public function view(User $user, WithdrawalRequest $withdrawal): bool
     {
         return $user->isPlatform() || $withdrawal->requested_by === $user->id;

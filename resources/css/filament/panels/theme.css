@@ -9,6 +9,7 @@
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
 @source '../../../../resources/views/livewire/messages/**/*';
+@source '../../../../resources/views/livewire/support/staff-thread.blade.php';
 @source '../../../../resources/views/components/messages/**/*';
 @source '../../../../resources/views/components/button.blade.php';
 

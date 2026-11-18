@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\TrustedDevices;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
 
 class PasswordController extends Controller
@@ -23,11 +24,17 @@ class PasswordController extends Controller
             'password' => ['required', Password::defaults(), 'confirmed'],
         ]);
 
-        $request->user()->update([
+        $user = $request->user();
+        $user->forceFill([
             'password' => $validated['password'],
-        ]);
+            'password_change_required' => false,
+        ])->save();
 
-        $devices->forgetAll($request->user());
+        // The panels' AuthenticateSession signs out sessions whose stored
+        // password hash is stale; this one changed it, so it stays signed in.
+        $request->session()->put('password_hash_'.Auth::getDefaultDriver(), $user->getAuthPassword());
+
+        $devices->forgetAll($user);
 
         return back()->with('status', __('Password changed.'));
     }

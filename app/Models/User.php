@@ -76,6 +76,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
             'role' => UserRole::class,
             'kyc_status' => KycStatus::class,
             'is_active' => 'boolean',
+            'password_change_required' => 'boolean',
             'notification_preferences' => 'array',
         ];
     }
