@@ -5,7 +5,10 @@
     $tabs = [
         'open' => __('Live & upcoming').' ('.($live + $upcoming).')',
         'sold' => __('Sold').' ('.$sold.')',
+        'reviews' => __('Reviews').' ('.$company->rating_count.')',
     ];
+    // The company's own colour for the storefront header; validated as #rrggbb when saved.
+    $accent = $company->accent_color;
 @endphp
 
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -16,7 +19,15 @@
     </nav>
 
     {{-- Who the seller is --}}
-    <x-card class="mt-4">
+    <x-card class="mt-4 overflow-hidden" :padding="false">
+        @if ($company->banner_path)
+            <img src="{{ Storage::disk('public')->url($company->banner_path) }}" alt=""
+                 class="h-32 w-full object-cover sm:h-48" @if ($accent) style="background-color: {{ $accent }}" @endif>
+        @else
+            <div @class(['h-20 sm:h-24', 'bg-brand-600' => ! $accent]) @if ($accent) style="background-color: {{ $accent }}" @endif></div>
+        @endif
+
+        <div class="p-5 sm:p-6">
         <div class="flex flex-col gap-6 sm:flex-row sm:items-start">
             @if ($company->logo_path)
                 <img src="{{ Storage::disk('public')->url($company->logo_path) }}" alt="{{ $company->name }}"
@@ -49,6 +60,23 @@
                 @if ($company->about)
                     <div class="mt-4 max-w-prose whitespace-pre-line leading-relaxed text-slate-700 dark:text-slate-300">{{ $company->about }}</div>
                 @endif
+
+                @if ($company->website_url || $company->facebook_url)
+                    <div class="mt-4 flex flex-wrap gap-4 text-sm">
+                        @if ($company->website_url)
+                            <a href="{{ $company->website_url }}" target="_blank" rel="nofollow noopener noreferrer ugc"
+                               class="inline-flex items-center gap-1 font-medium text-brand-700 hover:underline dark:text-brand-300">
+                                <x-app-icon name="arrow-right" class="size-4" /> {{ __('Website') }}
+                            </a>
+                        @endif
+                        @if ($company->facebook_url)
+                            <a href="{{ $company->facebook_url }}" target="_blank" rel="nofollow noopener noreferrer ugc"
+                               class="inline-flex items-center gap-1 font-medium text-brand-700 hover:underline dark:text-brand-300">
+                                <x-app-icon name="arrow-right" class="size-4" /> {{ __('Facebook') }}
+                            </a>
+                        @endif
+                    </div>
+                @endif
             </div>
 
             <dl class="grid shrink-0 grid-cols-3 gap-3 text-center sm:w-72">
@@ -72,10 +100,11 @@
                 {{ __('This seller is not taking new listings at the moment. Auctions already running finish as usual.') }}
             </p>
         @endif
+        </div>
     </x-card>
 
     {{-- Their auctions --}}
-    <nav aria-label="{{ __('Filter') }}" class="mt-8 flex gap-1 overflow-x-auto border-b border-slate-200 dark:border-slate-800">
+    <nav aria-label="{{ __('Filter') }}" class="mt-8 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-slate-200 dark:border-slate-800">
         @foreach ($tabs as $key => $label)
             <button type="button" wire:click="$set('tab', '{{ $key }}')" @if ($tab === $key) aria-current="page" @endif
                     @class([
@@ -88,7 +117,43 @@
         @endforeach
     </nav>
 
-    @if ($auctions->isEmpty())
+    @if ($reviews !== null)
+        @if ($reviews->isEmpty())
+            <x-empty-state class="mt-6" :title="__('No reviews yet')"
+                :description="__('Buyers can review a seller once their order is complete.')" />
+        @else
+            <ul class="mt-6 space-y-4">
+                @foreach ($reviews as $review)
+                    <li wire:key="review-{{ $review->id }}">
+                        <x-card>
+                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                                <span class="inline-flex items-center gap-0.5" aria-label="{{ __(':count out of 5 stars', ['count' => $review->rating]) }}">
+                                    @for ($star = 1; $star <= 5; $star++)
+                                        <x-app-icon name="star" @class(['size-4', 'text-amber-500' => $star <= $review->rating, 'text-slate-300 dark:text-slate-600' => $star > $review->rating]) />
+                                    @endfor
+                                </span>
+                                <span class="font-medium text-slate-900 dark:text-slate-100">{{ $review->buyer?->maskedName() ?? __('A buyer') }}</span>
+                                <x-datetime :value="$review->created_at" format="j M Y" class="text-slate-500 dark:text-slate-400" />
+                            </div>
+                            @if ($review->comment)
+                                <p class="mt-2 whitespace-pre-line text-slate-700 dark:text-slate-300">{{ $review->comment }}</p>
+                            @endif
+                            @if ($review->reply)
+                                <div class="mt-3 rounded-md bg-slate-50 px-4 py-3 text-sm dark:bg-slate-800/60">
+                                    <p class="font-medium text-slate-900 dark:text-slate-100">{{ __('Reply from :name', ['name' => $company->name]) }}</p>
+                                    <p class="mt-1 whitespace-pre-line text-slate-700 dark:text-slate-300">{{ $review->reply }}</p>
+                                </div>
+                            @endif
+                        </x-card>
+                    </li>
+                @endforeach
+            </ul>
+
+            <div class="mt-6">
+                {{ $reviews->links() }}
+            </div>
+        @endif
+    @elseif ($auctions->isEmpty())
         <x-empty-state class="mt-6"
             :title="$tab === 'sold' ? __('Nothing sold yet') : __('No auctions open right now')"
             :description="__('Check back later, or browse other sellers’ auctions.')" />

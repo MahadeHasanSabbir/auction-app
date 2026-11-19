@@ -40,6 +40,10 @@ return new class extends Migration
             $table->string('logo_path')->nullable();
             $table->string('banner_path')->nullable();
             $table->text('about')->nullable();
+            // Storefront: a colour for the header of the public page and links.
+            $table->char('accent_color', 7)->nullable();
+            $table->string('website_url')->nullable();
+            $table->string('facebook_url')->nullable();
             $table->string('status', 32)->default('pending');
             $table->string('kyc_status', 32)->default('not_required');
             $table->foreignId('user_type_id')->nullable()->constrained()->nullOnDelete();

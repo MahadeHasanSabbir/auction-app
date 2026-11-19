@@ -13,6 +13,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,7 +27,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use LogicException;
 
-class User extends Authenticatable implements FilamentUser, HasTenants, MustVerifyEmail
+class User extends Authenticatable implements FilamentUser, HasLocalePreference, HasTenants, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
@@ -238,6 +239,16 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
         }
 
         return $channel === 'bell' ? true : $category->mailByDefault();
+    }
+
+    /**
+     * Emails and notifications are written in the default language: only the
+     * site is translated, so a Bangla visitor still gets whole English mails
+     * rather than half-translated ones. users.locale holds the site choice.
+     */
+    public function preferredLocale(): string
+    {
+        return (string) config('app.locale');
     }
 
     /** The timezone times are shown in for this user. */

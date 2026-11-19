@@ -6,7 +6,9 @@ use App\Enums\AuctionStatus;
 use App\Enums\CompanyStatus;
 use App\Models\Auction;
 use App\Models\Company;
+use App\Models\Review;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -47,7 +49,7 @@ class Show extends Component
     {
         $company = Company::query()->findOrFail($this->companyId);
 
-        if (! in_array($this->tab, ['open', 'sold'], true)) {
+        if (! in_array($this->tab, ['open', 'sold', 'reviews'], true)) {
             $this->tab = 'open';
         }
 
@@ -60,11 +62,27 @@ class Show extends Component
 
         return view('livewire.sellers.show', [
             'company' => $company,
-            'auctions' => $this->auctions($company),
+            'auctions' => $this->tab === 'reviews' ? null : $this->auctions($company),
+            'reviews' => $this->tab === 'reviews' ? $this->reviews($company) : null,
             'live' => (int) ($counts[AuctionStatus::Live->value] ?? 0),
             'upcoming' => (int) ($counts[AuctionStatus::Scheduled->value] ?? 0),
             'sold' => (int) ($counts[AuctionStatus::Sold->value] ?? 0),
-        ])->title($company->name);
+        ])->title($company->name)->layoutData([
+            'description' => $company->about ?: __(':name sells on :site. See their live and upcoming auctions.', ['name' => $company->name, 'site' => config('app.name')]),
+            'image' => $company->banner_path ? Storage::disk('public')->url($company->banner_path) : ($company->logo_path ? Storage::disk('public')->url($company->logo_path) : null),
+            'canonical' => route('sellers.show', $company),
+        ]);
+    }
+
+    /** @return LengthAwarePaginator<int, Review> */
+    private function reviews(Company $company): LengthAwarePaginator
+    {
+        return Review::query()
+            ->where('company_id', $company->id)
+            ->where('is_visible', true)
+            ->with(['buyer' => fn ($query) => $query->withTrashed()->select('id', 'name')])
+            ->latest()
+            ->paginate(10);
     }
 
     /** @return LengthAwarePaginator<int, Auction> */

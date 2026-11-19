@@ -18,6 +18,7 @@ use App\Services\Realtime\ViewerCount;
 use App\Support\Money;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -243,7 +244,11 @@ class Show extends Component
             'canBid' => $user instanceof User && $user->can('bid', $auction),
             'viewer' => $user instanceof User ? $this->viewerState($user, $auction) : null,
             'retractReasons' => self::retractReasons(),
-        ])->title($auction->title);
+        ])->title($auction->title)->layoutData([
+            'description' => $auction->product?->description,
+            'image' => ($cover = $auction->product?->images->first()) ? Storage::disk('public')->url($cover->path) : null,
+            'canonical' => $auction->url(),
+        ]);
     }
 
     /**

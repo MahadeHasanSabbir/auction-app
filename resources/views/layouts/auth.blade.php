@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ filled($title ?? null) ? $title.' · ' : '' }}{{ config('app.name') }}</title>
+    <meta name="robots" content="noindex, nofollow">
 
     <script>
         (() => {
@@ -19,10 +20,15 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700|space-grotesk:500,600,700&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('partials.brand-head')
     @livewireStyles
 </head>
 <body class="flex min-h-screen flex-col">
-    <div class="flex flex-1 flex-col items-center px-4 py-10 sm:justify-center sm:py-16">
+    <div class="flex justify-end px-4 pt-4">
+        <x-site.language-switcher />
+    </div>
+
+    <div class="flex flex-1 flex-col items-center px-4 pb-10 sm:justify-center sm:pb-16">
         <a href="{{ route('home') }}" aria-label="{{ __('Home') }}">
             <x-logo />
         </a>

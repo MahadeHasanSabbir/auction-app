@@ -27,7 +27,7 @@
 
         <h3 class="mt-1 line-clamp-2 font-sans text-base font-semibold leading-snug text-slate-900 dark:text-slate-50">
             {{-- The whole card is the link target. --}}
-            <a href="{{ route('auctions.show', $auction) }}" class="after:absolute after:inset-0">{{ $auction->title }}</a>
+            <a href="{{ $auction->url() }}" class="after:absolute after:inset-0">{{ $auction->title }}</a>
         </h3>
 
         <dl class="mt-auto grid grid-cols-2 gap-3 pt-4 text-sm">

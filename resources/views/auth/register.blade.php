@@ -52,6 +52,13 @@
             <x-field :label="__('Repeat password')" name="password_confirmation" type="password" required autocomplete="new-password" />
         </div>
 
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+            {!! __('By creating an account you agree to the :terms and the :privacy.', [
+                'terms' => '<a href="'.e(route('pages.terms')).'" class="font-medium text-brand-700 underline dark:text-brand-300" target="_blank">'.e(__('Terms of use')).'</a>',
+                'privacy' => '<a href="'.e(route('pages.privacy')).'" class="font-medium text-brand-700 underline dark:text-brand-300" target="_blank">'.e(__('Privacy policy')).'</a>',
+            ]) !!}
+        </p>
+
         <x-button class="w-full" size="lg">
             <span x-show="type !== 'seller'">{{ __('Create buyer account') }}</span>
             <span x-show="type === 'seller'" x-cloak>{{ __('Create company account') }}</span>

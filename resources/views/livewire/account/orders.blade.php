@@ -1,6 +1,6 @@
 <div>
     <x-account.shell :title="__('My orders')" :description="__('What you won or bought, from payment to delivery.')">
-        <nav aria-label="{{ __('Filter') }}" class="flex gap-1 overflow-x-auto border-b border-slate-200 dark:border-slate-800">
+        <nav aria-label="{{ __('Filter') }}" class="flex gap-1 overflow-x-auto overflow-y-hidden border-b border-slate-200 dark:border-slate-800">
             @foreach ($tabs as $key => $label)
                 <button type="button" wire:click="$set('tab', '{{ $key }}')" @if ($tab === $key) aria-current="page" @endif
                         @class([

@@ -77,10 +77,25 @@ return new class extends Migration
 
             $table->index(['audience', 'published_at', 'expires_at']);
         });
+
+        // The site's text pages (terms, privacy, FAQ, about), edited by staff.
+        // One row per page, in English and, optionally, Bangla; the bodies
+        // are sanitised HTML.
+        Schema::create('pages', function (Blueprint $table) {
+            $table->id();
+            $table->string('slug', 32)->unique();
+            $table->string('title_en');
+            $table->string('title_bn')->nullable();
+            $table->longText('body_en')->nullable();
+            $table->longText('body_bn')->nullable();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('pages');
         Schema::dropIfExists('notices');
         Schema::dropIfExists('notifications');
         Schema::dropIfExists('messages');

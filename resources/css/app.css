@@ -63,6 +63,42 @@
         font-variant-numeric: tabular-nums;
     }
 
+    /* Staff-written rich text (site pages): readable spacing for the few elements the sanitiser keeps. */
+    .prose-page {
+        @apply max-w-none leading-relaxed text-slate-700 dark:text-slate-300;
+    }
+    .prose-page > * + * {
+        @apply mt-4;
+    }
+    .prose-page h2 {
+        @apply mt-10 font-display text-2xl font-semibold text-slate-900 dark:text-slate-50;
+    }
+    .prose-page h3 {
+        @apply mt-8 text-lg font-semibold text-slate-900 dark:text-slate-50;
+    }
+    .prose-page a {
+        @apply font-medium text-brand-700 underline underline-offset-2 hover:text-brand-800 dark:text-brand-300;
+    }
+    .prose-page ul {
+        @apply list-disc space-y-1 pl-6;
+    }
+    .prose-page ol {
+        @apply list-decimal space-y-1 pl-6;
+    }
+    .prose-page blockquote {
+        @apply border-l-4 border-brand-200 pl-4 italic dark:border-brand-800;
+    }
+    .prose-page table {
+        @apply w-full border-collapse text-sm;
+    }
+    .prose-page th,
+    .prose-page td {
+        @apply border border-slate-200 px-3 py-2 text-left dark:border-slate-700;
+    }
+    .prose-page img {
+        @apply h-auto max-w-full rounded-md;
+    }
+
     /* Form controls share one look; the forms plugin supplies the reset. */
     .form-control {
         @apply block w-full rounded-md border-slate-300 bg-white text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500 disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-brand-400 dark:focus:ring-brand-400;

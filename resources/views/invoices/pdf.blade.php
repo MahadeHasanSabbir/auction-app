@@ -39,6 +39,9 @@
                 <div class="muted">{{ __('Issued') }} {{ $invoice->issued_at->setTimezone($zone)->format('j M Y, H:i') }}</div>
             </td>
             <td style="text-align: right;">
+                @if ($logo = app(\App\Services\Branding\Branding::class)->logoDataUri())
+                    <img src="{{ $logo }}" alt="" style="max-height: 40px; max-width: 200px; margin-bottom: 6px;"><br>
+                @endif
                 <strong>{{ $issuer['name'] }}</strong><br>
                 @if ($issuer['address']){!! nl2br(e($issuer['address'])) !!}<br>@endif
                 @if ($issuer['email']){{ $issuer['email'] }}<br>@endif

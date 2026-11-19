@@ -22,6 +22,7 @@ use App\Models\KycRequest;
 use App\Models\LoginEvent;
 use App\Models\Notice;
 use App\Models\Order;
+use App\Models\Page;
 use App\Models\Plan;
 use App\Models\Product;
 use App\Models\ProductImage;
@@ -61,7 +62,7 @@ class FactoryTest extends TestCase
             User::class, UserType::class, Plan::class, Company::class, Subscription::class,
             CompanyAgreement::class, CompanyInvitation::class, Category::class, Product::class,
             ProductImage::class, Auction::class, Bid::class, AutoBid::class, Wallet::class,
-            FeeRule::class, Order::class, Review::class, Notice::class, TrustedDevice::class, SocialAccount::class, KycRequest::class,
+            FeeRule::class, Order::class, Review::class, Notice::class, Page::class, TrustedDevice::class, SocialAccount::class, KycRequest::class,
             LoginEvent::class, FraudFlag::class, Strike::class, BlacklistEntry::class, Invoice::class,
         ])->mapWithKeys(fn (string $model) => [class_basename($model) => [$model]])->all();
     }

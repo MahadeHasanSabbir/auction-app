@@ -1,9 +1,13 @@
 <?php
 
+use App\Enums\SitePage;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\KycDocumentController;
+use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SecurityController;
+use App\Http\Controllers\SitemapController;
 use App\Livewire\Account\Bids;
 use App\Livewire\Account\Invoices as AccountInvoices;
 use App\Livewire\Account\Notifications;
@@ -32,10 +36,22 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', Home::class)->name('home');
-Route::view('/about', 'about')->name('about');
+Route::get('/about', [PageController::class, 'about'])->name('about');
+Route::get('/terms', [PageController::class, 'show'])->defaults('page', SitePage::Terms->value)->name('pages.terms');
+Route::get('/privacy', [PageController::class, 'show'])->defaults('page', SitePage::Privacy->value)->name('pages.privacy');
+Route::get('/faq', [PageController::class, 'show'])->defaults('page', SitePage::Faq->value)->name('pages.faq');
+Route::post('/locale', LocaleController::class)->middleware('throttle:30,1')->name('locale');
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+Route::get('/robots.txt', fn () => response(implode("\n", [
+    'User-agent: *',
+    // Panels, account pages and Livewire requests are not for search engines.
+    ...array_map(fn (string $path) => "Disallow: /{$path}", ['admin', 'seller', 'livewire', 'dashboard', 'wallet', 'my-bids', 'orders', 'purchases', 'invoices', 'verification', 'notifications', 'support', 'profile', 'login', 'register']),
+    'Sitemap: '.route('sitemap'),
+])."\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']))->name('robots');
 Route::get('/contact', Contact::class)->name('contact');
 Route::get('/auctions', AuctionIndex::class)->name('auctions.index');
-Route::get('/auctions/{auction}', AuctionShow::class)->name('auctions.show');
+// The slug is only for people and search engines (Auction::url()); the id finds the auction.
+Route::get('/auctions/{auction}/{slug?}', AuctionShow::class)->where('slug', '[a-z0-9-]+')->name('auctions.show');
 Route::get('/sellers/{company:slug}', SellerShow::class)->name('sellers.show');
 Route::get('/notices', Notices::class)->name('notices');
 

@@ -13,6 +13,7 @@
                 <li><a class="hover:text-brand-700 dark:hover:text-brand-300" href="{{ route('auctions.index') }}">{{ __('Browse auctions') }}</a></li>
                 <li><a class="hover:text-brand-700 dark:hover:text-brand-300" href="{{ route('auctions.index', ['status' => 'upcoming']) }}">{{ __('Opening soon') }}</a></li>
                 <li><a class="hover:text-brand-700 dark:hover:text-brand-300" href="{{ route('about') }}">{{ __('How it works') }}</a></li>
+                <li><a class="hover:text-brand-700 dark:hover:text-brand-300" href="{{ route('pages.faq') }}">{{ __('Questions and answers') }}</a></li>
                 <li><a class="hover:text-brand-700 dark:hover:text-brand-300" href="{{ route('notices') }}">{{ __('Notices') }}</a></li>
                 <li><a class="hover:text-brand-700 dark:hover:text-brand-300" href="{{ route('contact') }}">{{ __('Contact us') }}</a></li>
             </ul>
@@ -33,8 +34,12 @@
     </div>
 
     <div class="border-t border-slate-200 dark:border-slate-800">
-        <p class="mx-auto max-w-7xl px-4 py-4 text-xs text-slate-500 sm:px-6 lg:px-8">
-            &copy; {{ now()->year }} {{ config('app.name') }}. {{ __('All rights reserved.') }}
-        </p>
+        <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-4 text-xs text-slate-500 sm:px-6 lg:px-8">
+            <p>&copy; {{ now()->year }} {{ config('app.name') }}. {{ __('All rights reserved.') }}</p>
+            <nav aria-label="{{ __('Legal') }}" class="flex gap-4">
+                <a class="hover:text-brand-700 dark:hover:text-brand-300" href="{{ route('pages.terms') }}">{{ __('Terms of use') }}</a>
+                <a class="hover:text-brand-700 dark:hover:text-brand-300" href="{{ route('pages.privacy') }}">{{ __('Privacy policy') }}</a>
+            </nav>
+        </div>
     </div>
 </footer>

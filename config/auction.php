@@ -37,6 +37,13 @@ return [
     // the account has one, otherwise in this one.
     'display_timezone' => env('AUCTION_DISPLAY_TIMEZONE', 'Asia/Dhaka'),
 
+    // Languages of the public site (switcher in the header; lang/bn.json).
+    // The admin and seller panels and emails stay in app.locale.
+    'locales' => [
+        'en' => 'English',
+        'bn' => 'বাংলা',
+    ],
+
     // Emailed one-time codes: sign-up verification, the login second step
     // and the confirmation asked before sensitive account changes.
     'otp' => [

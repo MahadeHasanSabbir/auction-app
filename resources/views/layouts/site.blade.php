@@ -7,6 +7,8 @@
 
     <title>{{ filled($title ?? null) ? $title.' · ' : '' }}{{ config('app.name') }}</title>
 
+    @include('partials.seo-head')
+
     {{-- Apply the saved or system theme before the first paint, so the page never flashes. --}}
     <script>
         (() => {
@@ -20,6 +22,7 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700|space-grotesk:500,600,700&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('partials.brand-head')
     @livewireStyles
 </head>
 <body class="flex min-h-screen flex-col">

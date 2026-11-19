@@ -26,6 +26,7 @@ class Company extends Model
      */
     protected $fillable = [
         'name', 'slug', 'legal_name', 'email', 'phone', 'address', 'logo_path', 'banner_path', 'about',
+        'accent_color', 'website_url', 'facebook_url',
     ];
 
     /** @var array<string, mixed> */
@@ -129,13 +130,13 @@ class Company extends Model
         return $this->hasMany(KycRequest::class);
     }
 
-    /** Seats taken: everyone on the team plus invitations still waiting to be accepted. */
     /** @return HasMany<Invoice, $this> */
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
     }
 
+    /** Seats taken: everyone on the team plus invitations still waiting to be accepted. */
     public function seatsUsed(): int
     {
         return $this->users()->count() + $this->invitations()->pending()->count();

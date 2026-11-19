@@ -227,6 +227,8 @@ class AuctionIndexTest extends TestCase
     public function test_the_list_does_not_run_a_query_per_auction(): void
     {
         Auction::factory()->live()->count(3)->create();
+        // A first visit fills the caches (branding, settings), which are not per auction.
+        $this->get('/auctions')->assertOk();
         $few = $this->countQueries(fn () => $this->get('/auctions')->assertOk());
 
         Auction::factory()->live()->count(8)->create();

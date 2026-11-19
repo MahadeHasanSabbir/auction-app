@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Seller\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Support\BrandAvatarProvider;
+use App\Filament\Support\PanelBranding;
 use App\Http\Middleware\RequirePlan;
 use App\Models\Company;
 use Filament\Http\Middleware\Authenticate;
@@ -13,7 +14,6 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -34,17 +34,12 @@ class SellerPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel
+        // The brand colour, logo and favicon, English only; the site fonts and
+        // our compiled theme (resources/css/filament/panels/theme.css).
+        return PanelBranding::apply($panel, 'Seller')
             ->id('seller')
             ->path('seller')
             ->tenant(Company::class, slugAttribute: 'slug')
-            ->brandName(config('app.name').' Seller')
-            // The site's brand blue, slate neutrals and fonts, and our compiled
-            // theme (resources/css/filament/panels/theme.css).
-            ->colors([
-                'primary' => Color::Blue,
-                'gray' => Color::Slate,
-            ])
             ->font('Inter', url: 'https://fonts.bunny.net/css?family=inter:400,500,600,700|space-grotesk:500,600,700&display=swap')
             ->viteTheme('resources/css/filament/panels/theme.css')
             ->sidebarCollapsibleOnDesktop()

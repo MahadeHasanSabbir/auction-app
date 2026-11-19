@@ -71,7 +71,7 @@
                     @foreach ($bidding as $auction)
                         <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4" wire:key="bidding-{{ $auction->id }}">
                             <div class="min-w-0">
-                                <a href="{{ route('auctions.show', $auction) }}" class="font-semibold text-slate-900 hover:text-brand-700 dark:text-slate-50 dark:hover:text-brand-300">{{ $auction->title }}</a>
+                                <a href="{{ $auction->url() }}" class="font-semibold text-slate-900 hover:text-brand-700 dark:text-slate-50 dark:hover:text-brand-300">{{ $auction->title }}</a>
                                 <p class="text-sm text-slate-500 dark:text-slate-400">{{ $auction->company->name }}</p>
                             </div>
                             <div class="flex items-center gap-4 text-sm">

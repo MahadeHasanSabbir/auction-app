@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 use LogicException;
 
 class Auction extends Model
@@ -162,6 +163,18 @@ class Auction extends Model
     {
         $query->where('status', AuctionStatus::Sold)
             ->whereDoesntHave('order', fn (Builder $order) => $order->where('status', OrderStatus::Cancelled));
+    }
+
+    /**
+     * The public address with the title in it (/auctions/42/antique-clock),
+     * for links, the canonical tag and the sitemap. The id alone finds the
+     * auction too, so an old link or a renamed title still works.
+     */
+    public function url(): string
+    {
+        $slug = Str::slug(Str::limit($this->title, 80, ''));
+
+        return route('auctions.show', $slug === '' ? $this : ['auction' => $this, 'slug' => $slug]);
     }
 
     /**

@@ -15,6 +15,7 @@ use App\Models\KycRequest;
 use App\Models\LedgerTransaction;
 use App\Models\Notice;
 use App\Models\Order;
+use App\Models\Page;
 use App\Models\Plan;
 use App\Models\Product;
 use App\Models\Setting;
@@ -24,6 +25,7 @@ use App\Models\SubscriptionInvoice;
 use App\Models\User;
 use App\Models\WithdrawalRequest;
 use App\Policies\ActivityPolicy;
+use App\Services\Branding\Branding;
 use App\Services\Ledger\Ledger;
 use App\Services\Settings\Settings;
 use Carbon\CarbonImmutable;
@@ -51,6 +53,9 @@ class AppServiceProvider extends ServiceProvider
         // Remembers the platform accounts it has looked up; scoped so a queue
         // worker starts every job with a fresh copy.
         $this->app->scoped(Ledger::class);
+
+        // Reads the branding row once per request (or job).
+        $this->app->scoped(Branding::class);
     }
 
     /**
@@ -89,6 +94,7 @@ class AppServiceProvider extends ServiceProvider
             'strike' => Strike::class,
             'fraud_flag' => FraudFlag::class,
             'blacklist_entry' => BlacklistEntry::class,
+            'page' => Page::class,
         ]);
 
         // Values the system owner changed in the admin panel override the

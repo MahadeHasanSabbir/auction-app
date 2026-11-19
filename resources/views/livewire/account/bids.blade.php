@@ -5,7 +5,7 @@
 
 <div>
     <x-account.shell :title="__('My bids')" :description="__('Auctions you bid on, the ones you won, and your watchlist.')">
-        <nav aria-label="{{ __('Filter') }}" class="flex gap-1 overflow-x-auto border-b border-slate-200 dark:border-slate-800">
+        <nav aria-label="{{ __('Filter') }}" class="flex gap-1 overflow-x-auto overflow-y-hidden border-b border-slate-200 dark:border-slate-800">
             @foreach ($tabs as $key => $label)
                 <button type="button" wire:click="$set('tab', '{{ $key }}')" @if ($tab === $key) aria-current="page" @endif
                         @class([
@@ -37,12 +37,12 @@
                         $maximum = $maximums[$auction->id] ?? null;
                     @endphp
                     <div class="flex flex-wrap items-center gap-4 px-5 py-4" wire:key="bid-row-{{ $auction->id }}">
-                        <a href="{{ route('auctions.show', $auction) }}" class="size-14 shrink-0 overflow-hidden rounded-md bg-slate-100 dark:bg-slate-800">
+                        <a href="{{ $auction->url() }}" class="size-14 shrink-0 overflow-hidden rounded-md bg-slate-100 dark:bg-slate-800">
                             <x-product-image :image="$auction->product?->coverImage" :seed="$auction->id" :alt="$auction->title" />
                         </a>
 
                         <div class="min-w-0 flex-1">
-                            <a href="{{ route('auctions.show', $auction) }}" class="font-semibold text-slate-900 hover:text-brand-700 dark:text-slate-50 dark:hover:text-brand-300">{{ $auction->title }}</a>
+                            <a href="{{ $auction->url() }}" class="font-semibold text-slate-900 hover:text-brand-700 dark:text-slate-50 dark:hover:text-brand-300">{{ $auction->title }}</a>
                             <p class="text-sm text-slate-500 dark:text-slate-400">
                                 {{ $auction->company->name }}
                                 @if ($topBid)

@@ -5,15 +5,18 @@ namespace Database\Seeders;
 use App\Enums\AccountKind;
 use App\Enums\FeeChargeType;
 use App\Enums\FeeUseCase;
+use App\Enums\SitePage;
 use App\Enums\SystemAccount;
 use App\Enums\UserRole;
 use App\Enums\WalletType;
 use App\Models\Category;
 use App\Models\FeeRule;
+use App\Models\Page;
 use App\Models\Plan;
 use App\Models\User;
 use App\Models\UserType;
 use App\Models\Wallet;
+use App\Support\SafeHtml;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -34,6 +37,62 @@ class PlatformSeeder extends Seeder
         $this->plans();
         $this->feeRules($owner);
         $this->categories();
+        $this->pages();
+    }
+
+    /**
+     * The site's text pages with starting text, for staff to rewrite in the
+     * admin panel. A page that exists is left alone.
+     */
+    private function pages(): void
+    {
+        $name = (string) config('app.name');
+
+        $pages = [
+            SitePage::About->value => ['About us', 'আমাদের কথা', null],
+            SitePage::Terms->value => ['Terms of use', 'ব্যবহারের শর্তাবলি', <<<HTML
+                <p>These terms apply to everyone who uses {$name}. By creating an account you accept them.</p>
+                <h2>Accounts</h2>
+                <ul><li>Give true details and keep your password and sign-in codes to yourself.</li><li>Buyers and seller companies may have to prove who they are before bidding, listing or withdrawing.</li><li>We may suspend an account that breaks these terms.</li></ul>
+                <h2>Bidding</h2>
+                <ul><li>A bid is a promise to buy. The money behind the leading bid is held in your wallet.</li><li>A late bid can extend an auction. A bid can be taken back only within the window shown on the auction page, and each retraction counts as a strike.</li></ul>
+                <h2>Payment and delivery</h2>
+                <ul><li>The winning price is paid into escrow at once and reaches the seller after delivery is confirmed or the release date passes.</li><li>If the item does not arrive or is not as described, open a dispute before the release date; staff decide it.</li></ul>
+                <h2>Fees</h2>
+                <p>Deposit, withdrawal and seller fees are shown before you confirm. VAT is included where it applies.</p>
+                HTML],
+            SitePage::Privacy->value => ['Privacy policy', 'গোপনীয়তা নীতি', <<<HTML
+                <p>This policy explains what {$name} keeps about you and why.</p>
+                <h2>What we keep</h2>
+                <ul><li>Your name, email address, phone number and delivery address.</li><li>Identity documents you upload for verification, kept on private storage and shown only to staff.</li><li>Your bids, orders, wallet transactions and sign-in history (time, address and device).</li></ul>
+                <h2>Why</h2>
+                <p>To run auctions and payments, keep accounts safe, prevent fraud and meet our legal duties.</p>
+                <h2>Who sees it</h2>
+                <p>Other bidders see a masked name only. A seller sees the delivery address of an order they have to ship. Payment providers receive what they need to process a payment.</p>
+                <h2>Your choices</h2>
+                <p>You can change your details on your profile and choose which notifications you receive. To close your account or ask for your data, contact us.</p>
+                HTML],
+            SitePage::Faq->value => ['Questions and answers', 'প্রশ্ন ও উত্তর', <<<'HTML'
+                <h3>How much can I bid?</h3>
+                <p>A share of the available balance in your wallet. Add money to your wallet to bid more.</p>
+                <h3>What happens to my money when I am outbid?</h3>
+                <p>It is released straight away and is available again.</p>
+                <h3>When does the seller get paid?</h3>
+                <p>After you confirm delivery, or automatically a few days after shipping unless you open a dispute.</p>
+                <h3>Why does the auction end time change?</h3>
+                <p>A bid in the last moments extends the auction, so everyone has a fair chance to answer.</p>
+                <h3>How do I sell?</h3>
+                <p>Register a company account, choose a plan and send your first auction for review.</p>
+                HTML],
+        ];
+
+        foreach ($pages as $slug => [$title, $titleBn, $body]) {
+            Page::query()->firstOrCreate(['slug' => $slug], [
+                'title_en' => $title,
+                'title_bn' => $titleBn,
+                'body_en' => $body === null ? null : SafeHtml::clean($body),
+            ]);
+        }
     }
 
     private function systemOwner(): User

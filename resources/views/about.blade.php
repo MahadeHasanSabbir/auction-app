@@ -1,4 +1,4 @@
-<x-site-layout :title="__('About')">
+<x-site-layout :title="$page?->title() ?? __('About')" :description="__(':name brings verified sellers and serious buyers together. Bids are backed by money in a wallet, sales are paid through escrow, and the rules are the same for everyone.', ['name' => config('app.name')])">
     <section class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
             <h1 class="max-w-3xl text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">{{ __('An auction house where every bid is real') }}</h1>
@@ -9,6 +9,11 @@
     </section>
 
     <div class="mx-auto max-w-7xl space-y-16 px-4 py-12 sm:px-6 lg:px-8">
+        {{-- Staff-written text (admin → Site pages), sanitised by UpdatePage. --}}
+        @if ($page?->body())
+            <div class="prose-page max-w-3xl">{!! $page->body() !!}</div>
+        @endif
+
         {{-- For buyers / for sellers --}}
         <div class="grid gap-6 lg:grid-cols-2">
             @foreach ([

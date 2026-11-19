@@ -24,9 +24,10 @@ final class ImageStore
      * @param  string  $directory  folder on the public disk, e.g. "avatars"
      * @param  int  $maxSide  longest side of the stored picture, in pixels
      * @param  bool  $square  crop to a centred square (avatars)
+     * @param  'webp'|'png'  $format  PNG for pictures that go into emails and PDFs (the site logo)
      * @return string the stored path, relative to the public disk
      */
-    public function store(UploadedFile $file, string $directory, int $maxSide = 1600, bool $square = false): string
+    public function store(UploadedFile $file, string $directory, int $maxSide = 1600, bool $square = false, string $format = 'webp'): string
     {
         $bytes = $file->get();
         $image = $bytes === false ? false : @imagecreatefromstring($bytes);
@@ -39,10 +40,10 @@ final class ImageStore
         $image = $this->resize($image, $maxSide, $square);
 
         ob_start();
-        imagewebp($image, null, self::QUALITY);
+        $format === 'png' ? imagepng($image, null, 9) : imagewebp($image, null, self::QUALITY);
         $encoded = (string) ob_get_clean();
 
-        $path = trim($directory, '/').'/'.Str::random(40).'.webp';
+        $path = trim($directory, '/').'/'.Str::random(40).'.'.$format;
 
         Storage::disk('public')->put($path, $encoded);
 
