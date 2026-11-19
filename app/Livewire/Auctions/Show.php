@@ -4,6 +4,7 @@ namespace App\Livewire\Auctions;
 
 use App\Actions\Bidding\BuyNow;
 use App\Actions\Bidding\PlaceBid;
+use App\Actions\Bidding\RetractBids;
 use App\Actions\Bidding\ToggleWatchlist;
 use App\Enums\AuctionStatus;
 use App\Enums\HoldType;
@@ -46,6 +47,8 @@ class Show extends Component
     public string $amount = '';
 
     public bool $auto = false;
+
+    public string $retractReason = '';
 
     /** Minted with the form, so a double submit places one bid. */
     #[Locked]
@@ -117,6 +120,49 @@ class Show extends Component
         $this->dispatch('toast', message: __('It is yours. Order :number is paid into escrow.', ['number' => $order->number]));
     }
 
+    /** The buyer takes back their bids (a strike; see RetractBids). */
+    public function retract(RetractBids $retract): void
+    {
+        $this->resetErrorBag();
+
+        $user = $this->buyer();
+
+        if ($user === null) {
+            return;
+        }
+
+        if (! array_key_exists($this->retractReason, self::retractReasons())) {
+            $this->addError('retract', __('Choose a reason.'));
+
+            return;
+        }
+
+        try {
+            $retract->handle($user, $this->auction(), self::retractReasons()[$this->retractReason]);
+        } catch (ValidationException $e) {
+            $this->addError('retract', (string) collect($e->errors())->flatten()->first());
+
+            return;
+        } catch (AuthorizationException) {
+            $this->addError('retract', __('This account cannot bid.'));
+
+            return;
+        }
+
+        $this->reset('retractReason');
+        $this->dispatch('toast', message: __('Your bids on this auction were taken back. A strike was added to your account.'));
+    }
+
+    /** @return array<string, string> */
+    public static function retractReasons(): array
+    {
+        return [
+            'typo' => __('I entered the wrong amount'),
+            'changed' => __('The description changed after I bid'),
+            'unreachable' => __('I cannot reach the seller'),
+        ];
+    }
+
     public function toggleWatch(ToggleWatchlist $toggle): void
     {
         $user = $this->buyer();
@@ -164,7 +210,7 @@ class Show extends Component
     {
         $auction = Auction::query()
             ->with([
-                'company:id,name,slug,about,rating_sum,rating_count,verified_at',
+                'company:id,name,slug,about,rating_sum,rating_count,verified_at,kyc_status',
                 'product' => fn ($query) => $query->withTrashed(),
                 'product.images',
                 'product.category:id,name,slug,parent_id',
@@ -196,6 +242,7 @@ class Show extends Component
             'viewerId' => $user?->id,
             'canBid' => $user instanceof User && $user->can('bid', $auction),
             'viewer' => $user instanceof User ? $this->viewerState($user, $auction) : null,
+            'retractReasons' => self::retractReasons(),
         ])->title($auction->title);
     }
 
@@ -203,7 +250,7 @@ class Show extends Component
      * Where the signed-in viewer stands: their maximum (private to them),
      * how much they can bid, and whether they watch the auction.
      *
-     * @return array{isBuyer: bool, verified: bool, watching: bool, hasBid: bool, autoMax: ?Money, biddable: ?Money, available: ?Money}
+     * @return array{isBuyer: bool, verified: bool, identityCleared: bool, watching: bool, hasBid: bool, canRetract: bool, autoMax: ?Money, biddable: ?Money, available: ?Money}
      */
     private function viewerState(User $user, Auction $auction): array
     {
@@ -215,16 +262,29 @@ class Show extends Component
             ->where('wallet_id', $wallet->id)
             ->first()?->amount;
         $base = $ownHold === null ? $wallet?->available() : $wallet->available()->plus($ownHold);
+        $latestBid = $auction->bids()->standing()->where('user_id', $user->id)->max('created_at');
 
         return [
             'isBuyer' => $user->isBuyer(),
             'verified' => $user->hasVerifiedEmail(),
             'identityCleared' => $user->kyc_status->isCleared(),
             'watching' => $user->watchedAuctions()->whereKey($auction->id)->exists(),
-            'hasBid' => $auction->bids()->where('user_id', $user->id)->exists(),
+            'hasBid' => $latestBid !== null,
+            'canRetract' => $this->canRetract($auction, $latestBid),
             'autoMax' => $autoBid?->max_amount,
             'biddable' => $base?->basisPointsFloor((int) config('auction.bidding.biddable_share_bps')),
             'available' => $wallet?->available(),
         ];
+    }
+
+    /** Whether the window to take back bids is open (RetractBids decides for real). */
+    private function canRetract(Auction $auction, mixed $latestBid): bool
+    {
+        $window = (int) config('auction.trust.retract_window_minutes');
+
+        return $latestBid !== null && $window > 0
+            && $auction->status === AuctionStatus::Live && $auction->ends_at !== null
+            && now()->addMinutes((int) config('auction.trust.retract_closing_minutes'))->lessThan($auction->ends_at)
+            && now()->subMinutes($window)->lessThanOrEqualTo($latestBid);
     }
 }

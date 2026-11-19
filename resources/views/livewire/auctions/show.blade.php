@@ -298,6 +298,29 @@
                             </p>
                         </form>
 
+                        @if ($viewer['canRetract'])
+                            <details class="border-t border-slate-100 pt-3 text-sm dark:border-slate-800" @if ($errors->has('retract')) open @endif>
+                                <summary class="cursor-pointer text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">{{ __('Take back my bids') }}</summary>
+                                <div class="mt-3 space-y-2">
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                                        {{ __('All your bids on this auction are withdrawn and a strike is added to your account. :limit strikes suspend it.', ['limit' => config('auction.trust.strike_limit')]) }}
+                                    </p>
+                                    <select wire:model="retractReason" class="form-control" aria-label="{{ __('Reason') }}">
+                                        <option value="">{{ __('Choose a reason') }}</option>
+                                        @foreach ($retractReasons as $key => $label)
+                                            <option value="{{ $key }}">{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    <x-button type="button" variant="secondary" size="sm" class="w-full"
+                                              wire:click="retract" wire:loading.attr="disabled" wire:target="retract"
+                                              wire:confirm="{{ __('Take back all your bids on this auction? This adds a strike to your account.') }}">
+                                        {{ __('Take back my bids') }}
+                                    </x-button>
+                                    <x-input-error :messages="$errors->get('retract')" class="mt-1.5" />
+                                </div>
+                            </details>
+                        @endif
+
                         @if ($auction->buy_now_price !== null && $auction->bid_count === 0)
                             <div class="border-t border-slate-100 pt-4 dark:border-slate-800" x-show="buyNow">
                                 <x-button type="button" variant="secondary" class="w-full"
@@ -333,7 +356,7 @@
                     <div class="min-w-0">
                         <a href="{{ route('sellers.show', $auction->company) }}" class="font-semibold text-slate-900 hover:text-brand-700 dark:text-slate-50 dark:hover:text-brand-300">{{ $auction->company->name }}</a>
                         <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
-                            @if ($auction->company->verified_at)
+                            @if ($auction->company->isVerified())
                                 <span class="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400"><x-app-icon name="shield" class="size-4" /> {{ __('Verified') }}</span>
                             @endif
                             @if ($auction->company->averageRating() !== null)

@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\KycDocumentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SecurityController;
 use App\Livewire\Account\Bids;
+use App\Livewire\Account\Invoices as AccountInvoices;
 use App\Livewire\Account\Notifications;
 use App\Livewire\Account\NotificationSettings;
 use App\Livewire\Account\Orders;
@@ -44,7 +46,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/orders', Orders::class)->name('orders');
     Route::get('/orders/{order}', OrderShow::class)->name('orders.show');
     Route::get('/purchases', Purchases::class)->name('purchases');
+    Route::get('/invoices', AccountInvoices::class)->name('invoices');
     Route::get('/verification', Verification::class)->name('verification');
+    Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'show'])->name('invoices.pdf');
     Route::get('/kyc-documents/{document}', [KycDocumentController::class, 'show'])->middleware('signed')->name('kyc.document');
     Route::get('/notifications', Notifications::class)->name('notifications');
     Route::get('/support', SupportIndex::class)->name('support.index');

@@ -39,6 +39,11 @@ final class Settings
             'bidding.anti_snipe_window_seconds' => ['group' => 'bidding', 'label' => __('Late-bid window (seconds)'), 'help' => __('A bid this close to the end extends the auction. Applies to auctions approved from now on.'), 'kind' => 'integer', 'min' => 0, 'max' => 3_600],
             'bidding.anti_snipe_extend_seconds' => ['group' => 'bidding', 'label' => __('Extension (seconds)'), 'help' => __('How far a late bid moves the end.'), 'kind' => 'integer', 'min' => 0, 'max' => 3_600],
             'bidding.anti_snipe_max_extensions' => ['group' => 'bidding', 'label' => __('Most extensions per auction'), 'help' => __('0 turns extensions off.'), 'kind' => 'integer', 'min' => 0, 'max' => 500],
+            'trust.retract_window_minutes' => ['group' => 'trust', 'label' => __('Minutes to retract a bid'), 'help' => __('After the buyer’s latest bid on the auction. 0 turns retraction off.'), 'kind' => 'integer', 'min' => 0, 'max' => 1_440],
+            'trust.retract_closing_minutes' => ['group' => 'trust', 'label' => __('No retraction in the last minutes'), 'help' => __('Before the auction ends.'), 'kind' => 'integer', 'min' => 0, 'max' => 10_080],
+            'trust.strike_days' => ['group' => 'trust', 'label' => __('Days a strike counts'), 'help' => '', 'kind' => 'integer', 'min' => 1, 'max' => 3_650],
+            'trust.strike_limit' => ['group' => 'trust', 'label' => __('Strikes that suspend an account'), 'help' => '', 'kind' => 'integer', 'min' => 1, 'max' => 20],
+            'tax.vat_bps' => ['group' => 'tax', 'label' => __('VAT on platform fees'), 'help' => __('Included in every fee and plan price. 0 turns it off.'), 'kind' => 'percent', 'min' => 0, 'max' => 5_000],
             'orders.ship_by_days' => ['group' => 'orders', 'label' => __('Days to ship'), 'help' => __('Counted from the delivery address; also the buyer’s time to give one.'), 'kind' => 'integer', 'min' => 1, 'max' => 60],
             'orders.auto_release_days' => ['group' => 'orders', 'label' => __('Days until payout'), 'help' => __('After shipping, unless the buyer confirms earlier or disputes.'), 'kind' => 'integer', 'min' => 1, 'max' => 60],
             'orders.review_days' => ['group' => 'orders', 'label' => __('Days to leave a review'), 'help' => __('After the order completes.'), 'kind' => 'integer', 'min' => 1, 'max' => 365],
@@ -57,6 +62,8 @@ final class Settings
             'orders' => __('Orders'),
             'payments' => __('Deposits and withdrawals'),
             'billing' => __('Seller plans'),
+            'trust' => __('Trust'),
+            'tax' => __('Tax'),
         ];
     }
 

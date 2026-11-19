@@ -56,7 +56,7 @@ class Bids extends Component
     public function render(): View
     {
         $user = $this->user();
-        $mine = fn (Builder $query) => $query->where('user_id', $user->id);
+        $mine = fn (Builder $query) => $query->where('user_id', $user->id)->whereNull('retracted_at');
 
         $query = match ($this->tab) {
             'won' => Auction::query()->where('status', AuctionStatus::Sold)->where('winner_id', $user->id)->with('order:id,auction_id,number')->orderByDesc('closed_at'),

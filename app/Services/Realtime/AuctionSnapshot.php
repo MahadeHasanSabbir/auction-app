@@ -44,6 +44,7 @@ final class AuctionSnapshot
 
         if ($withBids) {
             $snapshot['bids'] = $auction->bids()
+                ->standing()
                 ->with(['bidder' => fn ($query) => $query->withTrashed()->select(['id', 'name'])])
                 ->orderByDesc('seq')
                 ->limit((int) config('auction.realtime.feed_size'))

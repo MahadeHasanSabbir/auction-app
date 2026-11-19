@@ -180,10 +180,52 @@ return new class extends Migration
             $table->index(['company_id', 'status']);
             $table->index(['status', 'due_at']);
         });
+
+        // Invoices and receipts, frozen when issued: the PDF is drawn from
+        // this row, never from the live records. Numbers come from
+        // invoice_sequences without gaps, one series per kind and year.
+        Schema::create('invoices', function (Blueprint $table) {
+            $table->id();
+            $table->string('kind', 16);
+            $table->string('number', 32)->unique();
+            $table->morphs('subject');
+            $table->foreignId('user_id')->nullable()->constrained();
+            $table->foreignId('company_id')->nullable()->constrained();
+            $table->string('billed_name');
+            $table->string('billed_email')->nullable();
+            $table->text('billed_address')->nullable();
+            $table->char('currency', 3);
+            // [{description, amount (signed minor units)}]
+            $table->json('lines');
+            $table->bigInteger('total');
+            // Platform fees among the lines, and the VAT included in them.
+            $table->unsignedBigInteger('taxable')->default(0);
+            $table->unsignedInteger('tax_rate_bps')->default(0);
+            $table->unsignedBigInteger('tax')->default(0);
+            $table->foreignId('ledger_transaction_id')->nullable()->constrained();
+            $table->dateTime('issued_at');
+            $table->timestamps();
+
+            $table->unique(['kind', 'subject_type', 'subject_id']);
+            $table->index(['user_id', 'issued_at']);
+            $table->index(['company_id', 'issued_at']);
+            $table->index('issued_at');
+        });
+
+        Schema::create('invoice_sequences', function (Blueprint $table) {
+            $table->id();
+            $table->string('series', 16);
+            $table->unsignedSmallInteger('year');
+            $table->unsignedInteger('last_number')->default(0);
+
+            $table->unique(['series', 'year']);
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('invoice_sequences');
+        Schema::dropIfExists('invoices');
         Schema::dropIfExists('subscription_invoices');
         Schema::dropIfExists('wallet_holds');
         Schema::dropIfExists('withdrawal_requests');

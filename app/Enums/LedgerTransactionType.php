@@ -11,6 +11,7 @@ enum LedgerTransactionType: string
     case Refund = 'refund';
     case SubscriptionPayment = 'subscription_payment';
     case Promotion = 'promotion';
+    case Fine = 'fine';
     case Adjustment = 'adjustment';
 
     public function label(): string
@@ -23,6 +24,7 @@ enum LedgerTransactionType: string
             self::Refund => __('Refund'),
             self::SubscriptionPayment => __('Plan payment'),
             self::Promotion => __('Promotion credit'),
+            self::Fine => __('Fine'),
             self::Adjustment => __('Adjustment'),
         };
     }

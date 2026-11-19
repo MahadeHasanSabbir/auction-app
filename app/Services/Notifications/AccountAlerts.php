@@ -10,8 +10,11 @@ use App\Filament\Seller\Pages\Verification;
 use App\Filament\Seller\Resources\Auctions\AuctionResource;
 use App\Models\Auction;
 use App\Models\Company;
+use App\Models\Invoice;
 use App\Models\KycRequest;
+use App\Models\Strike;
 use App\Models\User;
+use App\Models\Wallet;
 use App\Models\WithdrawalRequest;
 
 /** Notifications about bidding, withdrawals and the seller's auctions (orders have OrderAlerts). */
@@ -106,5 +109,25 @@ class AccountAlerts
             },
             $body,
             AuctionResource::getUrl('view', ['record' => $auction], panel: 'seller', tenant: Company::query()->findOrFail($auction->company_id)));
+    }
+
+    /** A strike was given: the buyer hears why, and how close the limit is. */
+    public function strike(User $buyer, Strike $strike, int $active, int $limit): void
+    {
+        $this->notifier->send($buyer, NotificationKind::StrikeIssued,
+            __('A strike was added to your account'),
+            __(':reason You have :count of :limit strikes; at :limit the account is suspended.', ['reason' => rtrim($strike->reason, '.').'.', 'count' => $active, 'limit' => $limit]),
+            route('dashboard'));
+    }
+
+    /** Staff fined a buyer or a company. */
+    public function fine(Wallet $wallet, Invoice $invoice, string $reason): void
+    {
+        $company = $wallet->company_id === null ? null : Company::query()->find($wallet->company_id);
+
+        $this->notifier->send($company !== null ? $this->notifier->team($company) : $wallet->user_id, NotificationKind::FineIssued,
+            __('Fine of :amount', ['amount' => $invoice->total->format()]),
+            __('Taken from your wallet: :reason', ['reason' => $reason]),
+            $company !== null ? CompanyWallet::getUrl(panel: 'seller', tenant: $company) : route('wallet'));
     }
 }

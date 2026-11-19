@@ -11,6 +11,7 @@ use App\Enums\WithdrawalStatus;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WithdrawalRequest;
+use App\Services\Invoices\Invoices;
 use App\Services\Ledger\Ledger;
 use App\Services\Notifications\AccountAlerts;
 use Illuminate\Support\Facades\DB;
@@ -24,12 +25,16 @@ use Illuminate\Validation\ValidationException;
  * Postings, capturing the request's hold: the wallet is debited the amount,
  * the gateway-charges and service-revenue accounts get the charges, and
  * payout clearing gets the net (it mirrors what left the platform's bank).
+ * The VAT included in the charges goes to tax payable; a receipt is issued.
  */
 final class PayWithdrawal
 {
     use ChangesWithdrawalStatus;
 
-    public function __construct(private readonly Ledger $ledger) {}
+    public function __construct(
+        private readonly Ledger $ledger,
+        private readonly Invoices $invoices,
+    ) {}
 
     public function handle(User $staff, WithdrawalRequest $withdrawal, string $reference): WithdrawalRequest
     {
@@ -52,8 +57,8 @@ final class PayWithdrawal
                 ->by($staff)
                 ->capturing($this->activeHold($locked))
                 ->debit(Wallet::query()->findOrFail($locked->wallet_id), $locked->amount)
-                ->credit($this->ledger->system(SystemAccount::GatewayCharges), $locked->gateway_charge, LedgerComponent::GatewayCharge, $locked->gatewayFeeRule)
-                ->credit($this->ledger->system(SystemAccount::ServiceRevenue), $locked->service_charge, LedgerComponent::ServiceCharge, $locked->serviceFeeRule)
+                ->creditWithVat($this->ledger->system(SystemAccount::GatewayCharges), $locked->gateway_charge, LedgerComponent::GatewayCharge, $locked->gatewayFeeRule)
+                ->creditWithVat($this->ledger->system(SystemAccount::ServiceRevenue), $locked->service_charge, LedgerComponent::ServiceCharge, $locked->serviceFeeRule)
                 ->credit($this->ledger->system(SystemAccount::PayoutClearing), $locked->net_amount)
                 ->post();
 
@@ -63,6 +68,8 @@ final class PayWithdrawal
                 'paid_at' => now(),
                 'ledger_transaction_id' => $transaction->id,
             ])->save();
+
+            $this->invoices->withdrawal($locked, $transaction);
 
             $this->logReview($staff, $locked, 'paid', $reference);
 

@@ -197,7 +197,8 @@ class Auction extends Model
     /** The lowest amount the next bid must reach. */
     public function minimumNextBid(): Money
     {
-        return $this->bid_count === 0
+        // No leader: no bids yet, or every bid was retracted.
+        return $this->leader_id === null
             ? $this->starting_price
             : $this->current_price->plus($this->min_increment);
     }

@@ -3,6 +3,7 @@
 namespace App\Actions\Billing;
 
 use App\Enums\InvoiceStatus;
+use App\Enums\LedgerComponent;
 use App\Enums\LedgerTransactionType;
 use App\Enums\PaymentOutcome;
 use App\Enums\SubscriptionStatus;
@@ -12,6 +13,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\Wallet;
+use App\Services\Invoices\Invoices;
 use App\Services\Ledger\InsufficientFundsException;
 use App\Services\Ledger\Ledger;
 use App\Services\Payments\InvalidCallbackException;
@@ -23,13 +25,17 @@ use Illuminate\Validation\ValidationException;
  * Settles a plan invoice, from the company wallet or from a gateway payment,
  * and then starts the period it pays for (and the plan it was issued for).
  *
- * Postings: the plan revenue account is credited the amount; the debit is
+ * Postings: the plan revenue account is credited the amount less the VAT
+ * in it, which goes to tax payable; the debit is
  * the company wallet, or gateway clearing when a payer paid at the gateway.
  * Callers decide who may pay; this class only checks the invoice.
  */
 final class PayInvoice
 {
-    public function __construct(private readonly Ledger $ledger) {}
+    public function __construct(
+        private readonly Ledger $ledger,
+        private readonly Invoices $invoices,
+    ) {}
 
     /**
      * @throws ValidationException when the invoice is not open or the wallet cannot cover it
@@ -119,7 +125,7 @@ final class PayInvoice
             ->idempotent("invoice:{$invoice->id}")
             ->describe("Plan invoice {$invoice->number}")
             ->debit($payer, $invoice->amount)
-            ->credit($this->ledger->system(SystemAccount::SubscriptionRevenue), $invoice->amount)
+            ->creditWithVat($this->ledger->system(SystemAccount::SubscriptionRevenue), $invoice->amount, LedgerComponent::Principal)
             ->post();
     }
 
@@ -131,6 +137,10 @@ final class PayInvoice
             'paid_at' => now(),
             'ledger_transaction_id' => $transaction?->id,
         ])->save();
+
+        if ($transaction !== null) {
+            $this->invoices->subscription($invoice, $transaction);
+        }
 
         $subscription = Subscription::query()->whereKey($invoice->subscription_id)->lockForUpdate()->firstOrFail();
         $changed = $subscription->plan_id !== $invoice->plan_id || $subscription->billing_interval !== $invoice->billing_interval;

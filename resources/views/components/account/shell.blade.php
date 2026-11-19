@@ -9,6 +9,7 @@
         $user->isBuyer() ? ['url' => route('bids'), 'label' => __('My bids'), 'icon' => 'gavel', 'active' => request()->routeIs('bids')] : null,
         $user->isBuyer() ? ['url' => route('orders'), 'label' => __('My orders'), 'icon' => 'truck', 'active' => request()->routeIs('orders', 'orders.*')] : null,
         $user->isBuyer() ? ['url' => route('purchases'), 'label' => __('Purchases'), 'icon' => 'tag', 'active' => request()->routeIs('purchases')] : null,
+        $user->isBuyer() ? ['url' => route('invoices'), 'label' => __('Invoices'), 'icon' => 'document', 'active' => request()->routeIs('invoices')] : null,
         $user->isBuyer() ? ['url' => route('wallet'), 'label' => __('Wallet'), 'icon' => 'wallet', 'active' => request()->routeIs('wallet', 'wallet.*')] : null,
         $user->isBuyer() ? ['url' => route('verification'), 'label' => __('Verification'), 'icon' => 'shield', 'active' => request()->routeIs('verification')] : null,
         ['url' => route('notifications'), 'label' => __('Notifications'), 'icon' => 'bell', 'active' => request()->routeIs('notifications', 'profile.notifications')],

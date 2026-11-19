@@ -39,7 +39,8 @@ final readonly class BidState
 
     public function minimumNext(): Money
     {
-        return $this->bidCount === 0 ? $this->starting : $this->price->plus($this->increment);
+        // No leader: no bids yet, or every bid was retracted.
+        return $this->leaderId === null ? $this->starting : $this->price->plus($this->increment);
     }
 
     /** What the leader would pay at most: their automatic maximum, or their bid. */

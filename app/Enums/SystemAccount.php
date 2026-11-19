@@ -10,6 +10,7 @@ enum SystemAccount: string
     case ServiceRevenue = 'service_revenue';
     case CommissionRevenue = 'commission_revenue';
     case SubscriptionRevenue = 'subscription_revenue';
+    case PenaltyRevenue = 'penalty_revenue';
     case TaxPayable = 'tax_payable';
     case Promotions = 'promotions';
     case Escrow = 'escrow';
@@ -23,7 +24,8 @@ enum SystemAccount: string
             self::ServiceRevenue => __('Service revenue'),
             self::CommissionRevenue => __('Commission revenue'),
             self::SubscriptionRevenue => __('Subscription revenue'),
-            self::TaxPayable => __('Tax payable'),
+            self::PenaltyRevenue => __('Fines'),
+            self::TaxPayable => __('VAT payable'),
             self::Promotions => __('Promotions'),
             self::Escrow => __('Escrow'),
             self::PayoutClearing => __('Payout clearing'),

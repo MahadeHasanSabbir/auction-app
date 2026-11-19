@@ -30,6 +30,8 @@ enum NotificationKind: string
     case KycSubmitted = 'kyc_submitted';
     case KycApproved = 'kyc_approved';
     case KycRejected = 'kyc_rejected';
+    case StrikeIssued = 'strike_issued';
+    case FineIssued = 'fine_issued';
 
     public function category(): NotificationCategory
     {
@@ -38,10 +40,10 @@ enum NotificationKind: string
             self::AuctionWon, self::NewOrder, self::OrderShipped, self::OrderCompleted, self::OrderCancelled,
             self::DisputeOpened, self::DisputeWithdrawn, self::DisputeResolved => NotificationCategory::Orders,
             self::AddressReceived, self::ReviewLeft, self::ReviewReplied, self::ChatMessage => NotificationCategory::Activity,
-            self::WithdrawalApproved, self::WithdrawalPaid, self::WithdrawalRejected => NotificationCategory::Money,
+            self::WithdrawalApproved, self::WithdrawalPaid, self::WithdrawalRejected, self::FineIssued => NotificationCategory::Money,
             self::AuctionApproved, self::AuctionRejected, self::AuctionUnsold => NotificationCategory::Listings,
             self::TicketReply, self::NewTicket => NotificationCategory::Support,
-            self::KycRequested, self::KycSubmitted, self::KycApproved, self::KycRejected => NotificationCategory::Account,
+            self::KycRequested, self::KycSubmitted, self::KycApproved, self::KycRejected, self::StrikeIssued => NotificationCategory::Account,
         };
     }
 }

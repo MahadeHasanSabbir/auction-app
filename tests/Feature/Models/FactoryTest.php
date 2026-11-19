@@ -10,12 +10,16 @@ use App\Enums\WalletType;
 use App\Models\Auction;
 use App\Models\AutoBid;
 use App\Models\Bid;
+use App\Models\BlacklistEntry;
 use App\Models\Category;
 use App\Models\Company;
 use App\Models\CompanyAgreement;
 use App\Models\CompanyInvitation;
 use App\Models\FeeRule;
+use App\Models\FraudFlag;
+use App\Models\Invoice;
 use App\Models\KycRequest;
+use App\Models\LoginEvent;
 use App\Models\Notice;
 use App\Models\Order;
 use App\Models\Plan;
@@ -23,6 +27,7 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\Review;
 use App\Models\SocialAccount;
+use App\Models\Strike;
 use App\Models\Subscription;
 use App\Models\TrustedDevice;
 use App\Models\User;
@@ -57,6 +62,7 @@ class FactoryTest extends TestCase
             CompanyAgreement::class, CompanyInvitation::class, Category::class, Product::class,
             ProductImage::class, Auction::class, Bid::class, AutoBid::class, Wallet::class,
             FeeRule::class, Order::class, Review::class, Notice::class, TrustedDevice::class, SocialAccount::class, KycRequest::class,
+            LoginEvent::class, FraudFlag::class, Strike::class, BlacklistEntry::class, Invoice::class,
         ])->mapWithKeys(fn (string $model) => [class_basename($model) => [$model]])->all();
     }
 
@@ -116,7 +122,7 @@ class FactoryTest extends TestCase
         $this->assertTrue($auction->current_price->equals(Money::minor(250_000)));
         $this->assertTrue($auction->minimumNextBid()->equals(Money::minor(250_000)));
 
-        $auction->forceFill(['bid_count' => 1, 'current_price' => 260_000])->save();
+        $auction->forceFill(['bid_count' => 1, 'current_price' => 260_000, 'leader_id' => User::factory()->create()->id])->save();
 
         $this->assertTrue($auction->minimumNextBid()->equals(Money::minor(270_000)));
     }

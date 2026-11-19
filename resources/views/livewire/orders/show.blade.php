@@ -191,6 +191,11 @@
                         @endif
                         <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">{{ __('Ordered') }}</dt><dd><x-datetime :value="$order->created_at" format="j M Y" /></dd></div>
                     </dl>
+                    @if ($receipt)
+                        <a href="{{ route('invoices.pdf', $receipt) }}" class="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline dark:text-brand-300">
+                            <x-app-icon name="download" class="size-4" /> {{ __('Purchase receipt :number', ['number' => $receipt->number]) }}
+                        </a>
+                    @endif
                 </x-card>
 
                 <x-card>

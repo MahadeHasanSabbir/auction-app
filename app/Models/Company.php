@@ -130,9 +130,24 @@ class Company extends Model
     }
 
     /** Seats taken: everyone on the team plus invitations still waiting to be accepted. */
+    /** @return HasMany<Invoice, $this> */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
     public function seatsUsed(): int
     {
         return $this->users()->count() + $this->invitations()->pending()->count();
+    }
+
+    /**
+     * The "verified seller" badge: the platform verified the company and its
+     * identity documents are cleared.
+     */
+    public function isVerified(): bool
+    {
+        return $this->verified_at !== null && $this->kyc_status->isCleared();
     }
 
     public function isSuspended(): bool

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\LoginEvent;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -13,6 +14,9 @@ Artisan::command('log:clear', function () {
 
     $this->comment('Log has been clear!');
 })->describe('Clear log file');
+
+// Drops sign-in history older than auction.trust.login_history_days.
+Schedule::command('model:prune', ['--model' => [LoginEvent::class]])->daily();
 
 // Logs a critical error when the books do not add up.
 Schedule::command('ledger:verify')->dailyAt('03:00')->withoutOverlapping();

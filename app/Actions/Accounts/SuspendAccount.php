@@ -29,13 +29,29 @@ final class SuspendAccount
         }
 
         DB::transaction(function () use ($by, $account, $reason): void {
-            $account->forceFill(['is_active' => false, 'suspension_reason' => $reason])->save();
-            $account->trustedDevices()->delete();
-            DB::table('sessions')->where('user_id', $account->id)->delete();
-
+            $this->suspend($account, $reason);
             $this->record($by, $account, 'suspended', ['reason' => $reason]);
         });
 
         return $account;
+    }
+
+    /** The system suspends an account that reached the strike limit. */
+    public function automatically(User $account, string $reason): void
+    {
+        DB::transaction(function () use ($account, $reason): void {
+            $this->suspend($account, mb_substr($reason, 0, 500));
+
+            activity('admin')->performedOn($account)->event('suspended')
+                ->withProperties(['reason' => $reason, 'automatic' => true])
+                ->log("suspended User {$account->id}");
+        });
+    }
+
+    private function suspend(User $account, string $reason): void
+    {
+        $account->forceFill(['is_active' => false, 'suspension_reason' => $reason])->save();
+        $account->trustedDevices()->delete();
+        DB::table('sessions')->where('user_id', $account->id)->delete();
     }
 }

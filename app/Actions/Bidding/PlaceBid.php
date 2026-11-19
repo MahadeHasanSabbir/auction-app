@@ -7,6 +7,7 @@ use App\Enums\AuctionStatus;
 use App\Enums\HoldType;
 use App\Events\Account\Outbid;
 use App\Events\Auctions\BidPlaced;
+use App\Jobs\CheckSharedIp;
 use App\Models\Auction;
 use App\Models\AutoBid;
 use App\Models\Bid;
@@ -103,7 +104,7 @@ final class PlaceBid
         $resolution = $this->resolver->resolve($state, $bidder->id, $max, $auto);
         $previousLeader = $locked->leader_id;
 
-        $this->writeBids($locked, $resolution);
+        $this->writeBids($locked, $resolution, $bidder->id);
         $this->moveHold($locked, $resolution, $hold, $wallet);
         $this->updateAutoBids($locked, $resolution, $bidder, $max, $auto);
         $extended = $this->updateAuction($locked, $resolution);
@@ -111,6 +112,10 @@ final class PlaceBid
         // Sent after commit. A leader raising their own hidden maximum changes nothing anyone sees.
         if ($resolution->bids !== []) {
             BidPlaced::dispatch($locked);
+
+            if (($ip = request()->ip()) !== null) {
+                CheckSharedIp::dispatch($locked->id, $bidder->id, $ip);
+            }
         }
 
         if ($previousLeader !== null && $previousLeader !== $resolution->leaderId) {
@@ -160,9 +165,11 @@ final class PlaceBid
         }
     }
 
-    private function writeBids(Auction $auction, Resolution $resolution): void
+    /** The bidder's own rows carry the request's IP; rows placed for the other leader do not. */
+    private function writeBids(Auction $auction, Resolution $resolution, int $bidderId): void
     {
         $seq = $auction->bid_count;
+        $ip = request()->ip();
 
         foreach ($resolution->bids as $row) {
             $bid = new Bid;
@@ -172,6 +179,7 @@ final class PlaceBid
                 'amount' => $row->amount,
                 'type' => $row->type,
                 'seq' => ++$seq,
+                'ip_address' => $row->userId === $bidderId ? $ip : null,
                 'created_at' => now(),
             ])->save();
         }

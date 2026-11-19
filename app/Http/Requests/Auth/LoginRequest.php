@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Auth;
 
 use App\Models\User;
+use App\Services\Trust\Blacklist;
+use App\Services\Trust\LoginHistory;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -45,12 +47,18 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        // A deactivated account fails exactly like a wrong password.
+        // A deactivated account, or a blacklisted address or IP, fails
+        // exactly like a wrong password.
         $valid = Auth::validate($this->only('email', 'password') + ['is_active' => true]);
         $user = Auth::getLastAttempted();
+        $blocked = app(Blacklist::class)->blocks($this->string('email')->toString(), $this->ip());
 
-        if (! $valid || ! $user instanceof User) {
+        if (! $valid || ! $user instanceof User || $blocked) {
             RateLimiter::hit($this->throttleKey());
+
+            if ($user instanceof User) {
+                app(LoginHistory::class)->failed($this, $user, $this->string('email')->toString());
+            }
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),

@@ -8,6 +8,8 @@ use App\Actions\Orders\OpenDispute;
 use App\Actions\Orders\UpdateDeliveryAddress;
 use App\Actions\Orders\WithdrawDispute;
 use App\Enums\DisputeReason;
+use App\Enums\InvoiceKind;
+use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\User;
 use Closure;
@@ -112,6 +114,7 @@ class Show extends Component
         return view('livewire.orders.show', [
             'order' => $order,
             'reasons' => DisputeReason::cases(),
+            'receipt' => Invoice::query()->where('kind', InvoiceKind::Purchase)->where('subject_type', $order->getMorphClass())->where('subject_id', $order->id)->first(),
             'can' => [
                 'address' => $user->can('updateAddress', $order),
                 'confirm' => $user->can('confirm', $order),

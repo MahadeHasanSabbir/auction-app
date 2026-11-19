@@ -20,7 +20,8 @@ use Illuminate\Support\Facades\Gate;
 /**
  * What the platform earned in a period, straight from the ledger: every
  * entry on the revenue accounts (commission, service charges, gateway
- * charges, plan payments). A refund that reverses a charge shows negative.
+ * charges, plan payments, fines), net of VAT, and the VAT itself on its own
+ * line, outside the total. A refund that reverses a charge shows negative.
  */
 class Revenue extends ReportPage
 {
@@ -36,6 +37,9 @@ class Revenue extends ReportPage
         SystemAccount::ServiceRevenue,
         SystemAccount::GatewayCharges,
         SystemAccount::SubscriptionRevenue,
+        SystemAccount::PenaltyRevenue,
+        // Not revenue: the VAT included in the fees, owed to the tax authority.
+        SystemAccount::TaxPayable,
     ];
 
     public static function canAccess(): bool
@@ -109,7 +113,9 @@ class Revenue extends ReportPage
             $summary[$label] = Money::minor((int) ($sums[$id] ?? 0))->format();
         }
 
-        return [...$summary, __('Total') => Money::minor((int) $sums->sum())->format()];
+        $tax = Wallet::forSystem(SystemAccount::TaxPayable)->id;
+
+        return [...$summary, __('Total revenue') => Money::minor((int) $sums->except([$tax])->sum())->format()];
     }
 
     protected function csvName(): string

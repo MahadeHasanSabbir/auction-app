@@ -10,8 +10,10 @@ use App\Models\Order;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Services\Fees\CommissionTerms;
+use App\Services\Invoices\Invoices;
 use App\Services\Ledger\Ledger;
 use App\Support\Money;
+use App\Support\Vat;
 use LogicException;
 
 /**
@@ -19,12 +21,19 @@ use LogicException;
  * to the company's wallet minus the commission, which shrinks in proportion
  * to what the company keeps (a full refund earns the platform nothing).
  *
+ * The commission includes VAT, which the ledger moves to tax payable and
+ * the order records in `tax`. When something was kept, the buyer gets a
+ * purchase receipt and the company a commission invoice.
+ *
  * Runs inside the caller's transaction with the order row already locked;
  * the caller moves the order to its final status.
  */
 final class SettleEscrow
 {
-    public function __construct(private readonly Ledger $ledger) {}
+    public function __construct(
+        private readonly Ledger $ledger,
+        private readonly Invoices $invoices,
+    ) {}
 
     public function handle(Order $order, Money $refund, ?User $by, string $description): void
     {
@@ -44,16 +53,21 @@ final class SettleEscrow
             ->debit($this->ledger->system(SystemAccount::Escrow), $order->amount)
             ->credit(Wallet::query()->where('user_id', $order->buyer_id)->firstOrFail(), $refund)
             ->credit(Wallet::query()->where('company_id', $order->company_id)->firstOrFail(), $payout)
-            ->credit($this->ledger->system(SystemAccount::CommissionRevenue), $commission, LedgerComponent::Commission, $this->terms($order))
+            ->creditWithVat($this->ledger->system(SystemAccount::CommissionRevenue), $commission, LedgerComponent::Commission, $this->terms($order))
             ->meta(['refund' => $refund->amount, 'commission' => $commission->amount, 'payout' => $payout->amount]);
 
-        $transaction->post();
+        $posted = $transaction->post();
 
         $order->forceFill([
             'refunded_amount' => $refund,
             'commission' => $commission,
+            'tax' => Vat::included($commission),
             'seller_payout' => $payout,
         ]);
+
+        if (! $kept->isZero()) {
+            $this->invoices->settlement($order, $posted);
+        }
     }
 
     private function terms(Order $order): ?CommissionTerms

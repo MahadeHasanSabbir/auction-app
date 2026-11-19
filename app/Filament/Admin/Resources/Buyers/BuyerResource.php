@@ -7,7 +7,9 @@ use App\Enums\UserRole;
 use App\Filament\Admin\Resources\AccountActions;
 use App\Filament\Admin\Resources\Buyers\Pages\ListBuyers;
 use App\Filament\Admin\Resources\Buyers\Pages\ViewBuyer;
+use App\Filament\Admin\Resources\Buyers\RelationManagers\LoginEventsRelationManager;
 use App\Filament\Admin\Resources\Buyers\RelationManagers\OrdersRelationManager;
+use App\Filament\Admin\Resources\Buyers\RelationManagers\StrikesRelationManager;
 use App\Filament\Admin\Resources\Kyc\KycRequestResource;
 use App\Filament\Admin\Resources\Kyc\KycRequestsRelationManager;
 use App\Models\User;
@@ -148,6 +150,8 @@ class BuyerResource extends Resource
                         TextEntry::make('wallet.held')->label(__('On hold'))->formatStateUsing($money)->placeholder('—'),
                         TextEntry::make('bids_count')->label(__('Bids placed')),
                         TextEntry::make('orders_count')->label(__('Orders')),
+                        TextEntry::make('active_strikes')->label(__('Active strikes'))
+                            ->state(fn (User $record) => $record->strikes()->active()->count().' / '.config('auction.trust.strike_limit')),
                     ]),
                 KycRequestResource::documentsSection(),
             ]);
@@ -156,7 +160,7 @@ class BuyerResource extends Resource
     public static function getRelations(): array
     {
         // One group renders the tables one under the other instead of as tabs.
-        return [RelationGroup::make(__('Related'), [OrdersRelationManager::class, KycRequestsRelationManager::class])];
+        return [RelationGroup::make(__('Related'), [OrdersRelationManager::class, StrikesRelationManager::class, LoginEventsRelationManager::class, KycRequestsRelationManager::class])];
     }
 
     public static function getPages(): array

@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\Companies\Pages;
 use App\Filament\Admin\Resources\Companies\Actions\CompanyActions;
 use App\Filament\Admin\Resources\Companies\CompanyResource;
 use App\Filament\Admin\Resources\Kyc\KycActions;
+use App\Filament\Admin\Resources\TrustActions;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewCompany extends ViewRecord
@@ -25,6 +26,7 @@ class ViewCompany extends ViewRecord
             CompanyActions::autoApprove(),
             CompanyActions::assignPlan(),
             KycActions::request(),
+            TrustActions::fine(),
         ];
     }
 }

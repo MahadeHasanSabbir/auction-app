@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Actions\Accounts\SignInWithGoogle;
+use App\Enums\LoginMethod;
 use App\Http\Controllers\Auth\Concerns\SignsUsersIn;
 use App\Http\Controllers\Controller;
+use App\Services\Trust\Blacklist;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -34,7 +36,7 @@ class GoogleController extends Controller
         return Socialite::driver('google')->redirect();
     }
 
-    public function callback(Request $request, SignInWithGoogle $signIn): RedirectResponse
+    public function callback(Request $request, SignInWithGoogle $signIn, Blacklist $blacklist): RedirectResponse
     {
         abort_unless(self::enabled(), 404);
 
@@ -50,12 +52,16 @@ class GoogleController extends Controller
             return redirect()->route('login')->withErrors(['email' => __('Google sign-in did not complete. Please try again.')]);
         }
 
+        if ($blacklist->blocks($google->getEmail(), $request->ip())) {
+            return redirect()->route('login')->withErrors(['email' => __('We cannot sign you in with this Google account.')]);
+        }
+
         try {
             $user = $signIn->handle($google);
         } catch (ValidationException $e) {
             return redirect()->route('login')->withErrors($e->errors());
         }
 
-        return $this->signIn($request, $user, false);
+        return $this->signIn($request, $user, false, LoginMethod::Google);
     }
 }

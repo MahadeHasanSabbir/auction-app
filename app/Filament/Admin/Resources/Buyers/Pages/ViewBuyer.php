@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\Buyers\Pages;
 use App\Filament\Admin\Resources\AccountActions;
 use App\Filament\Admin\Resources\Buyers\BuyerResource;
 use App\Filament\Admin\Resources\Kyc\KycActions;
+use App\Filament\Admin\Resources\TrustActions;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewBuyer extends ViewRecord
@@ -18,6 +19,6 @@ class ViewBuyer extends ViewRecord
 
     protected function getHeaderActions(): array
     {
-        return [KycActions::request(), AccountActions::suspend(), AccountActions::reactivate()];
+        return [KycActions::request(), TrustActions::strike(), TrustActions::fine(), AccountActions::suspend(), AccountActions::reactivate()];
     }
 }

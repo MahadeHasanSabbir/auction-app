@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\LoginMethod;
 use App\Enums\OtpPurpose;
 use App\Http\Controllers\Auth\Concerns\SignsUsersIn;
 use App\Http\Controllers\Controller;
@@ -39,7 +40,7 @@ class AuthenticatedSessionController extends Controller
         $remember = $request->boolean('remember');
 
         if ($devices->isTrusted($user, $request)) {
-            return $this->signIn($request, $user, $remember);
+            return $this->signIn($request, $user, $remember, LoginMethod::TrustedDevice);
         }
 
         try {

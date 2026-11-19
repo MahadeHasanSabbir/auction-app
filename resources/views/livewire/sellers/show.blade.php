@@ -31,7 +31,7 @@
                 <h1 class="text-2xl font-semibold text-slate-900 dark:text-slate-50 sm:text-3xl">{{ $company->name }}</h1>
 
                 <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
-                    @if ($company->verified_at)
+                    @if ($company->isVerified())
                         <span class="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400"><x-app-icon name="shield" class="size-4" /> {{ __('Verified seller') }}</span>
                     @endif
                     @if ($rating !== null)

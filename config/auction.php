@@ -106,6 +106,39 @@ return [
         'anti_snipe_max_extensions' => 20,
     ],
 
+    // Bid retraction, sign-in history, flags, strikes.
+    'trust' => [
+        // A buyer may take back their bids on an auction only within this many
+        // minutes of their latest bid, and not in the auction's last minutes.
+        'retract_window_minutes' => 60,
+        'retract_closing_minutes' => 60,
+
+        // Strikes count for this many days; this many active ones suspend the account.
+        'strike_days' => 180,
+        'strike_limit' => 3,
+
+        // How far back a bidder's IP is compared with the seller team's sign-ins.
+        'shared_ip_days' => 30,
+
+        // Sign-in history is kept this long.
+        'login_history_days' => 180,
+    ],
+
+    // VAT on the platform's own fees (commission, service and gateway
+    // charges, plan payments). Prices include it; the ledger moves the VAT
+    // part to the tax-payable account. Sale prices are not taxed.
+    'tax' => [
+        'vat_bps' => (int) env('AUCTION_VAT_BPS', 1500),
+        'vat_number' => env('AUCTION_VAT_NUMBER'),
+    ],
+
+    // Who issues the invoices and receipts.
+    'issuer' => [
+        'name' => env('AUCTION_ISSUER_NAME', env('APP_NAME', 'Auction')),
+        'address' => env('AUCTION_ISSUER_ADDRESS'),
+        'email' => env('AUCTION_ISSUER_EMAIL'),
+    ],
+
     'orders' => [
         // The company must ship within this many days of having the delivery
         // address, or the order is cancelled and the buyer refunded. A buyer

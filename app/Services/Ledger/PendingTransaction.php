@@ -4,6 +4,7 @@ namespace App\Services\Ledger;
 
 use App\Enums\LedgerComponent;
 use App\Enums\LedgerTransactionType;
+use App\Enums\SystemAccount;
 use App\Models\CompanyAgreement;
 use App\Models\FeeRule;
 use App\Models\LedgerTransaction;
@@ -13,6 +14,7 @@ use App\Models\WalletHold;
 use App\Services\Fees\CommissionTerms;
 use App\Services\Fees\Fee;
 use App\Support\Money;
+use App\Support\Vat;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 
@@ -62,6 +64,22 @@ final class PendingTransaction
         }
 
         return $this->line($wallet, $amount, $component, $source);
+    }
+
+    /**
+     * Credits a platform fee that includes VAT: the VAT part goes to the
+     * tax-payable account as its own entry, the rest to $wallet. The rate is
+     * recorded in the transaction's meta.
+     */
+    public function creditWithVat(Wallet $wallet, Money $gross, LedgerComponent $component, FeeRule|CompanyAgreement|Fee|CommissionTerms|null $source = null): self
+    {
+        $rate = Vat::rate();
+        [$net, $tax] = Vat::split($gross, $rate);
+
+        $this->meta['vat_bps'] = $rate;
+
+        return $this->credit($wallet, $net, $component, $source)
+            ->credit($this->ledger->system(SystemAccount::TaxPayable), $tax, LedgerComponent::Tax);
     }
 
     /** Takes money out of a wallet. A zero amount is skipped. */

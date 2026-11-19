@@ -6,6 +6,7 @@ use App\Actions\Accounts\RegisterBuyer;
 use App\Actions\Accounts\RegisterCompany;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Trust\Blacklist;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,7 +33,7 @@ class RegisteredUserController extends Controller
      * Either way the new user is signed in and sent to confirm the email
      * address with the code the Registered event has just emailed.
      */
-    public function store(Request $request, RegisterBuyer $registerBuyer, RegisterCompany $registerCompany): RedirectResponse
+    public function store(Request $request, RegisterBuyer $registerBuyer, RegisterCompany $registerCompany, Blacklist $blacklist): RedirectResponse
     {
         $data = $request->validate([
             'account_type' => ['required', Rule::in(['buyer', 'seller'])],
@@ -42,6 +43,8 @@ class RegisteredUserController extends Controller
             'company_name' => ['exclude_unless:account_type,seller', 'required', 'string', 'min:2', 'max:255'],
             'phone' => ['exclude_unless:account_type,seller', 'nullable', 'string', 'max:32'],
         ]);
+
+        $blacklist->ensureAllowed($data['email'], $request->ip());
 
         $user = $data['account_type'] === 'seller'
             ? $registerCompany->handle($data)

@@ -111,6 +111,18 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
         return $this->hasOne(Wallet::class);
     }
 
+    /** @return HasMany<Strike, $this> */
+    public function strikes(): HasMany
+    {
+        return $this->hasMany(Strike::class);
+    }
+
+    /** @return HasMany<LoginEvent, $this> */
+    public function loginEvents(): HasMany
+    {
+        return $this->hasMany(LoginEvent::class);
+    }
+
     /** @return HasMany<Bid, $this> */
     public function bids(): HasMany
     {

@@ -5,12 +5,15 @@ namespace App\Models;
 use App\Casts\MoneyCast;
 use App\Enums\BidType;
 use Database\Factories\BidFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Append-only: a bid is never changed or deleted once written.
+ * Append-only: a bid is never deleted, and the only change is retracted_at,
+ * set by App\Actions\Bidding\RetractBids. Retracted bids keep their seq
+ * (and count in auctions.bid_count) but no longer stand.
  */
 class Bid extends Model
 {
@@ -28,7 +31,18 @@ class Bid extends Model
         return [
             'amount' => MoneyCast::class,
             'type' => BidType::class,
+            'retracted_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Bids that were not retracted.
+     *
+     * @param  Builder<$this>  $query
+     */
+    public function scopeStanding(Builder $query): void
+    {
+        $query->whereNull('retracted_at');
     }
 
     /** @return BelongsTo<Auction, $this> */

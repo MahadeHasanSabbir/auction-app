@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LoginEvent;
 use App\Models\TrustedDevice;
 use App\Models\User;
 use App\Models\Wallet;
@@ -14,8 +15,8 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
- * The sensitive account settings: email address, password, trusted devices
- * and deleting the account. Every route here sits behind EnsureOtpConfirmed.
+ * The sensitive account settings: email address, password, trusted devices,
+ * the recent sign-ins and deleting the account. Every route here sits behind EnsureOtpConfirmed.
  */
 class SecurityController extends Controller
 {
@@ -30,6 +31,7 @@ class SecurityController extends Controller
                 ->where('expires_at', '>', now())
                 ->latest('last_used_at')
                 ->get(),
+            'logins' => LoginEvent::query()->where('user_id', $user->id)->latest('id')->limit(10)->get(),
         ]);
     }
 

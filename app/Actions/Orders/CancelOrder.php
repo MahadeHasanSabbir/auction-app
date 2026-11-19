@@ -3,7 +3,9 @@
 namespace App\Actions\Orders;
 
 use App\Actions\Orders\Concerns\ChangesOrders;
+use App\Actions\Trust\IssueStrike;
 use App\Enums\OrderStatus;
+use App\Enums\StrikeSource;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -14,13 +16,17 @@ use Illuminate\Validation\ValidationException;
  * Cancels an order that has not shipped and refunds the buyer in full: the
  * company owner does it (with a reason), or orders:sweep once the ship-by
  * date has passed, whether the seller did not ship or the buyer gave no
- * address. The product can be listed again.
+ * address. The product can be listed again. A buyer who gave no address
+ * gets a strike.
  */
 final class CancelOrder
 {
     use ChangesOrders;
 
-    public function __construct(private readonly SettleEscrow $settle) {}
+    public function __construct(
+        private readonly SettleEscrow $settle,
+        private readonly IssueStrike $strikes,
+    ) {}
 
     public function handle(User $owner, Order $order, string $reason): Order
     {
@@ -51,9 +57,21 @@ final class CancelOrder
                 return false;
             }
 
-            $this->cancel($locked, null, blank($locked->shipping_address)
+            $buyerAtFault = blank($locked->shipping_address);
+
+            $this->cancel($locked, null, $buyerAtFault
                 ? __('The buyer did not give a delivery address in time.')
                 : __('The seller did not ship in time.'));
+
+            if ($buyerAtFault) {
+                $buyer = User::query()->find($locked->buyer_id);
+
+                if ($buyer !== null) {
+                    $this->strikes->automatic($buyer, StrikeSource::UnpaidOrder,
+                        __('Order :number was cancelled: no delivery address was given in time.', ['number' => $locked->number]), $locked);
+                }
+            }
+
             $this->syncFrom($order, $locked);
 
             return true;

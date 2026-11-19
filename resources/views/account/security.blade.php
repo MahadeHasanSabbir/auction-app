@@ -70,6 +70,30 @@
             @endif
         </x-card>
 
+        {{-- Sign-in history --}}
+        <x-card>
+            <h2 class="font-sans text-base font-semibold tracking-normal text-slate-900 dark:text-slate-50">{{ __('Recent sign-ins') }}</h2>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">{{ __('If you do not recognise one, change your password and remove your trusted browsers.') }}</p>
+
+            @if ($logins->isEmpty())
+                <p class="mt-4 rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-400">{{ __('No sign-ins recorded yet.') }}</p>
+            @else
+                <ul class="mt-4 divide-y divide-slate-100 dark:divide-slate-800">
+                    @foreach ($logins as $login)
+                        <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-3 text-sm">
+                            <span>
+                                <span class="font-medium text-slate-900 dark:text-slate-100">{{ $login->browser() }}</span>
+                                <span class="text-slate-500 dark:text-slate-400">· {{ $login->ip_address ?? '—' }} · {{ $login->succeeded ? $login->method->label() : __('Wrong password') }}</span>
+                            </span>
+                            <span @class(['text-slate-500 dark:text-slate-400', 'font-medium text-red-700 dark:text-red-300' => ! $login->succeeded])>
+                                <x-datetime :value="$login->created_at" />
+                            </span>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </x-card>
+
         {{-- Closing the account: buyers only. Company and staff accounts are managed by their administrators. --}}
         @if ($user->isBuyer())
             <x-card class="border-red-200 dark:border-red-900/60">

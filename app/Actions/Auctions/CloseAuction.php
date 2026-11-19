@@ -61,7 +61,7 @@ final class CloseAuction
             } else {
                 $locked->transitionTo(AuctionStatus::Unsold);
                 $locked->forceFill([
-                    'close_reason' => $locked->bid_count === 0 ? AuctionCloseReason::NoBids : AuctionCloseReason::ReserveNotMet,
+                    'close_reason' => $locked->leader_id === null ? AuctionCloseReason::NoBids : AuctionCloseReason::ReserveNotMet,
                     'closed_at' => now(),
                 ])->save();
 
@@ -69,7 +69,7 @@ final class CloseAuction
                     $this->ledger->release($hold);
                 }
 
-                app(AccountAlerts::class)->listing($locked, NotificationKind::AuctionUnsold, $locked->bid_count === 0
+                app(AccountAlerts::class)->listing($locked, NotificationKind::AuctionUnsold, $locked->leader_id === null
                     ? __('Nobody bid. You can list the product again.')
                     : __('The reserve price was not met. You can list the product again.'));
             }

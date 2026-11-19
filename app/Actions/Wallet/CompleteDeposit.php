@@ -9,6 +9,7 @@ use App\Enums\PaymentOutcome;
 use App\Enums\SystemAccount;
 use App\Models\Deposit;
 use App\Models\Wallet;
+use App\Services\Invoices\Invoices;
 use App\Services\Ledger\Ledger;
 use App\Services\Payments\InvalidCallbackException;
 use App\Services\Payments\PaymentResult;
@@ -25,11 +26,15 @@ use Illuminate\Support\Facades\DB;
  *
  * Postings: the buyer gets the net amount, the gateway-charges and
  * service-revenue accounts get the charges, and gateway clearing is debited
- * the full amount (it mirrors what the gateway owes the platform).
+ * the full amount (it mirrors what the gateway owes the platform). The VAT
+ * included in the charges goes to tax payable. The buyer gets a receipt.
  */
 final class CompleteDeposit
 {
-    public function __construct(private readonly Ledger $ledger) {}
+    public function __construct(
+        private readonly Ledger $ledger,
+        private readonly Invoices $invoices,
+    ) {}
 
     /** @throws InvalidCallbackException when the result does not match a deposit */
     public function handle(PaymentResult $result): Deposit
@@ -72,8 +77,8 @@ final class CompleteDeposit
                 ->idempotent("deposit:{$deposit->id}")
                 ->describe("Deposit {$deposit->tran_id} through {$deposit->gateway}")
                 ->credit(Wallet::query()->findOrFail($deposit->wallet_id), $deposit->net_amount)
-                ->credit($this->ledger->system(SystemAccount::GatewayCharges), $deposit->gateway_charge, LedgerComponent::GatewayCharge, $deposit->gatewayFeeRule)
-                ->credit($this->ledger->system(SystemAccount::ServiceRevenue), $deposit->service_charge, LedgerComponent::ServiceCharge, $deposit->serviceFeeRule)
+                ->creditWithVat($this->ledger->system(SystemAccount::GatewayCharges), $deposit->gateway_charge, LedgerComponent::GatewayCharge, $deposit->gatewayFeeRule)
+                ->creditWithVat($this->ledger->system(SystemAccount::ServiceRevenue), $deposit->service_charge, LedgerComponent::ServiceCharge, $deposit->serviceFeeRule)
                 ->debit($this->ledger->system(SystemAccount::GatewayClearing), $deposit->amount)
                 ->post();
 
@@ -85,6 +90,8 @@ final class CompleteDeposit
                 'ledger_transaction_id' => $transaction->id,
                 'completed_at' => now(),
             ])->save();
+
+            $this->invoices->deposit($deposit, $transaction);
 
             return $deposit;
         });

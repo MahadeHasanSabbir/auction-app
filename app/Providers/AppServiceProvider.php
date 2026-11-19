@@ -3,17 +3,22 @@
 namespace App\Providers;
 
 use App\Models\Auction;
+use App\Models\BlacklistEntry;
 use App\Models\Company;
 use App\Models\CompanyAgreement;
 use App\Models\Deposit;
 use App\Models\Dispute;
 use App\Models\FeeRule;
+use App\Models\FraudFlag;
+use App\Models\Invoice;
 use App\Models\KycRequest;
+use App\Models\LedgerTransaction;
 use App\Models\Notice;
 use App\Models\Order;
 use App\Models\Plan;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Models\Strike;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\User;
@@ -30,6 +35,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -78,6 +84,11 @@ class AppServiceProvider extends ServiceProvider
             'kyc_request' => KycRequest::class,
             'notice' => Notice::class,
             'setting' => Setting::class,
+            'invoice' => Invoice::class,
+            'ledger_transaction' => LedgerTransaction::class,
+            'strike' => Strike::class,
+            'fraud_flag' => FraudFlag::class,
+            'blacklist_entry' => BlacklistEntry::class,
         ]);
 
         // Values the system owner changed in the admin panel override the
@@ -104,6 +115,14 @@ class AppServiceProvider extends ServiceProvider
 
         if ($production) {
             URL::forceScheme('https');
+
+            // Debug mode shows visitors the exception, the code around it, the
+            // SQL and the request. It is never allowed in production, whatever
+            // .env says.
+            if (config('app.debug')) {
+                config(['app.debug' => false]);
+                Log::critical('APP_DEBUG is true in production; it has been turned off. Set APP_DEBUG=false in .env.');
+            }
         }
 
         Password::defaults(fn () => $production

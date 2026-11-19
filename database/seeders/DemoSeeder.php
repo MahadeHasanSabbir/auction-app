@@ -6,6 +6,7 @@ use App\Actions\Billing\IssueInvoice;
 use App\Actions\Messaging\PostOrderMessage;
 use App\Actions\Support\OpenTicket;
 use App\Actions\Support\ReplyToTicket;
+use App\Actions\Trust\IssueStrike;
 use App\Actions\Wallet\ApproveWithdrawal;
 use App\Actions\Wallet\CompleteDeposit;
 use App\Actions\Wallet\PayWithdrawal;
@@ -13,6 +14,7 @@ use App\Actions\Wallet\RequestWithdrawal;
 use App\Enums\AuctionCloseReason;
 use App\Enums\AuctionStatus;
 use App\Enums\BidType;
+use App\Enums\BlacklistType;
 use App\Enums\CompanyStatus;
 use App\Enums\DepositStatus;
 use App\Enums\DisputeReason;
@@ -37,6 +39,7 @@ use App\Events\Messaging\MessagePosted;
 use App\Models\Auction;
 use App\Models\AutoBid;
 use App\Models\Bid;
+use App\Models\BlacklistEntry;
 use App\Models\Category;
 use App\Models\Company;
 use App\Models\CompanyAgreement;
@@ -45,6 +48,7 @@ use App\Models\Deposit;
 use App\Models\Dispute;
 use App\Models\KycDocument;
 use App\Models\KycRequest;
+use App\Models\LoginEvent;
 use App\Models\Notice;
 use App\Models\Order;
 use App\Models\OrderEvent;
@@ -58,9 +62,12 @@ use App\Models\UserType;
 use App\Models\Wallet;
 use App\Services\Fees\CommissionTerms;
 use App\Services\Fees\FeeResolver;
+use App\Services\Invoices\Invoices;
 use App\Services\Ledger\Ledger;
 use App\Services\Payments\PaymentResult;
+use App\Services\Trust\SharedIpCheck;
 use App\Support\Money;
+use App\Support\Vat;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Notifications\Events\BroadcastNotificationCreated;
@@ -123,6 +130,7 @@ class DemoSeeder extends Seeder
             $this->communication();
             $this->notices();
             $this->verification();
+            $this->trust();
         }), [WalletUpdated::class, MessagePosted::class, BroadcastNotificationCreated::class]);
     }
 
@@ -405,7 +413,7 @@ class DemoSeeder extends Seeder
                 ->idempotent("invoice:{$invoice->id}")
                 ->describe("Plan invoice {$invoice->number}")
                 ->debit($this->ledger->system(SystemAccount::GatewayClearing), $invoice->amount)
-                ->credit($this->ledger->system(SystemAccount::SubscriptionRevenue), $invoice->amount)
+                ->creditWithVat($this->ledger->system(SystemAccount::SubscriptionRevenue), $invoice->amount, LedgerComponent::Principal)
                 ->post();
 
             $invoice->forceFill([
@@ -414,6 +422,8 @@ class DemoSeeder extends Seeder
                 'gateway' => 'sslcommerz',
                 'ledger_transaction_id' => $transaction->id,
             ])->save();
+
+            app(Invoices::class)->subscription($invoice, $transaction);
         }
 
         if ($subscription->status === SubscriptionStatus::PastDue) {
@@ -722,13 +732,15 @@ class DemoSeeder extends Seeder
             'completed_at' => $completedAt,
         ])->save();
 
-        $this->ledger->transaction(LedgerTransactionType::EscrowRelease)
+        $release = $this->ledger->transaction(LedgerTransactionType::EscrowRelease)
             ->reference($order)
             ->describe("Order {$order->number} released to the seller")
             ->debit($this->ledger->system(SystemAccount::Escrow), $order->amount)
             ->credit($companyWallet, $order->seller_payout)
-            ->credit($this->ledger->system(SystemAccount::CommissionRevenue), $order->commission, LedgerComponent::Commission, $terms)
+            ->creditWithVat($this->ledger->system(SystemAccount::CommissionRevenue), $order->commission, LedgerComponent::Commission, $terms)
             ->post();
+        $order->forceFill(['tax' => Vat::included($order->commission)])->save();
+        app(Invoices::class)->settlement($order->refresh(), $release);
         $this->event($order, 'completed', OrderStatus::Shipped, OrderStatus::Completed, $buyer->id, 'Buyer confirmed delivery; payment released to the seller.', $completedAt);
 
         $rating = 4 + $order->id % 2;
@@ -760,6 +772,39 @@ class DemoSeeder extends Seeder
             'actor_id' => $actorId,
             'description' => $description,
             'created_at' => $at,
+        ]);
+    }
+
+    /**
+     * Sign-in history for the demo logins, a bidder who shares an IP address
+     * with a seller's owner (an open flag), a strike on buyer3 and a blocked
+     * throwaway-mail domain.
+     */
+    private function trust(): void
+    {
+        $agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
+
+        foreach (User::query()->whereIn('email', ['admin@auction.com', 'staff@auction.com', 'buyer1@auction.com'])->get() as $i => $user) {
+            LoginEvent::factory()->create(['user_id' => $user->id, 'email' => $user->email, 'ip_address' => '198.51.100.'.(10 + $i), 'user_agent' => $agent, 'created_at' => now()->subHours(3 + $i)]);
+        }
+
+        $auction = Auction::query()->where('status', AuctionStatus::Live)->where('bid_count', '>', 0)->orderBy('id')->first();
+        $bidder = $auction === null ? null : User::query()->find(Bid::query()->where('auction_id', $auction->id)->orderBy('seq')->value('user_id'));
+        $owner = $auction === null ? null : User::query()->where('company_id', $auction->company_id)->where('role', UserRole::CompanyOwner)->first();
+
+        if ($auction !== null && $bidder !== null && $owner !== null) {
+            LoginEvent::factory()->create(['user_id' => $owner->id, 'email' => $owner->email, 'ip_address' => '203.0.113.7', 'user_agent' => $agent, 'created_at' => now()->subDay()]);
+            LoginEvent::factory()->create(['user_id' => $bidder->id, 'email' => $bidder->email, 'ip_address' => '203.0.113.7', 'user_agent' => $agent, 'created_at' => now()->subHours(20)]);
+            app(SharedIpCheck::class)->check($auction, $bidder, '203.0.113.7');
+        }
+
+        app(IssueStrike::class)->handle($this->staff, $this->buyers[2], 'Asked a seller to complete the sale outside the marketplace.');
+
+        BlacklistEntry::factory()->create([
+            'type' => BlacklistType::Domain,
+            'value' => 'mailinator.com',
+            'reason' => 'Throwaway addresses used for fake bidder accounts.',
+            'created_by' => $this->staff->id,
         ]);
     }
 

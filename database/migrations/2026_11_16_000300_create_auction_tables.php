@@ -64,7 +64,8 @@ return new class extends Migration
             $table->index(['company_id', 'status']);
         });
 
-        // Append-only. seq numbers the bids of one auction without gaps.
+        // Append-only: only retracted_at is ever set afterwards. seq numbers
+        // the bids of one auction without gaps, retracted ones included.
         Schema::create('bids', function (Blueprint $table) {
             $table->id();
             $table->foreignId('auction_id')->constrained();
@@ -72,6 +73,8 @@ return new class extends Migration
             $table->unsignedBigInteger('amount');
             $table->string('type', 16);
             $table->unsignedInteger('seq');
+            $table->string('ip_address', 45)->nullable();
+            $table->timestamp('retracted_at')->nullable();
             $table->timestamp('created_at')->nullable();
 
             $table->unique(['auction_id', 'seq']);

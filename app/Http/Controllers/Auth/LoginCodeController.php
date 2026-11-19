@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\LoginMethod;
 use App\Enums\OtpPurpose;
 use App\Http\Controllers\Auth\Concerns\SignsUsersIn;
 use App\Http\Controllers\Controller;
@@ -71,7 +72,7 @@ class LoginCodeController extends Controller
 
         EnsureOtpConfirmed::markConfirmed($request);
 
-        return $this->signIn($request, $user, $remember);
+        return $this->signIn($request, $user, $remember, LoginMethod::Code);
     }
 
     public function resend(Request $request, OtpService $otp): RedirectResponse

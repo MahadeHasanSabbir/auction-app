@@ -21,4 +21,10 @@ final class WalletPolicy
             default => false,
         };
     }
+
+    /** Platform staff fine a buyer's or a company's wallet. */
+    public function fine(User $user, Wallet $wallet): bool
+    {
+        return $user->is_active && $user->isPlatform() && ($wallet->user_id !== null || $wallet->company_id !== null);
+    }
 }
