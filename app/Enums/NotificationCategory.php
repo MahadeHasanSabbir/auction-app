@@ -15,6 +15,7 @@ enum NotificationCategory: string
     case Listings = 'listings';
     case Support = 'support';
     case Account = 'account';
+    case Searches = 'searches';
 
     public function label(): string
     {
@@ -26,6 +27,7 @@ enum NotificationCategory: string
             self::Listings => __('Your auctions'),
             self::Support => __('Support'),
             self::Account => __('Account verification'),
+            self::Searches => __('Saved searches'),
         };
     }
 
@@ -34,11 +36,12 @@ enum NotificationCategory: string
         return match ($this) {
             self::Bidding => __('When another bidder takes the lead.'),
             self::Orders => __('Wins, new orders, shipping, delivery, cancellations and disputes.'),
-            self::Money => __('Withdrawals that were paid, rejected or approved.'),
+            self::Money => __('Withdrawals that were paid, rejected or approved, and bonus credit.'),
             self::Activity => __('New chat messages, delivery addresses, reviews and replies.'),
             self::Listings => __('Auctions approved, rejected or ended without a sale.'),
             self::Support => __('Replies to your support tickets.'),
             self::Account => __('Documents asked for, approved or not accepted.'),
+            self::Searches => __('New auctions that match a search you saved.'),
         };
     }
 
@@ -46,7 +49,7 @@ enum NotificationCategory: string
     public function mailByDefault(): bool
     {
         return match ($this) {
-            self::Orders, self::Money, self::Support, self::Account => true,
+            self::Orders, self::Money, self::Support, self::Account, self::Searches => true,
             self::Bidding, self::Activity, self::Listings => false,
         };
     }

@@ -25,6 +25,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use LogicException;
 
 class User extends Authenticatable implements FilamentUser, HasLocalePreference, HasTenants, MustVerifyEmail
@@ -79,6 +80,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
             'is_active' => 'boolean',
             'password_change_required' => 'boolean',
             'notification_preferences' => 'array',
+            'referral_rewarded_at' => 'datetime',
         ];
     }
 
@@ -91,7 +93,21 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
                     "A [{$user->role->value}] account ".($user->role->isSeller() ? 'needs a company.' : 'cannot belong to a company.')
                 );
             }
+
+            // Every buyer gets a referral code to share.
+            if ($user->role === UserRole::Buyer && $user->referral_code === null) {
+                $user->referral_code = self::newReferralCode();
+            }
         });
+    }
+
+    private static function newReferralCode(): string
+    {
+        do {
+            $code = Str::upper(Str::random(8));
+        } while (self::query()->withTrashed()->where('referral_code', $code)->exists());
+
+        return $code;
     }
 
     /** @return BelongsTo<Company, $this> */
@@ -270,6 +286,26 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     public function isSeller(): bool
     {
         return $this->role->isSeller();
+    }
+
+    /** The active buyer whose referral code this is, if any. */
+    public static function findByReferralCode(mixed $code): ?self
+    {
+        if (! is_string($code) || trim($code) === '') {
+            return null;
+        }
+
+        return self::query()
+            ->where('referral_code', mb_strtoupper(trim($code)))
+            ->where('role', UserRole::Buyer)
+            ->where('is_active', true)
+            ->first();
+    }
+
+    /** The sign-up link that credits this buyer with a referral. */
+    public function referralUrl(): ?string
+    {
+        return $this->referral_code === null ? null : route('register', ['ref' => $this->referral_code]);
     }
 
     public function isBuyer(): bool

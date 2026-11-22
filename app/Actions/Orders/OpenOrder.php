@@ -7,6 +7,7 @@ use App\Enums\LedgerTransactionType;
 use App\Enums\OrderStatus;
 use App\Enums\SystemAccount;
 use App\Models\Auction;
+use App\Models\LedgerEntry;
 use App\Models\Order;
 use App\Models\OrderEvent;
 use App\Models\User;
@@ -67,6 +68,7 @@ final class OpenOrder
             ->idempotent("sale:{$auction->id}")
             ->describe("Order {$order->number} paid into escrow")
             ->by($buyer)
+            ->spendingBonusFirst()
             ->debit($wallet, $price)
             ->credit($this->ledger->system(SystemAccount::Escrow), $price);
 
@@ -74,7 +76,15 @@ final class OpenOrder
             $transaction->capturing($hold);
         }
 
-        $transaction->post();
+        $posted = $transaction->post();
+
+        // The bonus credit paid with stays in escrow with the order, so a
+        // refund can give it back as bonus credit.
+        $bonus = -(int) LedgerEntry::query()->where('ledger_transaction_id', $posted->id)->where('wallet_id', $wallet->id)->sum('bonus');
+
+        if ($bonus > 0) {
+            $order->forceFill(['bonus_amount' => $bonus])->save();
+        }
 
         $event = new OrderEvent;
         $event->forceFill([

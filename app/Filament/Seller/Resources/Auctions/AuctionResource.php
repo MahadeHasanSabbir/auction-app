@@ -191,6 +191,7 @@ class AuctionResource extends Resource
                     EditAction::make(),
                     AuctionActions::submit(),
                     AuctionActions::withdraw(),
+                    AuctionActions::feature(),
                     AuctionActions::cancel(),
                 ]),
             ])

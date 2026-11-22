@@ -89,6 +89,29 @@
                     <x-button type="button" variant="secondary" size="sm" class="w-full" wire:click="clearFilters">{{ __('Clear filters') }}</x-button>
                 @endif
             </form>
+
+            @if ($canSaveSearch)
+                <div class="mt-6 rounded-lg border border-slate-200 p-4 dark:border-slate-800" :class="filters ? 'block' : 'hidden lg:block'"
+                     x-data="{ open: false }" x-on:search-saved.window="open = false">
+                    <p class="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        <x-app-icon name="bell" class="size-4 text-brand-600 dark:text-brand-400" /> {{ __('Get alerts for this search') }}
+                    </p>
+                    <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">{{ __('We will tell you when a new auction matches.') }}</p>
+
+                    @auth
+                        <x-button type="button" size="sm" class="mt-3 w-full" x-show="! open" x-on:click="open = true">{{ __('Save this search') }}</x-button>
+
+                        <form wire:submit="saveSearch" class="mt-3 space-y-2" x-show="open" x-cloak>
+                            <label for="search-name" class="sr-only">{{ __('Name') }}</label>
+                            <input id="search-name" type="text" wire:model="searchName" maxlength="100" placeholder="{{ $savedSearchName }}" class="form-control">
+                            @error('searchName') <p class="text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            <x-button type="submit" size="sm" class="w-full" wire:loading.attr="disabled" wire:target="saveSearch">{{ __('Save') }}</x-button>
+                        </form>
+                    @else
+                        <x-button :href="route('login')" size="sm" variant="secondary" class="mt-3 w-full">{{ __('Sign in to save this search') }}</x-button>
+                    @endauth
+                </div>
+            @endif
         </aside>
 
         <section aria-label="{{ __('Results') }}" class="min-w-0">

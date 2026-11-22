@@ -26,6 +26,7 @@ final class LedgerVerifier
             ...$this->singleEntryTransactions(),
             ...$this->balanceCaches(),
             ...$this->heldCaches(),
+            ...$this->bonusCaches(),
             ...$this->runningBalances(),
             ...$this->overdrawnWallets(),
             ...$this->foreignCurrencies(),
@@ -96,6 +97,27 @@ final class LedgerVerifier
     }
 
     /**
+     * Bonus credit is the sum of the entries' bonus parts, and never more
+     * than the balance or less than nothing.
+     *
+     * @return list<string>
+     */
+    private function bonusCaches(): array
+    {
+        $sums = DB::table('ledger_entries')
+            ->select('wallet_id')
+            ->selectRaw('sum(bonus) as total')
+            ->groupBy('wallet_id');
+
+        return DB::table('wallets as w')
+            ->leftJoinSub($sums, 'b', 'b.wallet_id', '=', 'w.id')
+            ->whereRaw('w.bonus <> coalesce(b.total, 0) or (w.type <> ? and cast(w.bonus as signed) > w.balance)', [WalletType::System->value])
+            ->get(['w.id', 'w.bonus', 'w.balance', DB::raw('coalesce(b.total, 0) as total')])
+            ->map(fn (object $row) => "Wallet {$row->id} caches {$row->bonus} bonus credit (balance {$row->balance}); its entries' bonus parts sum to {$row->total}.")
+            ->all();
+    }
+
+    /**
      * The newest entry of every wallet records the balance the wallet has now.
      *
      * @return list<string>
@@ -152,7 +174,7 @@ final class LedgerVerifier
 
         $owed = (int) DB::table('orders')
             ->whereIn('status', $open)
-            ->sum(DB::raw('amount - refunded_amount'));
+            ->sum(DB::raw('amount - discount - refunded_amount'));
 
         $balance = DB::table('wallets')->where('system_account', SystemAccount::Escrow)->value('balance');
 

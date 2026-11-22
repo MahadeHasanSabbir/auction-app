@@ -61,6 +61,7 @@ class Auction extends Model
             'submitted_at' => 'datetime',
             'reviewed_at' => 'datetime',
             'closed_at' => 'datetime',
+            'featured_at' => 'datetime',
         ];
     }
 

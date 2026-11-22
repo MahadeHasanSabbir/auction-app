@@ -11,7 +11,8 @@ use App\Support\Kyc;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Creates a buyer account with its wallet.
+ * Creates a buyer account with its wallet, remembering who referred them
+ * (RewardReferral pays both once their first order completes).
  *
  * The caller validates the input and fires the Registered event, which
  * emails the verification code.
@@ -19,11 +20,13 @@ use Illuminate\Support\Facades\DB;
 final class RegisterBuyer
 {
     /**
+     * $referrer: the buyer whose referral code brought them, if any.
+     *
      * @param  array{name: string, email: string, password: string}  $data
      */
-    public function handle(array $data): User
+    public function handle(array $data, ?User $referrer = null): User
     {
-        return DB::transaction(function () use ($data): User {
+        return DB::transaction(function () use ($data, $referrer): User {
             // A new User is a buyer by default; role cannot be mass-assigned.
             $user = new User([
                 'name' => $data['name'],
@@ -31,6 +34,7 @@ final class RegisterBuyer
                 'password' => $data['password'],
             ]);
             $user->kyc_status = Kyc::startingStatus();
+            $user->referred_by_id = $referrer !== null && $referrer->isBuyer() && $referrer->is_active ? $referrer->id : null;
             $user->user_type_id = UserType::query()
                 ->where('account_kind', AccountKind::Buyer)
                 ->where('is_default', true)

@@ -70,6 +70,22 @@
     </section>
 
     <div class="mx-auto max-w-7xl space-y-14 px-4 py-12 sm:px-6 lg:px-8">
+        {{-- Featured (paid placement) --}}
+        @if ($featured->isNotEmpty())
+            <section aria-labelledby="featured">
+                <div>
+                    <h2 id="featured" class="text-2xl font-semibold text-slate-900 dark:text-slate-50">{{ __('Featured auctions') }}</h2>
+                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">{{ __('Picked out by their sellers.') }}</p>
+                </div>
+
+                <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    @foreach ($featured as $auction)
+                        <x-auction.card :auction="$auction" wire:key="featured-{{ $auction->id }}" />
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
         {{-- Ending soon --}}
         <section aria-labelledby="ending-soon">
             <div class="flex items-end justify-between gap-4">

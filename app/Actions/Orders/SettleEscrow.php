@@ -17,7 +17,8 @@ use App\Support\Vat;
 use LogicException;
 
 /**
- * Empties an order's escrow, once: $refund goes back to the buyer, the rest
+ * Empties an order's escrow (the price less any seller-coupon discount),
+ * once: $refund goes back to the buyer, the rest
  * to the company's wallet minus the commission, which shrinks in proportion
  * to what the company keeps (a full refund earns the platform nothing).
  *
@@ -37,12 +38,16 @@ final class SettleEscrow
 
     public function handle(Order $order, Money $refund, ?User $by, string $description): void
     {
-        if ($refund->isNegative() || $refund->greaterThan($order->amount) || ! $order->refunded_amount->isZero()) {
+        $paid = $order->paid();
+
+        if ($refund->isNegative() || $refund->greaterThan($paid) || ! $order->refunded_amount->isZero()) {
             throw new LogicException("Order {$order->id} cannot refund {$refund->amount}.");
         }
 
-        $kept = $order->amount->minus($refund);
-        $commission = $kept->isZero() ? Money::zero($kept->currency) : $order->commission->share($kept->amount, $order->amount->amount);
+        $kept = $paid->minus($refund);
+        $commission = $kept->isZero() ? Money::zero($kept->currency) : $order->commission->share($kept->amount, $paid->amount);
+        // Bonus credit paid with comes back as bonus credit first.
+        $bonus = Money::minor(min($order->bonus_amount->amount, $refund->amount), $refund->currency);
         $payout = $kept->minus($commission);
 
         $transaction = $this->ledger->transaction($kept->isZero() ? LedgerTransactionType::Refund : LedgerTransactionType::EscrowRelease)
@@ -50,8 +55,8 @@ final class SettleEscrow
             ->idempotent("settle:{$order->id}")
             ->describe($description)
             ->by($by)
-            ->debit($this->ledger->system(SystemAccount::Escrow), $order->amount)
-            ->credit(Wallet::query()->where('user_id', $order->buyer_id)->firstOrFail(), $refund)
+            ->debit($this->ledger->system(SystemAccount::Escrow), $paid)
+            ->creditBonus(Wallet::query()->where('user_id', $order->buyer_id)->firstOrFail(), $refund, $bonus)
             ->credit(Wallet::query()->where('company_id', $order->company_id)->firstOrFail(), $payout)
             ->creditWithVat($this->ledger->system(SystemAccount::CommissionRevenue), $commission, LedgerComponent::Commission, $this->terms($order))
             ->meta(['refund' => $refund->amount, 'commission' => $commission->amount, 'payout' => $payout->amount]);
@@ -60,6 +65,7 @@ final class SettleEscrow
 
         $order->forceFill([
             'refunded_amount' => $refund,
+            'bonus_amount' => 0,
             'commission' => $commission,
             'tax' => Vat::included($commission),
             'seller_payout' => $payout,

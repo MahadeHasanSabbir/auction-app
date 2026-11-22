@@ -40,7 +40,7 @@ class SalesOverview extends StatsOverviewWidget
         $period = Period::lastDays(30);
 
         $sales = $period->apply(Order::query()->toBase(), 'created_at')
-            ->selectRaw('count(*) as orders, coalesce(sum(amount - refunded_amount), 0) as net')
+            ->selectRaw('count(*) as orders, coalesce(sum(amount - discount - refunded_amount), 0) as net')
             ->first();
 
         $toShip = Order::query()->where('status', OrderStatus::InEscrow)->count();

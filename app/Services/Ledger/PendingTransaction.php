@@ -31,8 +31,16 @@ use InvalidArgumentException;
  */
 final class PendingTransaction
 {
-    /** @var list<array{wallet: Wallet, amount: Money, component: LedgerComponent, fee_rule_id: int|null, company_agreement_id: int|null}> */
+    /**
+     * bonus: the bonus-credit part of a credit, in minor units; null lets
+     * the ledger work out a debit's part.
+     *
+     * @var list<array{wallet: Wallet, amount: Money, component: LedgerComponent, fee_rule_id: int|null, company_agreement_id: int|null, bonus: int|null}>
+     */
     public private(set) array $lines = [];
+
+    /** Whether debits of member wallets spend bonus credit before real money. */
+    public private(set) bool $bonusFirst = false;
 
     /** @var list<WalletHold> */
     public private(set) array $captures = [];
@@ -80,6 +88,39 @@ final class PendingTransaction
 
         return $this->credit($wallet, $net, $component, $source)
             ->credit($this->ledger->system(SystemAccount::TaxPayable), $tax, LedgerComponent::Tax);
+    }
+
+    /**
+     * Adds money to a member wallet of which $bonus (all of it by default)
+     * is bonus credit: spendable on purchases, never withdrawable.
+     */
+    public function creditBonus(Wallet $wallet, Money $amount, ?Money $bonus = null): self
+    {
+        $bonus ??= $amount;
+
+        if ($amount->isNegative() || $bonus->isNegative() || $bonus->greaterThan($amount)) {
+            throw new InvalidArgumentException('The bonus part of a credit lies between zero and the amount.');
+        }
+
+        $this->line($wallet, $amount, LedgerComponent::Principal, null);
+
+        if (! $amount->isZero()) {
+            $this->lines[array_key_last($this->lines)]['bonus'] = $bonus->amount;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Debits of member wallets in this transaction spend bonus credit first
+     * (purchases). Otherwise real money goes first and bonus credit is only
+     * touched when the real money runs out.
+     */
+    public function spendingBonusFirst(): self
+    {
+        $this->bonusFirst = true;
+
+        return $this;
     }
 
     /** Takes money out of a wallet. A zero amount is skipped. */
@@ -169,6 +210,7 @@ final class PendingTransaction
                     $source instanceof CommissionTerms => $source->companyAgreementId,
                     default => null,
                 },
+                'bonus' => null,
             ];
         }
 

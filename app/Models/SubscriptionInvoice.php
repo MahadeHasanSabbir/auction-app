@@ -16,11 +16,17 @@ class SubscriptionInvoice extends Model
         'period_start', 'period_end', 'due_at', 'paid_at', 'gateway', 'gateway_reference', 'ledger_transaction_id',
     ];
 
+    /** @var array<string, mixed> */
+    protected $attributes = [
+        'discount' => 0,
+    ];
+
     /** @return array<string, string> */
     protected function casts(): array
     {
         return [
             'amount' => MoneyCast::class,
+            'discount' => MoneyCast::class,
             'billing_interval' => BillingInterval::class,
             'status' => InvoiceStatus::class,
             'period_start' => 'datetime',

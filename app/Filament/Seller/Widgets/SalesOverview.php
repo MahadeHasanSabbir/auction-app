@@ -36,7 +36,7 @@ class SalesOverview extends StatsOverviewWidget
         }
 
         $sales = Period::lastDays(30)->apply(Order::query()->where('company_id', $company->id)->toBase(), 'created_at')
-            ->selectRaw('count(*) as orders, coalesce(sum(amount - refunded_amount), 0) as net')
+            ->selectRaw('count(*) as orders, coalesce(sum(amount - discount - refunded_amount), 0) as net')
             ->first();
 
         $toShip = (int) (OrderResource::getNavigationBadge() ?? 0);

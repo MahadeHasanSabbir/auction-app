@@ -20,6 +20,11 @@
         <x-product-image :image="$auction->product?->coverImage" :seed="$auction->id" :label="$category" :alt="$auction->title"
                          class="transition duration-300 group-hover:scale-105" />
         <x-auction.status :auction="$auction" class="absolute left-3 top-3" />
+        @if ($auction->featured_at !== null && ($live || $scheduled))
+            <span class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-md bg-amber-400 px-2 py-0.5 text-xs font-semibold text-amber-950">
+                <x-app-icon name="star" class="size-3.5" /> {{ __('Featured') }}
+            </span>
+        @endif
     </div>
 
     <div class="flex flex-1 flex-col p-4">

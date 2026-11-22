@@ -64,6 +64,7 @@ abstract class SalesReportPage extends ReportPage
                     ->color(fn (OrderStatus $state) => $state->color()),
                 TextColumn::make('amount')->label(__('Price'))->formatStateUsing($money)->alignEnd()->sortable(),
                 TextColumn::make('commission')->label(__('Commission'))->formatStateUsing($money)->alignEnd(),
+                TextColumn::make('discount')->label(__('Seller discount'))->formatStateUsing($money)->alignEnd()->toggleable(),
                 TextColumn::make('refunded_amount')->label(__('Refunded'))->formatStateUsing($money)->alignEnd(),
                 TextColumn::make('seller_payout')->label(__('Seller payout'))->formatStateUsing($money)->alignEnd(),
             ])
@@ -81,7 +82,7 @@ abstract class SalesReportPage extends ReportPage
     public function summary(): array
     {
         $totals = $this->filteredQuery()->toBase()
-            ->selectRaw('count(*) as orders, coalesce(sum(amount), 0) as amount, coalesce(sum(commission), 0) as commission, coalesce(sum(refunded_amount), 0) as refunded')
+            ->selectRaw('count(*) as orders, coalesce(sum(amount), 0) as amount, coalesce(sum(commission), 0) as commission, coalesce(sum(discount), 0) as discount, coalesce(sum(refunded_amount), 0) as refunded')
             ->first();
 
         $format = fn (string $key) => Money::minor((int) ($totals->{$key} ?? 0))->format();
@@ -89,6 +90,7 @@ abstract class SalesReportPage extends ReportPage
         return [
             __('Orders') => number_format((int) ($totals->orders ?? 0)),
             __('Sales') => $format('amount'),
+            __('Seller discounts') => $format('discount'),
             __('Refunded') => $format('refunded'),
             __('Commission') => $format('commission'),
         ];
@@ -103,7 +105,7 @@ abstract class SalesReportPage extends ReportPage
     {
         return array_values(array_filter([
             __('Date'), __('Order'), __('Item'), $this->forPlatform() ? __('Seller') : null, __('Buyer'), __('Status'),
-            __('Price'), __('Buyer fee'), __('Commission'), __('Refunded'), __('Seller payout'), __('Currency'),
+            __('Price'), __('Buyer fee'), __('Commission'), __('Seller discount'), __('Refunded'), __('Seller payout'), __('Currency'),
         ]));
     }
 
@@ -127,6 +129,7 @@ abstract class SalesReportPage extends ReportPage
             $record->amount->toDecimal(),
             $record->buyer_fee->toDecimal(),
             $record->commission->toDecimal(),
+            $record->discount->toDecimal(),
             $record->refunded_amount->toDecimal(),
             $record->seller_payout->toDecimal(),
             $record->amount->currency,

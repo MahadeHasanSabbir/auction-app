@@ -5,6 +5,7 @@ namespace App\Actions\Auctions;
 use App\Actions\Auctions\Concerns\AuctionRules;
 use App\Enums\AuctionStatus;
 use App\Enums\NotificationKind;
+use App\Jobs\AlertSavedSearches;
 use App\Models\Auction;
 use App\Models\Company;
 use App\Models\User;
@@ -83,5 +84,8 @@ final class ApproveAuction
             'reviewed_at' => now(),
             'rejection_reason' => null,
         ])->save();
+
+        // Buyers whose saved searches match hear about it (after commit).
+        AlertSavedSearches::dispatch($auction->id);
     }
 }

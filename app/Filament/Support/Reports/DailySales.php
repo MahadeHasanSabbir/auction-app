@@ -22,7 +22,7 @@ final class DailySales
 
         // A fixed offset, so MySQL needs no time-zone tables.
         $totals = Period::lastDays($days)->apply($orders->toBase(), 'orders.created_at')
-            ->selectRaw("date(convert_tz(orders.created_at, '+00:00', ?)) as day, sum(orders.amount - orders.refunded_amount) as total", [$today->format('P')])
+            ->selectRaw("date(convert_tz(orders.created_at, '+00:00', ?)) as day, sum(orders.amount - orders.discount - orders.refunded_amount) as total", [$today->format('P')])
             ->groupBy('day')
             ->pluck('total', 'day');
 

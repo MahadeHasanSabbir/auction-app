@@ -32,6 +32,9 @@ enum NotificationKind: string
     case KycRejected = 'kyc_rejected';
     case StrikeIssued = 'strike_issued';
     case FineIssued = 'fine_issued';
+    case SavedSearchMatch = 'saved_search_match';
+    case BonusCredited = 'bonus_credited';
+    case OrderDiscounted = 'order_discounted';
 
     public function category(): NotificationCategory
     {
@@ -39,8 +42,9 @@ enum NotificationKind: string
             self::Outbid => NotificationCategory::Bidding,
             self::AuctionWon, self::NewOrder, self::OrderShipped, self::OrderCompleted, self::OrderCancelled,
             self::DisputeOpened, self::DisputeWithdrawn, self::DisputeResolved => NotificationCategory::Orders,
-            self::AddressReceived, self::ReviewLeft, self::ReviewReplied, self::ChatMessage => NotificationCategory::Activity,
-            self::WithdrawalApproved, self::WithdrawalPaid, self::WithdrawalRejected, self::FineIssued => NotificationCategory::Money,
+            self::AddressReceived, self::OrderDiscounted, self::ReviewLeft, self::ReviewReplied, self::ChatMessage => NotificationCategory::Activity,
+            self::WithdrawalApproved, self::WithdrawalPaid, self::WithdrawalRejected, self::FineIssued, self::BonusCredited => NotificationCategory::Money,
+            self::SavedSearchMatch => NotificationCategory::Searches,
             self::AuctionApproved, self::AuctionRejected, self::AuctionUnsold => NotificationCategory::Listings,
             self::TicketReply, self::NewTicket => NotificationCategory::Support,
             self::KycRequested, self::KycSubmitted, self::KycApproved, self::KycRejected, self::StrikeIssued => NotificationCategory::Account,

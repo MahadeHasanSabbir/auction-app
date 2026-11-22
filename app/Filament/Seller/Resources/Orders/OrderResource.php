@@ -171,6 +171,8 @@ class OrderResource extends Resource
                             ->color(fn (OrderStatus $state) => $state->color()),
                         TextEntry::make('amount')->label(__('Price'))->formatStateUsing($money),
                         TextEntry::make('commission')->label(__('Commission'))->formatStateUsing($money),
+                        TextEntry::make('discount')->label(__('Your coupon discount'))->formatStateUsing($money)
+                            ->visible(fn (Order $record) => $record->discount->isPositive()),
                         TextEntry::make('seller_payout')->label(__('Your payout'))->formatStateUsing($money)->weight('semibold'),
                         TextEntry::make('refunded_amount')->label(__('Refunded to the buyer'))->formatStateUsing($money)
                             ->visible(fn (Order $record) => $record->refunded_amount->isPositive()),

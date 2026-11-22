@@ -2,6 +2,7 @@
 
 namespace App\Filament\Seller\Pages;
 
+use App\Actions\Billing\ApplyInvoiceCoupon;
 use App\Actions\Billing\CancelSubscription;
 use App\Actions\Billing\ChangePlan;
 use App\Actions\Billing\PayInvoice;
@@ -22,6 +23,7 @@ use App\Services\Payments\PaymentGateways;
 use App\Support\Money;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -299,6 +301,29 @@ class Billing extends Page implements HasTable
                 if ($this->attempt(fn () => $pay->fromWallet($invoice))) {
                     $this->refreshData();
                     $this->toast(__('Invoice :number paid.', ['number' => $invoice->number]));
+                }
+            });
+    }
+
+    public function applyCouponAction(): Action
+    {
+        return Action::make('applyCoupon')
+            ->label(__('Have a coupon?'))
+            ->link()
+            ->icon(Heroicon::OutlinedTicket)
+            ->visible(fn () => $this->canManage())
+            ->modalHeading(__('Apply a coupon'))
+            ->modalWidth('sm')
+            ->modalSubmitActionLabel(__('Apply'))
+            ->schema([
+                TextInput::make('code')->label(__('Coupon code'))->required()->maxLength(32),
+            ])
+            ->action(function (array $arguments, array $data, ApplyInvoiceCoupon $apply, Action $action): void {
+                $invoice = $this->invoiceFrom($arguments);
+
+                if ($this->attempt(fn () => $apply->handle($this->user(), $invoice, (string) $data['code']), $action)) {
+                    $this->refreshData();
+                    $this->toast(__('Coupon applied.'));
                 }
             });
     }

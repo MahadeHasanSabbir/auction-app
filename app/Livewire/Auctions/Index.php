@@ -2,15 +2,17 @@
 
 namespace App\Livewire\Auctions;
 
+use App\Actions\Searches\SaveSearch;
 use App\Enums\AuctionStatus;
 use App\Enums\CompanyStatus;
 use App\Models\Auction;
 use App\Models\Category;
 use App\Models\Company;
-use App\Support\Money;
+use App\Support\AuctionFilters;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use InvalidArgumentException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -59,9 +61,16 @@ class Index extends Component
     #[Url(except: 'ending')]
     public string $sort = 'ending';
 
+    /** The name typed for a new saved search; empty takes a summary of the filters. */
+    public string $searchName = '';
+
     /** Any change to a filter starts again from the first page. */
     public function updated(string $property): void
     {
+        if ($property === 'searchName') {
+            return;
+        }
+
         $this->resetPage();
     }
 
@@ -71,9 +80,37 @@ class Index extends Component
         $this->resetPage();
     }
 
+    /** Saves the current filters (buyers only) so new matches are alerted. */
+    public function saveSearch(SaveSearch $save): void
+    {
+        $user = Auth::user();
+
+        if ($user === null) {
+            $this->redirectRoute('login');
+
+            return;
+        }
+
+        try {
+            $save->handle($user, $this->filters(), $this->searchName);
+        } catch (ValidationException $e) {
+            $this->setErrorBag($e->validator->errors());
+
+            return;
+        }
+
+        $this->reset('searchName');
+        $this->dispatch('search-saved');
+        $this->dispatch('toast', message: __('Search saved. We will tell you about new auctions that match.'));
+    }
+
     public function render(): View
     {
+        $user = Auth::user();
+
         return view('livewire.auctions.index', [
+            'canSaveSearch' => ($user === null || $user->isBuyer()) && ! $this->filters()->isEmpty(),
+            'savedSearchName' => $this->filters()->summary(),
             'auctions' => $this->query()->paginate(12),
             'categories' => Category::query()
                 ->whereNull('parent_id')
@@ -100,35 +137,11 @@ class Index extends Component
 
         $query = Auction::query()->forCards()->whereIn('status', $statuses);
 
-        $search = trim($this->search);
-        if ($search !== '') {
-            // Typed % and _ are matched literally, not as wildcards.
-            $like = '%'.addcslashes($search, '\\%_').'%';
+        $this->filters()->apply($query);
 
-            $query->where(fn (Builder $q) => $q
-                ->where('title', 'like', $like)
-                ->orWhereHas('product', fn (Builder $product) => $product->where('name', 'like', $like)));
-        }
-
-        if ($this->category !== '') {
-            $ids = Category::query()
-                ->where('slug', $this->category)
-                ->orWhereHas('parent', fn (Builder $parent) => $parent->where('slug', $this->category))
-                ->pluck('id');
-
-            $query->whereHas('product', fn (Builder $product) => $product->whereIn('category_id', $ids));
-        }
-
-        if ($this->company !== '') {
-            $query->whereHas('company', fn (Builder $company) => $company->where('slug', $this->company));
-        }
-
-        if (($min = $this->price($this->minPrice)) !== null) {
-            $query->where('current_price', '>=', $min->amount);
-        }
-
-        if (($max = $this->price($this->maxPrice)) !== null) {
-            $query->where('current_price', '<=', $max->amount);
+        // Featured auctions lead the default order of open auctions.
+        if ($sort === 'ending' && $this->status !== 'ended') {
+            $query->orderByRaw('featured_at is null');
         }
 
         return match ($sort) {
@@ -144,21 +157,8 @@ class Index extends Component
         };
     }
 
-    /** A typed price as Money, or null when empty or not a valid amount. */
-    private function price(string $typed): ?Money
+    public function filters(): AuctionFilters
     {
-        $typed = trim(str_replace(',', '', $typed));
-
-        if ($typed === '') {
-            return null;
-        }
-
-        try {
-            $money = Money::parse($typed);
-        } catch (InvalidArgumentException) {
-            return null;
-        }
-
-        return $money->isNegative() ? null : $money;
+        return new AuctionFilters($this->search, $this->category, $this->company, $this->minPrice, $this->maxPrice);
     }
 }

@@ -18,7 +18,7 @@ class LedgerEntry extends Model
     /** @var list<string> */
     protected $fillable = [
         'ledger_transaction_id', 'wallet_id', 'amount', 'component',
-        'fee_rule_id', 'company_agreement_id', 'balance_after',
+        'fee_rule_id', 'company_agreement_id', 'balance_after', 'bonus',
     ];
 
     /** @return array<string, string> */
@@ -27,6 +27,7 @@ class LedgerEntry extends Model
         return [
             'amount' => MoneyCast::class,
             'balance_after' => MoneyCast::class,
+            'bonus' => MoneyCast::class,
             'component' => LedgerComponent::class,
         ];
     }

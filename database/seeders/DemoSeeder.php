@@ -10,6 +10,7 @@ use App\Actions\Trust\IssueStrike;
 use App\Actions\Wallet\ApproveWithdrawal;
 use App\Actions\Wallet\CompleteDeposit;
 use App\Actions\Wallet\PayWithdrawal;
+use App\Actions\Wallet\RedeemBonusCoupon;
 use App\Actions\Wallet\RequestWithdrawal;
 use App\Enums\AuctionCloseReason;
 use App\Enums\AuctionStatus;
@@ -44,6 +45,7 @@ use App\Models\Category;
 use App\Models\Company;
 use App\Models\CompanyAgreement;
 use App\Models\CompanyInvitation;
+use App\Models\Coupon;
 use App\Models\Deposit;
 use App\Models\Dispute;
 use App\Models\KycDocument;
@@ -55,6 +57,7 @@ use App\Models\OrderEvent;
 use App\Models\Plan;
 use App\Models\Product;
 use App\Models\Review;
+use App\Models\SavedSearch;
 use App\Models\Shipment;
 use App\Models\Subscription;
 use App\Models\User;
@@ -131,6 +134,7 @@ class DemoSeeder extends Seeder
             $this->notices();
             $this->verification();
             $this->trust();
+            $this->engagement();
         }), [WalletUpdated::class, MessagePosted::class, BroadcastNotificationCreated::class]);
     }
 
@@ -806,6 +810,31 @@ class DemoSeeder extends Seeder
             'reason' => 'Throwaway addresses used for fake bidder accounts.',
             'created_by' => $this->staff->id,
         ]);
+    }
+
+    /**
+     * Coupons of every kind, two featured auctions, a referral, bonus credit
+     * from a code and saved searches for buyer1.
+     */
+    private function engagement(): void
+    {
+        Coupon::factory()->create(['code' => 'PLAN20', 'value' => 2_000, 'description' => 'Launch offer: 20% off a plan invoice.', 'created_by' => $this->staff->id]);
+        Coupon::factory()->featured()->create(['code' => 'FEATURE50', 'value' => 5_000, 'description' => 'Half price featured listings.', 'created_by' => $this->staff->id]);
+        Coupon::factory()->bonus(50_000)->create(['code' => 'WELCOME500', 'max_uses' => 100, 'description' => 'BDT 500 bonus credit for new buyers.', 'created_by' => $this->staff->id]);
+
+        $seller = Company::query()->where('status', CompanyStatus::Active)->orderBy('id')->firstOrFail();
+        Coupon::factory()->forCompany($seller)->create(['code' => 'THANKYOU10', 'value' => 1_000, 'max_discount' => 500_000, 'description' => '10% off for returning buyers.']);
+
+        // buyer2 joined through buyer1's link; buyer3 redeemed a bonus code.
+        $this->buyers[1]->forceFill(['referred_by_id' => $this->buyers[0]->id])->save();
+        app(RedeemBonusCoupon::class)->handle($this->buyers[2], 'WELCOME500');
+
+        foreach ([AuctionStatus::Live, AuctionStatus::Scheduled] as $status) {
+            Auction::query()->where('status', $status)->orderByDesc('id')->first()?->forceFill(['featured_at' => now()->subHour()])->save();
+        }
+
+        SavedSearch::factory()->create(['user_id' => $this->buyers[0]->id, 'name' => 'Brass pieces', 'filters' => ['q' => 'brass']]);
+        SavedSearch::factory()->create(['user_id' => $this->buyers[0]->id, 'name' => 'Watches under 50,000', 'filters' => ['category' => 'watches', 'max' => '50000'], 'alerts' => false]);
     }
 
     private function notices(): void

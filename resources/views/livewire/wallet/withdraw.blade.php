@@ -3,7 +3,7 @@
         <x-card class="max-w-2xl">
             <p class="text-sm text-slate-600 dark:text-slate-400">
                 {{ __('Available to withdraw:') }}
-                <x-money :amount="$wallet->available()" class="font-semibold text-slate-900 dark:text-slate-50" />
+                <x-money :amount="$wallet->withdrawable()" class="font-semibold text-slate-900 dark:text-slate-50" />
             </p>
 
             <form wire:submit="submit" class="mt-5 space-y-5">

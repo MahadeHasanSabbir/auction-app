@@ -3,6 +3,7 @@
 namespace App\Actions\Orders\Concerns;
 
 use App\Enums\OrderStatus;
+use App\Jobs\RewardReferralJob;
 use App\Models\Order;
 use App\Models\OrderEvent;
 use App\Models\User;
@@ -63,6 +64,11 @@ trait ChangesOrders
         ])->save();
 
         app(OrderAlerts::class)->announce($order, $event, $description, $actor);
+
+        // A referred buyer's first completed order pays the referral bonus.
+        if ($to === OrderStatus::Completed) {
+            RewardReferralJob::dispatch($order->buyer_id);
+        }
     }
 
     /** Copies the locked row's state onto the caller's model. */

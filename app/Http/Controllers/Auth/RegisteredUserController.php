@@ -22,6 +22,11 @@ class RegisteredUserController extends Controller
      */
     public function create(Request $request): View
     {
+        // A referral link (/register?ref=CODE) is remembered until sign-up.
+        if (is_string($ref = $request->query('ref')) && $ref !== '') {
+            $request->session()->put('referral_code', mb_substr($ref, 0, 16));
+        }
+
         return view('auth.register', [
             'accountType' => $request->query('type') === 'seller' ? 'seller' : 'buyer',
         ]);
@@ -48,7 +53,7 @@ class RegisteredUserController extends Controller
 
         $user = $data['account_type'] === 'seller'
             ? $registerCompany->handle($data)
-            : $registerBuyer->handle($data);
+            : $registerBuyer->handle($data, User::findByReferralCode($request->session()->pull('referral_code')));
 
         event(new Registered($user));
 

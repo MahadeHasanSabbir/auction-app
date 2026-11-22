@@ -50,6 +50,8 @@ final class Settings
             'payments.deposit_min' => ['group' => 'payments', 'label' => __('Smallest deposit'), 'help' => '', 'kind' => 'money', 'min' => 100, 'max' => 100_000_000_000],
             'payments.deposit_max' => ['group' => 'payments', 'label' => __('Largest deposit'), 'help' => '', 'kind' => 'money', 'min' => 100, 'max' => 100_000_000_000],
             'payments.withdrawal_min' => ['group' => 'payments', 'label' => __('Smallest withdrawal'), 'help' => '', 'kind' => 'money', 'min' => 100, 'max' => 100_000_000_000],
+            'engagement.referral_bonus_referrer' => ['group' => 'engagement', 'label' => __('Referral bonus for the inviter'), 'help' => __('Bonus credit when the invited buyer completes a first order. 0 turns it off.'), 'kind' => 'money', 'min' => 0, 'max' => 100_000_000],
+            'engagement.referral_bonus_referred' => ['group' => 'engagement', 'label' => __('Referral bonus for the new buyer'), 'help' => __('Bonus credit paid at the same time.'), 'kind' => 'money', 'min' => 0, 'max' => 100_000_000],
             'billing.grace_days' => ['group' => 'billing', 'label' => __('Grace days after a failed plan payment'), 'help' => __('The company keeps selling this long before the plan expires.'), 'kind' => 'integer', 'min' => 0, 'max' => 60],
         ];
     }
@@ -64,6 +66,7 @@ final class Settings
             'billing' => __('Seller plans'),
             'trust' => __('Trust'),
             'tax' => __('Tax'),
+            'engagement' => __('Referrals'),
         ];
     }
 

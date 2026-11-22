@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Orders;
 
+use App\Actions\Orders\ApplyOrderCoupon;
 use App\Actions\Orders\CompleteOrder;
 use App\Actions\Orders\LeaveReview;
 use App\Actions\Orders\OpenDispute;
@@ -48,6 +49,8 @@ class Show extends Component
 
     public string $comment = '';
 
+    public string $couponCode = '';
+
     public function mount(Order $order): void
     {
         // The seller's team and staff work on orders in their panels.
@@ -56,6 +59,14 @@ class Show extends Component
         $this->orderId = $order->id;
         $this->fillAddress($order);
         $this->editingAddress = blank($order->shipping_address);
+    }
+
+    public function applyCoupon(ApplyOrderCoupon $action): void
+    {
+        $this->attempt(function () use ($action): void {
+            $action->handle($this->user(), $this->order(), $this->couponCode);
+            $this->reset('couponCode');
+        }, __('Coupon applied. The discount is back in your wallet.'));
     }
 
     public function saveAddress(UpdateDeliveryAddress $action): void
@@ -117,6 +128,7 @@ class Show extends Component
             'receipt' => Invoice::query()->where('kind', InvoiceKind::Purchase)->where('subject_type', $order->getMorphClass())->where('subject_id', $order->id)->first(),
             'can' => [
                 'address' => $user->can('updateAddress', $order),
+                'coupon' => $user->can('applyCoupon', $order),
                 'confirm' => $user->can('confirm', $order),
                 'dispute' => $user->can('dispute', $order),
                 'withdraw' => $user->can('withdrawDispute', $order),

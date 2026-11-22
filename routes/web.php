@@ -15,6 +15,8 @@ use App\Livewire\Account\NotificationSettings;
 use App\Livewire\Account\Orders;
 use App\Livewire\Account\Overview;
 use App\Livewire\Account\Purchases;
+use App\Livewire\Account\Referrals;
+use App\Livewire\Account\SavedSearches;
 use App\Livewire\Account\Verification;
 use App\Livewire\Auctions\Index as AuctionIndex;
 use App\Livewire\Auctions\Show as AuctionShow;
@@ -45,7 +47,7 @@ Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/robots.txt', fn () => response(implode("\n", [
     'User-agent: *',
     // Panels, account pages and Livewire requests are not for search engines.
-    ...array_map(fn (string $path) => "Disallow: /{$path}", ['admin', 'seller', 'livewire', 'dashboard', 'wallet', 'my-bids', 'orders', 'purchases', 'invoices', 'verification', 'notifications', 'support', 'profile', 'login', 'register']),
+    ...array_map(fn (string $path) => "Disallow: /{$path}", ['admin', 'seller', 'livewire', 'dashboard', 'wallet', 'my-bids', 'orders', 'purchases', 'saved-searches', 'referrals', 'invoices', 'verification', 'notifications', 'support', 'profile', 'login', 'register']),
     'Sitemap: '.route('sitemap'),
 ])."\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']))->name('robots');
 Route::get('/contact', Contact::class)->name('contact');
@@ -62,6 +64,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/orders', Orders::class)->name('orders');
     Route::get('/orders/{order}', OrderShow::class)->name('orders.show');
     Route::get('/purchases', Purchases::class)->name('purchases');
+    Route::get('/saved-searches', SavedSearches::class)->name('saved-searches');
+    Route::get('/referrals', Referrals::class)->name('referrals');
     Route::get('/invoices', AccountInvoices::class)->name('invoices');
     Route::get('/verification', Verification::class)->name('verification');
     Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'show'])->name('invoices.pdf');

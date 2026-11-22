@@ -48,6 +48,11 @@ return new class extends Migration
             // Which notifications the user wants, by category and channel; null means the defaults.
             $table->json('notification_preferences')->nullable();
             $table->dateTime('last_login_at')->nullable();
+            // Referrals: a buyer's own code, who referred them, and when the
+            // referral bonus was paid (after their first completed order).
+            $table->string('referral_code', 16)->nullable()->unique();
+            $table->foreignId('referred_by_id')->nullable()->constrained('users');
+            $table->dateTime('referral_rewarded_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

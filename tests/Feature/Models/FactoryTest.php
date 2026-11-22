@@ -15,6 +15,7 @@ use App\Models\Category;
 use App\Models\Company;
 use App\Models\CompanyAgreement;
 use App\Models\CompanyInvitation;
+use App\Models\Coupon;
 use App\Models\FeeRule;
 use App\Models\FraudFlag;
 use App\Models\Invoice;
@@ -27,6 +28,7 @@ use App\Models\Plan;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\Review;
+use App\Models\SavedSearch;
 use App\Models\SocialAccount;
 use App\Models\Strike;
 use App\Models\Subscription;
@@ -64,6 +66,7 @@ class FactoryTest extends TestCase
             ProductImage::class, Auction::class, Bid::class, AutoBid::class, Wallet::class,
             FeeRule::class, Order::class, Review::class, Notice::class, Page::class, TrustedDevice::class, SocialAccount::class, KycRequest::class,
             LoginEvent::class, FraudFlag::class, Strike::class, BlacklistEntry::class, Invoice::class,
+            Coupon::class, SavedSearch::class,
         ])->mapWithKeys(fn (string $model) => [class_basename($model) => [$model]])->all();
     }
 

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\MoneyCast;
 use App\Enums\DisputeStatus;
 use App\Enums\OrderStatus;
+use App\Support\Money;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -29,6 +30,12 @@ class Order extends Model
      */
     protected $fillable = ['shipping_name', 'shipping_phone', 'shipping_address'];
 
+    /** @var array<string, mixed> */
+    protected $attributes = [
+        'discount' => 0,
+        'bonus_amount' => 0,
+    ];
+
     /** @return array<string, string> */
     protected function casts(): array
     {
@@ -40,6 +47,8 @@ class Order extends Model
             'tax' => MoneyCast::class,
             'seller_payout' => MoneyCast::class,
             'refunded_amount' => MoneyCast::class,
+            'discount' => MoneyCast::class,
+            'bonus_amount' => MoneyCast::class,
             'ship_by_at' => 'datetime',
             'shipped_at' => 'datetime',
             'delivered_at' => 'datetime',
@@ -47,6 +56,12 @@ class Order extends Model
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
         ];
+    }
+
+    /** What the buyer paid into escrow: the price less any seller-coupon discount. */
+    public function paid(): Money
+    {
+        return $this->amount->minus($this->discount);
     }
 
     public function getRouteKeyName(): string

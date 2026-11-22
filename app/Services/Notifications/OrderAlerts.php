@@ -70,6 +70,11 @@ class OrderAlerts
 
             'dispute_resolved' => $this->resolved($order, $description, $team),
 
+            'discounted' => $this->notifier->send($team, NotificationKind::OrderDiscounted,
+                __('Coupon used on :number', ['number' => $order->number]),
+                $description,
+                $this->sellerUrl($order)),
+
             'reviewed' => $this->notifier->send($team, NotificationKind::ReviewLeft,
                 __('New review on :number', ['number' => $order->number]),
                 $description,

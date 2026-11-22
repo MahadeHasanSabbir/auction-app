@@ -56,6 +56,9 @@ final class IssueFine
                     ->reference($wallet->company_id !== null ? $wallet->company()->firstOrFail() : $wallet->user()->withTrashed()->firstOrFail())
                     ->describe("Fine: {$reason}")
                     ->by($staff)
+                    // Bonus credit goes first, so a fine never eats real
+                    // money that a pending withdrawal has set aside.
+                    ->spendingBonusFirst()
                     ->debit($wallet, $amount)
                     ->credit($this->ledger->system(SystemAccount::PenaltyRevenue), $amount)
                     ->post();

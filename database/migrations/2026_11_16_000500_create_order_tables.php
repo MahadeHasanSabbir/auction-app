@@ -24,6 +24,13 @@ return new class extends Migration
             $table->unsignedBigInteger('tax')->default(0);
             $table->unsignedBigInteger('seller_payout');
             $table->unsignedBigInteger('refunded_amount')->default(0);
+            // A seller coupon: the discount went back to the buyer from
+            // escrow, at the company's cost (commission stays on amount).
+            $table->unsignedBigInteger('discount')->default(0);
+            $table->foreignId('coupon_id')->nullable()->constrained();
+            // Bonus credit the buyer paid with that is still in escrow; a
+            // refund or discount gives it back as bonus credit.
+            $table->unsignedBigInteger('bonus_amount')->default(0);
             $table->string('status', 32)->default('in_escrow');
             $table->string('shipping_name')->nullable();
             $table->string('shipping_phone', 32)->nullable();

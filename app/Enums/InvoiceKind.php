@@ -11,6 +11,7 @@ enum InvoiceKind: string
     case Deposit = 'deposit';
     case Withdrawal = 'withdrawal';
     case Fine = 'fine';
+    case Featured = 'featured';
 
     public function label(): string
     {
@@ -21,6 +22,7 @@ enum InvoiceKind: string
             self::Deposit => __('Deposit receipt'),
             self::Withdrawal => __('Withdrawal receipt'),
             self::Fine => __('Fine notice'),
+            self::Featured => __('Featured listing invoice'),
         };
     }
 
@@ -34,6 +36,7 @@ enum InvoiceKind: string
             self::Deposit => 'DEP',
             self::Withdrawal => 'WDR',
             self::Fine => 'FIN',
+            self::Featured => 'FEA',
         };
     }
 }

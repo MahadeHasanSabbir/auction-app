@@ -3,6 +3,7 @@
 namespace App\Livewire\Wallet;
 
 use App\Actions\Wallet\CancelWithdrawal;
+use App\Actions\Wallet\RedeemBonusCoupon;
 use App\Actions\Wallet\StartDeposit;
 use App\Enums\DepositStatus;
 use App\Enums\FeeUseCase;
@@ -46,6 +47,8 @@ class Show extends Component
     public string $amount = '';
 
     public string $gateway = '';
+
+    public string $bonusCode = '';
 
     public function mount(PaymentGateways $gateways): void
     {
@@ -96,6 +99,16 @@ class Show extends Component
         }
 
         $this->redirect($checkout->redirectUrl);
+    }
+
+    public function redeemCode(RedeemBonusCoupon $redeem): void
+    {
+        $this->resetValidation();
+
+        $amount = $redeem->handle($this->user(), $this->bonusCode);
+
+        $this->reset('bonusCode');
+        $this->dispatch('toast', message: __(':amount bonus credit added to your wallet.', ['amount' => $amount->format()]));
     }
 
     public function cancelWithdrawal(int $id, CancelWithdrawal $cancel): void

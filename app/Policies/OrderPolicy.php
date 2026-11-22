@@ -31,6 +31,12 @@ final class OrderPolicy
         return $this->isBuyer($user, $order) && $order->status === OrderStatus::InEscrow;
     }
 
+    /** Use a seller coupon, once, before the order ships. */
+    public function applyCoupon(User $user, Order $order): bool
+    {
+        return $this->isBuyer($user, $order) && $order->status === OrderStatus::InEscrow && $order->coupon_id === null;
+    }
+
     public function ship(User $user, Order $order): bool
     {
         return $this->onTeam($user, $order) && $order->status === OrderStatus::InEscrow;

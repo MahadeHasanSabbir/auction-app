@@ -41,6 +41,7 @@ class ViewAuction extends ViewRecord
         return [
             AuctionActions::submit(),
             AuctionActions::withdraw(),
+            AuctionActions::feature(),
             EditAction::make(),
             AuctionActions::cancel(),
         ];

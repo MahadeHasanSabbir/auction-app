@@ -57,6 +57,9 @@ return new class extends Migration
             $table->unsignedBigInteger('final_price')->nullable();
             $table->dateTime('closed_at')->nullable();
 
+            // Paid featured placement, for the rest of the auction's run.
+            $table->dateTime('featured_at')->nullable();
+
             $table->timestamps();
 
             $table->index(['status', 'ends_at']);
@@ -102,6 +105,20 @@ return new class extends Migration
             $table->unique(['user_id', 'auction_id']);
         });
 
+        // A buyer's saved filters on the auction list; a newly approved
+        // auction that matches tells them while alerts are on.
+        Schema::create('saved_searches', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('name', 100);
+            $table->json('filters');
+            $table->boolean('alerts')->default(true);
+            $table->dateTime('last_alerted_at')->nullable();
+            $table->timestamps();
+
+            $table->index(['alerts', 'user_id']);
+        });
+
         // Lets a repeated form submission return the first result instead of
         // acting twice.
         Schema::create('idempotency_keys', function (Blueprint $table) {
@@ -120,6 +137,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('idempotency_keys');
+        Schema::dropIfExists('saved_searches');
         Schema::dropIfExists('watchlists');
         Schema::dropIfExists('auto_bids');
         Schema::dropIfExists('bids');

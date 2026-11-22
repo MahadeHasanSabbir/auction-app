@@ -129,6 +129,7 @@ class OrderResource extends Resource
                         TextEntry::make('created_at')->label(__('Ordered'))->dateTime($date),
                         TextEntry::make('amount')->label(__('Price'))->formatStateUsing($money),
                         TextEntry::make('commission')->label(__('Commission'))->formatStateUsing($money),
+                        TextEntry::make('discount')->label(__('Seller coupon discount'))->formatStateUsing($money),
                         TextEntry::make('seller_payout')->label(__('Seller payout'))->formatStateUsing($money),
                         TextEntry::make('refunded_amount')->label(__('Refunded'))->formatStateUsing($money),
                         TextEntry::make('ship_by_at')->label(__('Ship by'))->dateTime($date)->placeholder('—'),

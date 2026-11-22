@@ -80,7 +80,7 @@ final class CancelOrder
 
     private function cancel(Order $locked, ?User $actor, string $reason): void
     {
-        $this->settle->handle($locked, $locked->amount, $actor, "Order {$locked->number} cancelled, buyer refunded");
+        $this->settle->handle($locked, $locked->paid(), $actor, "Order {$locked->number} cancelled, buyer refunded");
 
         $from = $this->moveTo($locked, OrderStatus::Cancelled);
         $locked->forceFill(['cancelled_at' => now(), 'cancellation_reason' => $reason])->save();

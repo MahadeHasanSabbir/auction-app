@@ -44,6 +44,9 @@ return new class extends Migration
             // Signed: platform accounts such as gateway clearing run negative.
             $table->bigInteger('balance')->default(0);
             $table->unsignedBigInteger('held')->default(0);
+            // The part of the balance that is bonus credit (coupons,
+            // referrals): spent first on purchases, never withdrawn.
+            $table->unsignedBigInteger('bonus')->default(0);
             $table->timestamps();
         });
 
@@ -72,6 +75,8 @@ return new class extends Migration
             $table->foreignId('fee_rule_id')->nullable()->constrained();
             $table->foreignId('company_agreement_id')->nullable()->constrained();
             $table->bigInteger('balance_after');
+            // The bonus-credit part of amount, same sign; wallets.bonus is its sum.
+            $table->bigInteger('bonus')->default(0);
             $table->timestamp('created_at')->nullable();
 
             $table->index(['wallet_id', 'id']);
@@ -156,6 +161,47 @@ return new class extends Migration
             $table->index(['wallet_id', 'status']);
         });
 
+        // Discount codes. A platform coupon (company_id null) is for a plan
+        // invoice, the featured-listing fee or wallet bonus credit; a seller
+        // coupon (company_id set) takes money off that company's orders, at
+        // the company's cost.
+        Schema::create('coupons', function (Blueprint $table) {
+            $table->id();
+            $table->string('code', 32)->unique();
+            $table->foreignId('company_id')->nullable()->constrained();
+            $table->string('target', 32);
+            $table->string('discount_type', 16);
+            // Basis points for a percentage, minor units for a fixed amount.
+            $table->unsignedBigInteger('value');
+            $table->unsignedBigInteger('max_discount')->nullable();
+            $table->unsignedBigInteger('min_amount')->nullable();
+            $table->unsignedInteger('max_uses')->nullable();
+            $table->unsignedInteger('per_user_limit')->default(1);
+            $table->unsignedInteger('used_count')->default(0);
+            $table->dateTime('starts_at')->nullable();
+            $table->dateTime('ends_at')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->string('description', 255)->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('users');
+            $table->timestamps();
+
+            $table->index(['company_id', 'target']);
+        });
+
+        Schema::create('coupon_redemptions', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('coupon_id')->constrained();
+            // Who used it: the buyer, or the company for plan and featured coupons.
+            $table->foreignId('user_id')->nullable()->constrained();
+            $table->foreignId('company_id')->nullable()->constrained();
+            $table->morphs('subject');
+            $table->unsignedBigInteger('amount');
+            $table->timestamp('created_at')->nullable();
+
+            $table->index(['coupon_id', 'user_id']);
+            $table->index(['coupon_id', 'company_id']);
+        });
+
         Schema::create('subscription_invoices', function (Blueprint $table) {
             $table->id();
             $table->foreignId('subscription_id')->constrained()->cascadeOnDelete();
@@ -164,7 +210,10 @@ return new class extends Migration
             $table->string('number', 32)->nullable()->unique();
             // Our reference at the gateway; replaced on every payment attempt.
             $table->string('tran_id', 64)->nullable()->unique();
+            // What is due, after any coupon discount.
             $table->unsignedBigInteger('amount');
+            $table->unsignedBigInteger('discount')->default(0);
+            $table->foreignId('coupon_id')->nullable()->constrained();
             $table->char('currency', 3);
             $table->string('billing_interval', 16)->default('monthly');
             $table->string('status', 16)->default('open');
@@ -227,6 +276,8 @@ return new class extends Migration
         Schema::dropIfExists('invoice_sequences');
         Schema::dropIfExists('invoices');
         Schema::dropIfExists('subscription_invoices');
+        Schema::dropIfExists('coupon_redemptions');
+        Schema::dropIfExists('coupons');
         Schema::dropIfExists('wallet_holds');
         Schema::dropIfExists('withdrawal_requests');
         Schema::dropIfExists('deposits');

@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Casts\MoneyCast;
+use App\Enums\HoldStatus;
+use App\Enums\HoldType;
 use App\Enums\SystemAccount;
 use App\Enums\WalletType;
 use App\Events\Account\WalletUpdated;
@@ -16,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * A ledger account: one per buyer, per company and per platform account.
  *
- * balance and held are caches. They change only together with the ledger
+ * balance, held and bonus are caches. They change only together with the ledger
  * entries and holds they summarise, inside a transaction that holds a lock on
  * this row; nothing else may write them.
  */
@@ -32,13 +34,14 @@ class Wallet extends Model
     protected $attributes = [
         'balance' => 0,
         'held' => 0,
+        'bonus' => 0,
     ];
 
     protected static function booted(): void
     {
         // A buyer's open pages show the new balance (sent after the transaction commits).
         static::updated(function (Wallet $wallet): void {
-            if ($wallet->user_id !== null && $wallet->wasChanged(['balance', 'held'])) {
+            if ($wallet->user_id !== null && $wallet->wasChanged(['balance', 'held', 'bonus'])) {
                 WalletUpdated::dispatch($wallet);
             }
         });
@@ -52,6 +55,7 @@ class Wallet extends Model
             'system_account' => SystemAccount::class,
             'balance' => MoneyCast::class,
             'held' => MoneyCast::class,
+            'bonus' => MoneyCast::class,
         ];
     }
 
@@ -95,6 +99,34 @@ class Wallet extends Model
     public function available(): Money
     {
         return $this->balance->minus($this->held);
+    }
+
+    /** The balance without its bonus credit (which buys but is never withdrawn). */
+    public function realBalance(): Money
+    {
+        return $this->balance->minus($this->bonus);
+    }
+
+    /**
+     * What can be withdrawn: real money (never bonus credit) not on hold.
+     * A withdrawal hold sets real money aside; a bid hold is covered by
+     * bonus credit first, the way the purchase will spend it.
+     */
+    public function withdrawable(): Money
+    {
+        if ($this->bonus->isZero()) {
+            return $this->available();
+        }
+
+        $forWithdrawals = $this->held->isZero() ? 0 : (int) $this->holds()
+            ->where('status', HoldStatus::Active)
+            ->where('type', HoldType::Withdrawal)
+            ->sum('amount');
+        $forBids = $this->held->amount - $forWithdrawals;
+
+        $free = $this->realBalance()->amount - $forWithdrawals - max(0, $forBids - $this->bonus->amount);
+
+        return Money::minor(max(0, $free), $this->currency);
     }
 
     public static function forSystem(SystemAccount $account): self

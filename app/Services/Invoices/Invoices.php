@@ -4,6 +4,7 @@ namespace App\Services\Invoices;
 
 use App\Enums\InvoiceKind;
 use App\Enums\SystemAccount;
+use App\Models\Auction;
 use App\Models\Company;
 use App\Models\Deposit;
 use App\Models\Invoice;
@@ -71,7 +72,8 @@ final class Invoices
                 'from' => $invoice->period_start->setTimezone($zone)->format('j M Y'),
                 'to' => $invoice->period_end->setTimezone($zone)->format('j M Y'),
                 'number' => (string) $invoice->number,
-            ]), $invoice->amount],
+            ]), $invoice->amount->plus($invoice->discount)],
+            [__('Coupon discount'), $invoice->discount->negated()],
         ], $invoice->amount, $invoice->amount, $transaction);
     }
 
@@ -84,7 +86,7 @@ final class Invoices
         $title = (string) DB::table('auctions')->where('id', $order->auction_id)->value('title');
         $buyer = User::query()->withTrashed()->findOrFail($order->buyer_id);
         $company = Company::query()->withTrashed()->findOrFail($order->company_id);
-        $kept = $order->amount->minus($order->refunded_amount);
+        $kept = $order->paid()->minus($order->refunded_amount);
 
         $billed = $this->forBuyer($buyer);
         $billed['billed_name'] = $order->shipping_name ?: $billed['billed_name'];
@@ -92,14 +94,28 @@ final class Invoices
 
         $this->issue(InvoiceKind::Purchase, $order, $billed, [
             [__(':title (order :number), sold by :seller', ['title' => $title, 'number' => $order->number, 'seller' => $company->name]), $order->amount],
+            [__('Seller discount'), $order->discount->negated()],
             [__('Refunded'), $order->refunded_amount->negated()],
         ], $kept, Money::zero($kept->currency), null);
 
         $this->issue(InvoiceKind::Commission, $order, $this->forCompany($company), [
             [__('Sale of :title (order :number)', ['title' => $title, 'number' => $order->number]), $order->amount],
+            [__('Coupon discount you gave'), $order->discount->negated()],
             [__('Refunded to the buyer'), $order->refunded_amount->negated()],
             [__('Platform commission'), $order->commission->negated()],
         ], $order->seller_payout, $order->commission, $transaction);
+    }
+
+    /** The company's invoice for featuring an auction. */
+    public function featured(Auction $auction, Money $fee, Money $discount, LedgerTransaction $transaction): Invoice
+    {
+        $company = Company::query()->withTrashed()->findOrFail($auction->company_id);
+        $charged = $fee->minus($discount);
+
+        return $this->issue(InvoiceKind::Featured, $auction, $this->forCompany($company), [
+            [__('Featured placement for “:title” (auction :id)', ['title' => $auction->title, 'id' => $auction->id]), $fee],
+            [__('Coupon discount'), $discount->negated()],
+        ], $charged, $charged, $transaction);
     }
 
     /** The notice for a fine taken from a wallet. */

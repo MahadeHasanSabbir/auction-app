@@ -13,6 +13,8 @@ enum LedgerTransactionType: string
     case Promotion = 'promotion';
     case Fine = 'fine';
     case Adjustment = 'adjustment';
+    case FeaturedListing = 'featured_listing';
+    case CouponDiscount = 'coupon_discount';
 
     public function label(): string
     {
@@ -23,9 +25,11 @@ enum LedgerTransactionType: string
             self::EscrowRelease => __('Escrow released'),
             self::Refund => __('Refund'),
             self::SubscriptionPayment => __('Plan payment'),
-            self::Promotion => __('Promotion credit'),
+            self::Promotion => __('Bonus credit'),
             self::Fine => __('Fine'),
             self::Adjustment => __('Adjustment'),
+            self::FeaturedListing => __('Featured listing'),
+            self::CouponDiscount => __('Seller coupon discount'),
         };
     }
 }

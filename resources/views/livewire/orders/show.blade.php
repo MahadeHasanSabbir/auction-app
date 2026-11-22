@@ -186,11 +186,25 @@
                     </a>
                     <dl class="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm dark:border-slate-800">
                         <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">{{ __('Price') }}</dt><dd><x-money :amount="$order->amount" class="font-semibold" /></dd></div>
+                        @if ($order->discount->isPositive())
+                            <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">{{ __('Seller coupon') }}</dt><dd>&minus;<x-money :amount="$order->discount" /></dd></div>
+                        @endif
                         @if ($order->refunded_amount->isPositive())
                             <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">{{ __('Refunded') }}</dt><dd><x-money :amount="$order->refunded_amount" /></dd></div>
                         @endif
                         <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">{{ __('Ordered') }}</dt><dd><x-datetime :value="$order->created_at" format="j M Y" /></dd></div>
                     </dl>
+                    @if ($can['coupon'])
+                        <form wire:submit="applyCoupon" class="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
+                            <label for="coupon-code" class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ __('Seller coupon') }}</label>
+                            <div class="mt-1.5 flex gap-2">
+                                <input id="coupon-code" type="text" wire:model="couponCode" maxlength="32" autocomplete="off" class="form-control uppercase">
+                                <x-button type="submit" variant="secondary" size="sm" wire:loading.attr="disabled" wire:target="applyCoupon">{{ __('Apply') }}</x-button>
+                            </div>
+                            @error('code') <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Before the seller ships. The discount goes back to your wallet.') }}</p>
+                        </form>
+                    @endif
                     @if ($receipt)
                         <a href="{{ route('invoices.pdf', $receipt) }}" class="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline dark:text-brand-300">
                             <x-app-icon name="download" class="size-4" /> {{ __('Purchase receipt :number', ['number' => $receipt->number]) }}

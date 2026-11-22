@@ -3,13 +3,16 @@
 namespace App\Filament\Seller\Resources\Auctions;
 
 use App\Actions\Auctions\CancelAuction;
+use App\Actions\Auctions\FeatureAuction;
 use App\Actions\Auctions\SubmitAuction;
 use App\Actions\Auctions\WithdrawAuction;
 use App\Enums\AuctionStatus;
 use App\Models\Auction;
+use App\Models\Company;
 use App\Models\User;
 use Closure;
 use Filament\Actions\Action;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
@@ -64,6 +67,40 @@ final class AuctionActions
             ->visible(fn (Auction $record) => in_array($record->status, [AuctionStatus::Draft, AuctionStatus::PendingReview, AuctionStatus::Rejected, AuctionStatus::Scheduled, AuctionStatus::Live], true)
                 && self::user()->can('cancel', $record))
             ->action(self::run(fn (Auction $record) => app(CancelAuction::class)->handle(self::user(), $record), fn () => __('Auction cancelled.')));
+    }
+
+    /** The owner pays from the company wallet to feature a scheduled or live auction. */
+    public static function feature(): Action
+    {
+        return Action::make('feature')
+            ->label(__('Feature'))
+            ->icon(Heroicon::OutlinedSparkles)
+            ->color('warning')
+            ->modalHeading(__('Feature this auction?'))
+            ->modalDescription(function (Auction $record): string {
+                $fee = app(FeatureAuction::class)->quote($record);
+
+                return $fee === null ? __('Featured listings are not offered right now.') : __('It leads the auction list and shows on the home page until it ends. :amount is paid from the company wallet now and is not refunded if the auction is cancelled.', ['amount' => $fee->amount->format()]);
+            })
+            ->schema([
+                TextInput::make('code')->label(__('Coupon code'))->maxLength(32)->helperText(__('Optional.')),
+            ])
+            ->modalSubmitActionLabel(__('Pay and feature'))
+            ->visible(fn (Auction $record) => in_array($record->status, [AuctionStatus::Scheduled, AuctionStatus::Live], true)
+                && $record->featured_at === null
+                && self::user()->can('manageBilling', Company::query()->findOrFail($record->company_id)))
+            ->action(function (Auction $record, array $data, Action $action): void {
+                try {
+                    app(FeatureAuction::class)->handle(self::user(), $record, isset($data['code']) ? (string) $data['code'] : null);
+                } catch (ValidationException $e) {
+                    Notification::make()->danger()->title((string) collect($e->errors())->flatten()->first())->send();
+                    $action->halt();
+
+                    return;
+                }
+
+                Notification::make()->success()->title(__('The auction is featured.'))->send();
+            });
     }
 
     /**

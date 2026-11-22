@@ -19,6 +19,15 @@ class Home extends Component
     public function render(): View
     {
         return view('livewire.home', [
+            'featured' => Auction::query()
+                ->whereIn('status', [AuctionStatus::Live, AuctionStatus::Scheduled])
+                ->whereNotNull('featured_at')
+                ->forCards()
+                ->orderBy('status')
+                ->orderByRaw('coalesce(ends_at, starts_at)')
+                ->limit((int) config('auction.engagement.home_featured'))
+                ->get(),
+
             'endingSoon' => Auction::query()
                 ->where('status', AuctionStatus::Live)
                 ->forCards()

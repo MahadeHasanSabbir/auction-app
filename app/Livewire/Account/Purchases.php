@@ -91,13 +91,13 @@ class Purchases extends Component
     /** What a purchase cost the buyer in the end: price and fee, less refunds. */
     public static function paid(Order $order): Money
     {
-        return $order->amount->plus($order->buyer_fee)->minus($order->refunded_amount);
+        return $order->paid()->plus($order->buyer_fee)->minus($order->refunded_amount);
     }
 
     public function render(): View
     {
         $totals = $this->orders()->toBase()
-            ->selectRaw('count(*) as orders, coalesce(sum(amount + buyer_fee), 0) as spent, coalesce(sum(refunded_amount), 0) as refunded')
+            ->selectRaw('count(*) as orders, coalesce(sum(amount - discount + buyer_fee), 0) as spent, coalesce(sum(refunded_amount), 0) as refunded')
             ->first();
 
         $spent = (int) ($totals->spent ?? 0);

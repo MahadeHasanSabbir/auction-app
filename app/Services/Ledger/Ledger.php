@@ -143,8 +143,11 @@ final class Ledger
         return DB::transaction(function () use ($wallet, $amount, $type, $auction, $withdrawal): WalletHold {
             $locked = $this->lock($wallet)[$wallet->id];
 
-            if ($locked->available()->lessThan($amount)) {
-                throw new InsufficientFundsException($locked->id, $locked->available(), $amount);
+            // Bonus credit can be bid with but not withdrawn.
+            $spendable = $type === HoldType::Withdrawal ? $locked->withdrawable() : $locked->available();
+
+            if ($spendable->lessThan($amount)) {
+                throw new InsufficientFundsException($locked->id, $spendable, $amount);
             }
 
             $hold = new WalletHold;
@@ -253,7 +256,9 @@ final class Ledger
 
             foreach ($lines as $line) {
                 $wallet = $wallets[$line['wallet']->id];
+                $bonus = $this->bonusPart($wallet, $line['amount'], $line['bonus'], $pending->bonusFirst);
                 $wallet->balance = $wallet->balance->plus($line['amount']);
+                $wallet->bonus = $wallet->bonus->plus($bonus);
 
                 $entry = new LedgerEntry;
                 $entry->forceFill([
@@ -264,6 +269,7 @@ final class Ledger
                     'fee_rule_id' => $line['fee_rule_id'],
                     'company_agreement_id' => $line['company_agreement_id'],
                     'balance_after' => $wallet->balance,
+                    'bonus' => $bonus->amount,
                     'created_at' => $now,
                 ])->save();
 
@@ -293,6 +299,37 @@ final class Ledger
 
             return $transaction;
         });
+    }
+
+    /**
+     * The bonus-credit part of an entry, with the entry's sign. A credit
+     * carries the part its caller gave; a debit spends bonus first when
+     * the transaction says so (purchases), otherwise only what real money
+     * cannot cover. $wallet is the locked copy before this entry.
+     */
+    private function bonusPart(Wallet $wallet, Money $amount, ?int $given, bool $bonusFirst): Money
+    {
+        $currency = $amount->currency;
+
+        if ($wallet->type === WalletType::System) {
+            if ($given !== null && $given !== 0) {
+                throw new LogicException('Platform accounts hold no bonus credit.');
+            }
+
+            return Money::zero($currency);
+        }
+
+        if (! $amount->isNegative()) {
+            return Money::minor($given ?? 0, $currency);
+        }
+
+        $spent = -$amount->amount;
+        $bonus = $wallet->bonus->amount;
+        $real = $wallet->balance->amount - $bonus;
+
+        $part = $bonusFirst ? min($bonus, $spent) : min($bonus, max(0, $spent - $real));
+
+        return Money::minor(-$part, $currency);
     }
 
     /**
@@ -331,7 +368,7 @@ final class Ledger
     }
 
     /**
-     * @param  list<array{wallet: Wallet, amount: Money, component: mixed, fee_rule_id: int|null, company_agreement_id: int|null}>  $lines
+     * @param  list<array{wallet: Wallet, amount: Money, component: mixed, fee_rule_id: int|null, company_agreement_id: int|null, bonus: int|null}>  $lines
      * @param  array<int, Wallet>  $wallets
      * @param  array<int, int>  $released  minor units freed by captured holds, by wallet id
      */

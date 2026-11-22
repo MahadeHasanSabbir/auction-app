@@ -6,6 +6,7 @@ use App\Models\Auction;
 use App\Models\BlacklistEntry;
 use App\Models\Company;
 use App\Models\CompanyAgreement;
+use App\Models\Coupon;
 use App\Models\Deposit;
 use App\Models\Dispute;
 use App\Models\FeeRule;
@@ -95,6 +96,7 @@ class AppServiceProvider extends ServiceProvider
             'fraud_flag' => FraudFlag::class,
             'blacklist_entry' => BlacklistEntry::class,
             'page' => Page::class,
+            'coupon' => Coupon::class,
         ]);
 
         // Values the system owner changed in the admin panel override the

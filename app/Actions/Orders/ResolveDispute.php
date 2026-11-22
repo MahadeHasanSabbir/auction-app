@@ -42,7 +42,7 @@ final class ResolveDispute
             $dispute = Dispute::query()->where('order_id', $locked->id)->where('status', DisputeStatus::Open)->lockForUpdate()->sole();
 
             $amount = match ($resolution) {
-                DisputeResolution::RefundFull => $locked->amount,
+                DisputeResolution::RefundFull => $locked->paid(),
                 DisputeResolution::ReleaseToSeller => Money::zero($locked->amount->currency),
                 DisputeResolution::RefundPartial => $this->partial($locked, $refund),
             };
@@ -103,8 +103,8 @@ final class ResolveDispute
             throw ValidationException::withMessages(['refund' => __('Enter the amount to refund.')]);
         }
 
-        if (! $amount->isPositive() || ! $amount->lessThan($order->amount)) {
-            throw ValidationException::withMessages(['refund' => __('A partial refund is more than nothing and less than :amount.', ['amount' => $order->amount->format()])]);
+        if (! $amount->isPositive() || ! $amount->lessThan($order->paid())) {
+            throw ValidationException::withMessages(['refund' => __('A partial refund is more than nothing and less than :amount.', ['amount' => $order->paid()->format()])]);
         }
 
         return $amount;

@@ -111,7 +111,13 @@
                         @foreach ($this->gateways as $name => $driver)
                             {{ ($this->payOnlineAction)(['invoice' => $invoice->id, 'gateway' => $name]) }}
                         @endforeach
+                        @if ($invoice->coupon_id === null)
+                            {{ ($this->applyCouponAction)(['invoice' => $invoice->id]) }}
+                        @endif
                     </div>
+                    @if ($invoice->discount->isPositive())
+                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ __('Coupon discount of :amount applied.', ['amount' => $invoice->discount->format()]) }}</p>
+                    @endif
                     @if (! $walletCovers && $this->gateways === [])
                         <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ __('Online payment is not available right now, and the company wallet does not cover this invoice.') }}</p>
                     @endif

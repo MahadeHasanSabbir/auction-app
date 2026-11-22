@@ -28,10 +28,32 @@
                     <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('You can bid up to') }}</dt>
                     <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50"><x-money :amount="$biddable" /></dd>
                 </div>
+                @if ($wallet->bonus->isPositive())
+                    <div>
+                        <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('Bonus credit') }}</dt>
+                        <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50"><x-money :amount="$wallet->bonus" /></dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm text-slate-500 dark:text-slate-400">{{ __('You can withdraw') }}</dt>
+                        <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50"><x-money :amount="$wallet->withdrawable()" /></dd>
+                    </div>
+                @endif
             </dl>
             <p class="mt-5 border-t border-slate-100 pt-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">
                 {{ __('Money is on hold while you lead an auction or wait for a withdrawal. You can commit up to :percent% of your available balance to bids.', ['percent' => config('auction.bidding.biddable_share_bps') / 100]) }}
+                @if ($wallet->bonus->isPositive())
+                    {{ __('Bonus credit is spent first when you win, and cannot be withdrawn.') }}
+                @endif
             </p>
+
+            <form wire:submit="redeemCode" class="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
+                <label for="bonus-code" class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ __('Have a bonus code?') }}</label>
+                <div class="mt-1.5 flex max-w-sm gap-2">
+                    <input id="bonus-code" type="text" wire:model="bonusCode" maxlength="32" autocomplete="off" class="form-control uppercase">
+                    <x-button type="submit" variant="secondary" wire:loading.attr="disabled" wire:target="redeemCode">{{ __('Redeem') }}</x-button>
+                </div>
+                @error('code') <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+            </form>
         </x-card>
 
         <div class="grid gap-6 lg:grid-cols-2">

@@ -200,4 +200,17 @@ return [
         'feed_size' => 15,
     ],
 
+    'engagement' => [
+        // Saved searches a buyer may keep on the auction list.
+        'saved_searches_max' => 20,
+
+        // Bonus credit for a referral, paid to both buyers when the new one's
+        // first order completes. Minor units; 0 turns that side off.
+        'referral_bonus_referrer' => (int) env('AUCTION_REFERRAL_BONUS_REFERRER', 20000),
+        'referral_bonus_referred' => (int) env('AUCTION_REFERRAL_BONUS_REFERRED', 10000),
+
+        // Featured auctions shown on the home page.
+        'home_featured' => 4,
+    ],
+
 ];

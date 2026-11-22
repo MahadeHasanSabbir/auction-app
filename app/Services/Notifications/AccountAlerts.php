@@ -12,10 +12,12 @@ use App\Models\Auction;
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\KycRequest;
+use App\Models\SavedSearch;
 use App\Models\Strike;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WithdrawalRequest;
+use App\Support\Money;
 
 /** Notifications about bidding, withdrawals and the seller's auctions (orders have OrderAlerts). */
 class AccountAlerts
@@ -29,6 +31,24 @@ class AccountAlerts
             __('You have been outbid'),
             __('Someone took the lead on “:title”. The price is now :price.', ['title' => $auction->title, 'price' => $auction->current_price->format()]),
             route('auctions.show', $auction));
+    }
+
+    /** A newly approved auction matches a buyer's saved search. */
+    public function savedSearch(SavedSearch $search, Auction $auction): void
+    {
+        $this->notifier->send($search->user_id, NotificationKind::SavedSearchMatch,
+            __('New auction for “:search”', ['search' => $search->name]),
+            __('“:title” starts at :price.', ['title' => $auction->title, 'price' => $auction->current_price->format()]),
+            $auction->url());
+    }
+
+    /** Bonus credit was added to a buyer's wallet. */
+    public function bonus(int $userId, Money $amount, string $body): void
+    {
+        $this->notifier->send($userId, NotificationKind::BonusCredited,
+            __(':amount bonus credit added', ['amount' => $amount->format()]),
+            $body,
+            route('wallet'));
     }
 
     /** A withdrawal moved on: approved, paid or rejected. */
