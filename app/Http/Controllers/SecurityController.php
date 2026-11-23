@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Accounts\ExportAccountData;
 use App\Models\LoginEvent;
 use App\Models\TrustedDevice;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Notifications\EmailChangedNotice;
+use App\Services\Trust\Blacklist;
 use App\Services\TrustedDevices;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -20,6 +25,18 @@ use Illuminate\View\View;
  */
 class SecurityController extends Controller
 {
+    /** A buyer's own data, as a JSON download. */
+    public function export(Request $request, ExportAccountData $export): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user->isBuyer(), 403);
+
+        return response()->json($export->handle($user), 200, [
+            'Content-Disposition' => 'attachment; filename="my-data-'.now()->format('Y-m-d').'.json"',
+            'Cache-Control' => 'no-store',
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
     public function show(Request $request): View
     {
         $user = $request->user();
@@ -39,7 +56,7 @@ class SecurityController extends Controller
      * Change the email address. The new address is unconfirmed until the code
      * sent to it is entered, and the account is held at that step until then.
      */
-    public function updateEmail(Request $request): RedirectResponse
+    public function updateEmail(Request $request, Blacklist $blacklist): RedirectResponse
     {
         $user = $request->user();
 
@@ -51,9 +68,20 @@ class SecurityController extends Controller
             return back()->with('status', __('That is already your email address.'));
         }
 
+        try {
+            $blacklist->ensureAllowed($data['email'], null);
+        } catch (ValidationException $e) {
+            throw $e->errorBag('updateEmail');
+        }
+
+        $previous = $user->email;
+
         $user->email = $data['email'];
         $user->email_verified_at = null;
         $user->save();
+
+        // The old address hears about it, in case it was not its owner who changed it.
+        Notification::route('mail', $previous)->notify(new EmailChangedNotice($user->name, $data['email']));
 
         $user->sendEmailVerificationNotification();
 

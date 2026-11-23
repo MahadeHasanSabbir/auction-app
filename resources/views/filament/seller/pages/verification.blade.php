@@ -21,7 +21,9 @@
                 @foreach ($latest->documents as $document)
                     <li class="flex flex-wrap items-center justify-between gap-2 py-2">
                         <span>{{ $document->type->label() }} <span class="text-xs text-gray-500">· {{ $document->original_name }}</span></span>
-                        <x-filament::link :href="\App\Http\Controllers\KycDocumentController::link($document)" target="_blank">{{ __('View') }}</x-filament::link>
+                        @can('view', $latest)
+                            <x-filament::link :href="\App\Http\Controllers\KycDocumentController::link($document)" target="_blank">{{ __('View') }}</x-filament::link>
+                        @endcan
                     </li>
                 @endforeach
             </ul>

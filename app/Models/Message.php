@@ -27,6 +27,7 @@ class Message extends Model
     /** @return BelongsTo<User, $this> */
     public function author(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        // A removed team member or closed account still wrote it.
+        return $this->belongsTo(User::class, 'user_id')->withTrashed();
     }
 }

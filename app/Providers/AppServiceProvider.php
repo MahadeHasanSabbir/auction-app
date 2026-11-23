@@ -33,18 +33,21 @@ use App\Policies\ApiTokenPolicy;
 use App\Services\Branding\Branding;
 use App\Services\Ledger\Ledger;
 use App\Services\Settings\Settings;
+use App\Support\OpsAlert;
 use Carbon\CarbonImmutable;
 use Filament\Support\Facades\FilamentTimezone;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\Looping;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -78,6 +81,12 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api', fn (Request $request) => $request->user() === null
             ? Limit::perMinute((int) config('auction.api.guest_per_minute'))->by('ip:'.$request->ip())
             : Limit::perMinute((int) config('auction.api.per_minute'))->by('user:'.$request->user()->getAuthIdentifier()));
+
+        // A job that gave up (closing an auction, a broadcast, a mail) is mailed to the operators.
+        Queue::failing(fn (JobFailed $event) => OpsAlert::send(
+            'A queued job failed: '.$event->job->resolveName(),
+            $event->exception->getMessage()."\n\n".$event->exception->getFile().':'.$event->exception->getLine(),
+        ));
 
         // Outside production an N+1 query throws, so it is caught by the test
         // suite instead of by a slow page.

@@ -20,7 +20,7 @@ class MessageResource extends JsonResource
             'id' => $this->id,
             'body' => $this->body,
             'mine' => $this->user_id === $request->user()?->getAuthIdentifier(),
-            'author' => $this->is_system ? null : $this->author->name,
+            'author' => $this->is_system ? null : $this->author?->name,
             'system' => (bool) $this->is_system,
             'sent_at' => $this->created_at?->toIso8601ZuluString(),
         ];

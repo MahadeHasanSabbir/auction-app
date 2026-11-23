@@ -40,6 +40,10 @@ class OtpCodeNotification extends Notification
                 __('Confirm it is you'),
                 __('Enter this code to confirm a change to your account.'),
             ],
+            OtpPurpose::PasswordReset => [
+                __('Reset your password'),
+                __('Enter this code to choose a new password. If you did not ask for this, ignore this email; your password stays as it is.'),
+            ],
         };
 
         return (new MailMessage)

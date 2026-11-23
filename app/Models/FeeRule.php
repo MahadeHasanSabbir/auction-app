@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * A charge set by platform staff: percent of the amount plus a fixed amount,
@@ -20,6 +22,14 @@ class FeeRule extends Model
 {
     /** @use HasFactory<FeeRuleFactory> */
     use HasFactory;
+
+    use LogsActivity;
+
+    /** Changes to what the platform charges go to the admin activity log. */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->useLogName('admin')->logFillable()->logOnlyDirty()->dontLogEmptyChanges();
+    }
 
     /** @var list<string> */
     protected $fillable = [

@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Seller\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Support\BrandAvatarProvider;
 use App\Filament\Support\PanelBranding;
+use App\Http\Middleware\EnsureActiveAccount;
 use App\Http\Middleware\RequirePlan;
 use App\Models\Company;
 use Filament\Http\Middleware\Authenticate;
@@ -74,6 +75,7 @@ class SellerPanelProvider extends PanelProvider
             // No panel login page: guests are sent to the site sign-in, so every
             // account passes the same emailed-code step.
             ->authMiddleware([
+                EnsureActiveAccount::class,
                 Authenticate::class,
                 EnsureEmailIsVerified::class,
             ]);

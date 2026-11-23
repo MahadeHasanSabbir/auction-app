@@ -25,11 +25,13 @@ final class PaymentGateways
     public function enabled(): array
     {
         $configured = (array) config('auction.payments.gateways', []);
-        $production = app()->isProduction();
+        // The fake gateway hands out money: only on a developer's machine and in tests,
+        // never on a server, whatever the environment is called there.
+        $fakeAllowed = app()->environment('local', 'testing');
 
         return array_values(array_filter(
             array_map(fn (mixed $name) => trim((string) $name), $configured),
-            fn (string $name) => isset($this->drivers[$name]) && ! ($production && $name === 'fake'),
+            fn (string $name) => isset($this->drivers[$name]) && ($fakeAllowed || $name !== 'fake'),
         ));
     }
 

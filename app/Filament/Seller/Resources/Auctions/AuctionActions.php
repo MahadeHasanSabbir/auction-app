@@ -12,6 +12,7 @@ use App\Models\Company;
 use App\Models\User;
 use Closure;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
@@ -88,7 +89,9 @@ final class AuctionActions
             ->modalSubmitActionLabel(__('Pay and feature'))
             ->visible(fn (Auction $record) => in_array($record->status, [AuctionStatus::Scheduled, AuctionStatus::Live], true)
                 && $record->featured_at === null
-                && self::user()->can('manageBilling', Company::query()->findOrFail($record->company_id)))
+                && self::user()->can('manageBilling', ($tenant = Filament::getTenant()) instanceof Company && $tenant->id === $record->company_id
+                    ? $tenant
+                    : Company::query()->findOrFail($record->company_id)))
             ->action(function (Auction $record, array $data, Action $action): void {
                 try {
                     app(FeatureAuction::class)->handle(self::user(), $record, isset($data['code']) ? (string) $data['code'] : null);

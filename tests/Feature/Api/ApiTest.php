@@ -224,16 +224,17 @@ class ApiTest extends TestCase
 
     public function test_orders_are_private(): void
     {
+        // Someone else's order answers like a missing one (numbers run in sequence).
         $order = app(BuyNow::class)->handle($this->buyer, $this->auction);
 
         Sanctum::actingAs(User::factory()->create(), ['read', 'write']);
-        $this->getJson("/api/v1/orders/{$order->number}")->assertForbidden();
-        $this->postJson("/api/v1/orders/{$order->number}/confirm")->assertForbidden();
+        $this->getJson("/api/v1/orders/{$order->number}")->assertNotFound();
+        $this->postJson("/api/v1/orders/{$order->number}/confirm")->assertNotFound();
 
         // Another company's team cannot see or ship it either.
         [, $other] = $this->company($this->plan());
         Sanctum::actingAs($other, ['read', 'write']);
-        $this->getJson("/api/v1/orders/{$order->number}")->assertForbidden();
+        $this->getJson("/api/v1/orders/{$order->number}")->assertNotFound();
         $this->postJson("/api/v1/seller/orders/{$order->number}/ship", ['courier' => 'X'])->assertNotFound();
         $this->getJson('/api/v1/seller/orders')->assertOk()->assertJsonCount(0, 'data');
     }

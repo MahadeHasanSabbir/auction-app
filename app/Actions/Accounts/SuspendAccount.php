@@ -6,6 +6,7 @@ use App\Actions\Companies\Concerns\LogsAdminActions;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -50,7 +51,8 @@ final class SuspendAccount
 
     private function suspend(User $account, string $reason): void
     {
-        $account->forceFill(['is_active' => false, 'suspension_reason' => $reason])->save();
+        // A new remember token kills every "remember me" cookie as well.
+        $account->forceFill(['is_active' => false, 'suspension_reason' => $reason, 'remember_token' => Str::random(60)])->save();
         $account->trustedDevices()->delete();
         DB::table('sessions')->where('user_id', $account->id)->delete();
     }

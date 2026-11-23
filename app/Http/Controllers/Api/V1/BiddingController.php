@@ -135,6 +135,14 @@ class BiddingController extends ApiController
     {
         $key = $request->header('Idempotency-Key');
 
-        return is_string($key) && $key !== '' ? mb_substr($key, 0, 100) : null;
+        if (! is_string($key) || $key === '') {
+            return null;
+        }
+
+        // The key column holds 64 characters; a longer key would be stored cut
+        // and never found again, so a retry would not get the first answer.
+        abort_if(strlen($key) > 64, 422, __('The Idempotency-Key header may be at most 64 characters.'));
+
+        return $key;
     }
 }

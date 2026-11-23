@@ -438,5 +438,15 @@
     "Revoke": "বাতিল করুন",
     "Token revoked.": "টোকেন বাতিল করা হয়েছে।",
     "API documentation": "এপিআই ডকুমেন্টেশন",
-    "You already have :count tokens. Revoke one first.": "আপনার ইতিমধ্যে :count টি টোকেন আছে। আগে একটি বাতিল করুন।"
+    "You already have :count tokens. Revoke one first.": "আপনার ইতিমধ্যে :count টি টোকেন আছে। আগে একটি বাতিল করুন।",
+    "Enter your email address and we will send you a code to choose a new password.": "আপনার ইমেইল ঠিকানা দিন, নতুন পাসওয়ার্ড বেছে নেওয়ার জন্য আমরা একটি কোড পাঠাব।",
+    "Email me a code": "আমাকে একটি কোড ইমেইল করুন",
+    "Use a different address": "অন্য ঠিকানা ব্যবহার করুন",
+    "Your password has been changed. Sign in with the new one.": "আপনার পাসওয়ার্ড বদলানো হয়েছে। নতুনটি দিয়ে সাইন ইন করুন।",
+    "We use only the cookies the site needs to work: to keep you signed in, protect forms and remember your language. No advertising or tracking cookies.": "আমরা শুধু সাইট চালানোর জন্য প্রয়োজনীয় কুকি ব্যবহার করি: আপনাকে সাইন ইন রাখতে, ফর্ম সুরক্ষিত রাখতে এবং আপনার ভাষা মনে রাখতে। কোনো বিজ্ঞাপন বা ট্র্যাকিং কুকি নেই।",
+    "Cookies": "কুকি",
+    "OK": "ঠিক আছে",
+    "Your data": "আপনার তথ্য",
+    "Download my data": "আমার তথ্য ডাউনলোড করুন",
+    "Download what we keep about you: profile, wallet statement, payments, bids, orders, messages, invoices and sign-ins, as one JSON file. To have your personal details deleted, close the account and ask support.": "আপনার সম্পর্কে আমরা যা রাখি তা ডাউনলোড করুন: প্রোফাইল, ওয়ালেট স্টেটমেন্ট, পেমেন্ট, বিড, অর্ডার, মেসেজ, ইনভয়েস ও সাইন-ইন, একটি JSON ফাইলে। আপনার ব্যক্তিগত তথ্য মুছে ফেলতে অ্যাকাউন্ট বন্ধ করে সাপোর্টে জানান।"
 }

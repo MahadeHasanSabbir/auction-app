@@ -9,11 +9,21 @@ use Database\Factories\PlanFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Plan extends Model
 {
     /** @use HasFactory<PlanFactory> */
     use HasFactory;
+
+    use LogsActivity;
+
+    /** Changes to what the platform charges go to the admin activity log. */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->useLogName('admin')->logFillable()->logOnlyDirty()->dontLogEmptyChanges();
+    }
 
     /** @var list<string> */
     protected $fillable = [

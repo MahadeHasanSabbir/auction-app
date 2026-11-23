@@ -17,6 +17,7 @@ use App\Models\WithdrawalRequest;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Gate;
 
 /** What needs the platform's attention, and how plans are doing. */
 class PlatformOverview extends StatsOverviewWidget
@@ -52,7 +53,8 @@ class PlatformOverview extends StatsOverviewWidget
             Stat::make(__('Companies selling'), (string) Subscription::query()->whereIn('status', [SubscriptionStatus::Active, SubscriptionStatus::Trialing])->count())
                 ->description(__(':count past due', ['count' => Subscription::query()->where('status', SubscriptionStatus::PastDue)->count()]))
                 ->icon(Heroicon::OutlinedBuildingStorefront),
-            Stat::make(__('Plan revenue'), $revenue?->balance->format() ?? '—')
+            // Revenue is the system owner's (gate viewRevenue), like the revenue report.
+            Stat::make(__('Plan revenue'), Gate::allows('viewRevenue') ? ($revenue?->balance->format() ?? '—') : '—')
                 ->description(__('All time'))
                 ->icon(Heroicon::OutlinedChartBar),
             Stat::make(__('Payouts to send'), (string) WithdrawalRequest::query()->whereIn('status', [WithdrawalStatus::Pending, WithdrawalStatus::Approved])->count())

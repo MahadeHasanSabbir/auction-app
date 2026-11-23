@@ -92,6 +92,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/profile/email', [SecurityController::class, 'updateEmail'])->name('profile.email');
         Route::delete('/profile/devices', [SecurityController::class, 'forgetDevices'])->name('profile.devices');
         Route::delete('/profile', [SecurityController::class, 'destroy'])->name('profile.destroy');
+        Route::post('/profile/export', [SecurityController::class, 'export'])->middleware('throttle:3,10')->name('profile.export');
 
         Route::get('/wallet/withdraw', Withdraw::class)->name('wallet.withdraw');
         Route::get('/profile/api-tokens', ApiTokens::class)->name('profile.api-tokens');

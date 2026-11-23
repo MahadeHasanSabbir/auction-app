@@ -1,12 +1,16 @@
 <?php
 
+use App\Http\Middleware\EnsureActiveAccount;
 use App\Http\Middleware\EnsureApiAccount;
 use App\Http\Middleware\EnsureOtpConfirmed;
 use App\Http\Middleware\LogApiRequest;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\TrustConfiguredProxies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -30,8 +34,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.log' => LogApiRequest::class,
         ]);
 
-        // The site's language (English or Bangla); the panels undo it.
-        $middleware->web(append: [SetLocale::class]);
+        // The site's language (English or Bangla); the panels undo it. A
+        // suspended or closed account is signed out on its next page.
+        $middleware->web(append: [SetLocale::class, EnsureActiveAccount::class]);
+        $middleware->append(SecurityHeaders::class);
+
+        // Behind a load balancer or proxy: auction.trusted_proxies (TRUSTED_PROXIES).
+        $middleware->replace(TrustProxies::class, TrustConfiguredProxies::class);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // The API always answers in JSON, errors included.

@@ -218,7 +218,10 @@ class CouponTest extends TestCase
 
         $this->refused(fn () => app(SaveCoupon::class)->handle($staff, $data), 'code');
         $this->refused(fn () => app(SaveCoupon::class)->handle($staff, ['code' => 'BIG', 'value' => 20_000] + $data), 'value');
-        $this->refused(fn () => app(SaveCoupon::class)->handle($staff, ['code' => 'BONUSPCT', 'target' => CouponTarget::WalletBonus->value] + $data), 'discount_type');
+        $owner = User::factory()->systemOwner()->create();
+        $this->refused(fn () => app(SaveCoupon::class)->handle($owner, ['code' => 'BONUSPCT', 'target' => CouponTarget::WalletBonus->value] + $data), 'discount_type');
+        // Bonus credit coupons are the system owner's.
+        $this->refused(fn () => app(SaveCoupon::class)->handle($staff, ['code' => 'BONUSFIX', 'target' => CouponTarget::WalletBonus->value, 'discount_type' => CouponDiscountType::Fixed->value] + $data), 'target');
 
         $this->expectException(AuthorizationException::class);
         app(SaveCoupon::class)->handle(User::factory()->companyMember($this->company)->create(), ['code' => 'NOPE'] + $data, $this->company);

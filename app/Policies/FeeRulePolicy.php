@@ -2,6 +2,8 @@
 
 namespace App\Policies;
 
+use App\Enums\FeeUseCase;
+use App\Enums\UserRole;
 use App\Models\FeeRule;
 use App\Models\User;
 
@@ -29,13 +31,13 @@ final class FeeRulePolicy
 
     public function update(User $user, FeeRule $rule): bool
     {
-        return $this->isStaff($user) && $rule->effective_from->isFuture();
+        return $this->mayManage($user, $rule) && $rule->effective_from->isFuture();
     }
 
     /** Stop a rule from now on. */
     public function end(User $user, FeeRule $rule): bool
     {
-        return $this->isStaff($user) && $rule->is_active
+        return $this->mayManage($user, $rule) && $rule->is_active
             && ($rule->effective_until === null || $rule->effective_until->isFuture());
     }
 
@@ -47,6 +49,14 @@ final class FeeRulePolicy
     public function deleteAny(User $user): bool
     {
         return false;
+    }
+
+    /** The default sale commission is the system owner's, like company agreements. */
+    private function mayManage(User $user, FeeRule $rule): bool
+    {
+        return $rule->use_case === FeeUseCase::SaleCommission
+            ? $user->is_active && $user->role === UserRole::SystemOwner
+            : $this->isStaff($user);
     }
 
     private function isStaff(User $user): bool

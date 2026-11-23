@@ -26,9 +26,11 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 /**
  * Buyer accounts: look them up, see their wallet and orders, suspend or
@@ -75,7 +77,10 @@ class BuyerResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
+        // Closed accounts are listed too (the "Closed" filter), so a deletion
+        // request can still be handled after the person closed the account.
         return parent::getEloquentQuery()
+            ->withoutGlobalScopes([SoftDeletingScope::class])
             ->where('role', UserRole::Buyer)
             ->with(['wallet'])
             ->withCount(['orders', 'bids']);
@@ -96,9 +101,9 @@ class BuyerResource extends Resource
                 TextColumn::make('wallet.balance')->label(__('Balance'))->formatStateUsing(fn ($state) => $state?->format())->alignEnd()->placeholder('—'),
                 TextColumn::make('bids_count')->label(__('Bids'))->alignEnd(),
                 TextColumn::make('orders_count')->label(__('Orders'))->alignEnd(),
-                TextColumn::make('is_active')->label(__('Account'))->badge()
-                    ->formatStateUsing(fn (bool $state) => $state ? __('Active') : __('Suspended'))
-                    ->color(fn (bool $state) => $state ? 'success' : 'danger'),
+                TextColumn::make('account_state')->label(__('Account'))->badge()
+                    ->state(fn (User $record) => self::accountState($record))
+                    ->color(fn (User $record) => $record->trashed() ? 'gray' : ($record->is_active ? 'success' : 'danger')),
                 TextColumn::make('created_at')->label(__('Joined'))->date('j M Y')->sortable(),
             ])
             ->filters([
@@ -106,12 +111,24 @@ class BuyerResource extends Resource
                     ->trueLabel(__('Active'))->falseLabel(__('Suspended')),
                 TernaryFilter::make('email_verified_at')->label(__('Email'))->nullable()
                     ->trueLabel(__('Verified'))->falseLabel(__('Not verified')),
+                TrashedFilter::make()->label(__('Closed accounts'))
+                    ->placeholder(__('Open accounts'))->trueLabel(__('Open and closed'))->falseLabel(__('Closed only')),
             ])
             ->recordActions([
                 ViewAction::make(),
-                ActionGroup::make([AccountActions::suspend(), AccountActions::reactivate()]),
+                ActionGroup::make([AccountActions::suspend(), AccountActions::reactivate(), AccountActions::anonymise()]),
             ])
             ->emptyStateHeading(__('No buyers yet'));
+    }
+
+    public static function accountState(User $user): string
+    {
+        return match (true) {
+            $user->anonymised_at !== null => __('Anonymised'),
+            $user->trashed() => __('Closed'),
+            ! $user->is_active => __('Suspended'),
+            default => __('Active'),
+        };
     }
 
     public static function infolist(Schema $schema): Schema
@@ -125,12 +142,13 @@ class BuyerResource extends Resource
                     ->icon(Heroicon::OutlinedNoSymbol)
                     ->iconColor('danger')
                     ->columnSpanFull()
-                    ->visible(fn (User $record) => ! $record->is_active)
+                    ->visible(fn (User $record) => ! $record->is_active && $record->anonymised_at === null)
                     ->schema([TextEntry::make('suspension_reason')->hiddenLabel()->placeholder(__('No reason recorded.'))]),
                 Section::make(__('Account'))
                     ->columnSpan(2)
                     ->columns(3)
                     ->schema([
+                        TextEntry::make('account_state')->label(__('Account'))->badge()->state(fn (User $record) => self::accountState($record)),
                         TextEntry::make('email')->label(__('Email'))->copyable(),
                         IconEntry::make('verified')->label(__('Email verified'))->boolean()
                             ->state(fn (User $record) => $record->email_verified_at !== null),

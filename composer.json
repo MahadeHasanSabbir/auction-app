@@ -90,6 +90,7 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
+        "process-timeout": 1200,
         "sort-packages": true,
         "allow-plugins": {
             "php-http/discovery": true

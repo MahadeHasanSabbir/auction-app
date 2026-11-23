@@ -46,7 +46,10 @@ class OrderResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['auction:id,title,product_id', 'auction.product:id', 'auction.product.coverImage']);
+        $tenant = Filament::getTenant();
+
+        // Filament adds its tenant scope too; this keeps the list safe without it.
+        return parent::getEloquentQuery()->where('company_id', $tenant instanceof Company ? $tenant->id : 0)->with(['auction:id,title,product_id', 'auction.product:id', 'auction.product.coverImage']);
     }
 
     public static function getNavigationBadge(): ?string

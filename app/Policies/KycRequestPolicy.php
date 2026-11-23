@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\KycRequest;
 use App\Models\User;
@@ -14,12 +15,16 @@ final class KycRequestPolicy
         return $user->is_active && $user->isPlatform();
     }
 
-    /** Staff, and the buyer or company the documents belong to. */
+    /**
+     * Staff, and the buyer or the company owner the documents belong to. A
+     * company's documents include the owner's identity papers, so members
+     * do not see them.
+     */
     public function view(User $user, KycRequest $request): bool
     {
         return ($user->is_active && $user->isPlatform())
             || ($request->user_id !== null && $request->user_id === $user->id)
-            || ($request->company_id !== null && $request->company_id === $user->company_id);
+            || ($request->company_id !== null && $request->company_id === $user->company_id && $user->role === UserRole::CompanyOwner && $user->is_active);
     }
 
     /** Asking for documents, approving and rejecting. */

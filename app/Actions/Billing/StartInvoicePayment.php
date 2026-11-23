@@ -43,7 +43,9 @@ final class StartInvoicePayment
 
         $invoice->forceFill([
             'gateway' => $gateway,
-            'tran_id' => 'INV'.Str::upper((string) Str::ulid()),
+            // The invoice id is part of the reference, so a payment made through an
+            // older attempt can still be traced to the company (PayInvoice::fromGateway).
+            'tran_id' => 'INV'.$invoice->id.'X'.Str::upper((string) Str::ulid()),
             'gateway_reference' => null,
         ])->save();
 

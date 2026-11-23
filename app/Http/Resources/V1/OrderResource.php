@@ -32,7 +32,7 @@ class OrderResource extends JsonResource
             'seller_payout' => $this->when($seller, fn () => $this->seller_payout),
             'auction' => $this->whenLoaded('auction', fn () => ['id' => $this->auction->id, 'title' => $this->auction->title]),
             'seller' => $this->whenLoaded('company', fn () => ['id' => $this->company->id, 'name' => $this->company->name, 'slug' => $this->company->slug]),
-            'buyer' => $this->when($seller, fn () => $this->buyer->maskedName()),
+            'buyer' => $this->when($seller, fn () => $this->buyer?->maskedName()),
             'delivery' => [
                 'name' => $this->shipping_name,
                 'phone' => $this->shipping_phone,

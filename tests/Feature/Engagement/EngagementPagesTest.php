@@ -22,9 +22,10 @@ class EngagementPagesTest extends TestCase
     use InteractsWithCompanies;
     use RefreshDatabase;
 
-    public function test_staff_create_platform_coupons(): void
+    public function test_the_owner_creates_platform_coupons(): void
     {
-        $staff = User::factory()->platformStaff()->create();
+        // A bonus credit coupon is the system owner's to make.
+        $staff = User::factory()->systemOwner()->create();
         Coupon::factory()->forCompany()->create(['code' => 'SELLERS']);
         Filament::setCurrentPanel('admin');
         $this->actingAs($staff);

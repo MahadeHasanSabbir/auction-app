@@ -49,6 +49,8 @@
 
     <x-flash />
 
+    <x-site.cookie-notice />
+
     @livewireScripts
 </body>
 </html>

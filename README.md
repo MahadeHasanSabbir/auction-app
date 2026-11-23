@@ -1,32 +1,78 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Auction marketplace
 
-## About Auction-app
+An online auction marketplace. Seller companies subscribe to a plan and list items from their own panel. Buyers sign up for free and bid in real time from a wallet. Platform staff review listings and handle orders, disputes and payouts from an admin panel.
 
-Auction app is a open source web app which is for making auction automated and wild speared. It help to open a new world for e-commerce sector. This web app help to sell add buy product which will be supervised by this system and administration.
+## What it does
 
-For using this auction system follow this:
-1. Get the source into your system
-    git clone -link from github-
+- **Buyers** sign up and sign in with an emailed code, or with Google. They pass an identity check before bidding.
+  - Bidding: by hand or automatically (proxy bidding) from a wallet, with live prices, a countdown and anti-sniping.
+  - Money: buyers add money through SSLCommerz or Stripe and withdraw to a bank, bKash, Nagad or Rocket.
+  - After the sale: orders with escrow, delivery tracking, disputes and reviews.
+- **Sellers** (companies) work in `/seller`:
+  - their plan and billing, team, products and auction drafts
+  - orders, wallet and payouts, coupons and featured listings
+  - reports, and a public storefront
+- **Platform staff** work in `/admin`:
+  - review queues for auctions, identity checks, orders, disputes, withdrawals and support tickets
+  - accounts, fees, plans, coupons, notices and site pages
+  - reports, the activity log and API oversight
+- **Money** goes through a double-entry ledger. Every movement is a balanced transaction, and `php artisan ledger:verify` checks the books daily. Platform fees include VAT, and invoices and receipts are numbered PDFs.
+- **Also included:** English and Bangla, an installable app with web push, a versioned REST API (`/api/v1`, docs at `/docs/api`), and a buyer data export.
 
-2. Get the dependencies
-    composer install
-    npm install
-    npm run build
+## Stack
 
-3. Migrate the database
-    php artisan migrate
-    (I use mysql for database. if you use other then you need to work on config file)
-4. Add super admin
-    php artisan db:seed
-    
-5. Run in your system
-    php artisan serve
+Laravel 13 (PHP 8.4), Livewire 4, Filament 5, Tailwind CSS 4, Vite, Laravel Reverb (websockets) and MySQL 8.4.
 
+## Run it locally
 
-## Security Vulnerabilities
+You need PHP 8.4 (with the `gd`, `exif`, `zip` and `intl` extensions), Composer, Node 20+ and MySQL 8.4.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+# create the databases first: CREATE DATABASE auction; CREATE DATABASE auction_test;
+php artisan migrate --seed      # system owner, plans, fees, categories + demo data
+php artisan storage:link
+npm run build
+composer dev                    # web server, queue workers, Reverb, scheduler and Vite together
+```
 
-## License
+Then open http://localhost:8000. Demo sign-ins:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Role | Email | Password |
+|---|---|---|
+| System owner | `admin@auction.com` | `admin` |
+| Platform staff | `staff@auction.com` | `password` |
+| Seller (company owner) | `owner@dhaka-antiques.test` | `password` |
+| Buyer | `buyer1@auction.com` … `buyer12@auction.com` | `password` |
+
+With `MAIL_MAILER=log`, emailed codes go to `storage/logs/laravel.log`. In the `local` environment the code is also shown on the code page.
+
+## Checks
+
+```
+composer check        # code style (Pint), static analysis (Larastan) and the tests
+php artisan test      # tests only; they use the separate auction_test database
+php artisan bids:load-test --buyers=10 --bids=20   # concurrent bids at one auction (local only; use a scratch database)
+```
+
+## Going live
+
+Read [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). It covers the server, environment, workers, scheduler, backups, alerts and the release checklist.
+
+## For developers
+
+`CLAUDE.md` describes the architecture and the conventions:
+- money as integers through `App\Support\Money`
+- business operations as action classes
+- the ledger's lock order
+- policies for every model
+- where each feature lives
+
+Read it before changing the code.
+
+## Security
+
+Report a vulnerability privately to the system owner's address configured for your installation, not in a public issue.

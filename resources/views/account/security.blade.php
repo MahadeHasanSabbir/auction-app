@@ -96,6 +96,17 @@
 
         {{-- Closing the account: buyers only. Company and staff accounts are managed by their administrators. --}}
         @if ($user->isBuyer())
+            <x-card>
+                <h2 class="font-sans text-base font-semibold tracking-normal text-slate-900 dark:text-slate-50">{{ __('Your data') }}</h2>
+                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                    {{ __('Download what we keep about you: profile, wallet statement, payments, bids, orders, messages, invoices and sign-ins, as one JSON file. To have your personal details deleted, close the account and ask support.') }}
+                </p>
+                <form method="POST" action="{{ route('profile.export') }}" class="mt-4">
+                    @csrf
+                    <x-button variant="secondary">{{ __('Download my data') }}</x-button>
+                </form>
+            </x-card>
+
             <x-card class="border-red-200 dark:border-red-900/60">
                 <h2 class="font-sans text-base font-semibold tracking-normal text-slate-900 dark:text-slate-50">{{ __('Close account') }}</h2>
                 <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">

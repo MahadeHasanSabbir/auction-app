@@ -64,6 +64,8 @@ return new class extends Migration
 
             $table->index(['status', 'ends_at']);
             $table->index(['status', 'starts_at']);
+            // The "ended" list: sold and unsold, newest first.
+            $table->index(['status', 'closed_at']);
             $table->index(['company_id', 'status']);
         });
 

@@ -47,7 +47,10 @@ class AuctionResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['product:id,name', 'product.coverImage']);
+        $tenant = Filament::getTenant();
+
+        // Filament adds its tenant scope too; this keeps the list safe without it.
+        return parent::getEloquentQuery()->where('company_id', $tenant instanceof Company ? $tenant->id : 0)->with(['product:id,name', 'product.coverImage']);
     }
 
     public static function form(Schema $schema): Schema

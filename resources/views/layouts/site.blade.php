@@ -43,6 +43,8 @@
 
     <x-flash />
 
+    <x-site.cookie-notice />
+
     {{-- Words the live updates write into the page (resources/js/live.js). --}}
     <script>
         window.liveText = @js([

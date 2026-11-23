@@ -8,6 +8,7 @@ enum OtpPurpose: string
     case EmailVerification = 'email_verification';
     case Login = 'login';
     case SensitiveAction = 'sensitive_action';
+    case PasswordReset = 'password_reset';
 
     public function label(): string
     {
@@ -15,6 +16,7 @@ enum OtpPurpose: string
             self::EmailVerification => __('Email verification'),
             self::Login => __('Login'),
             self::SensitiveAction => __('Sensitive action'),
+            self::PasswordReset => __('Password reset'),
         };
     }
 }

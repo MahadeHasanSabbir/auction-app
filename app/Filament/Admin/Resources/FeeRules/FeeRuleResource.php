@@ -26,6 +26,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -68,8 +69,12 @@ class FeeRuleResource extends Resource
         return $schema
             ->columns(2)
             ->components([
+                // The default sale commission is every company's rate: the system
+                // owner's decision, like the per-company agreements.
                 Select::make('use_case')->label(__('Charged on'))
-                    ->options(collect(FeeUseCase::cases())->mapWithKeys(fn (FeeUseCase $case) => [$case->value => $case->label()])->all())
+                    ->options(fn () => collect(FeeUseCase::cases())
+                        ->reject(fn (FeeUseCase $case) => $case === FeeUseCase::SaleCommission && ! (Auth::user()?->isSystemOwner() ?? false))
+                        ->mapWithKeys(fn (FeeUseCase $case) => [$case->value => $case->label()])->all())
                     ->required(),
                 Select::make('charge_type')->label(__('Kind'))
                     ->options(collect(FeeChargeType::cases())->mapWithKeys(fn (FeeChargeType $type) => [$type->value => $type->label()])->all())

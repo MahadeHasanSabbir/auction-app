@@ -5,6 +5,8 @@ namespace App\Filament\Admin\Resources\Companies\RelationManagers;
 use App\Enums\CommissionBasis;
 use App\Enums\FeeUseCase;
 use App\Filament\Support\MoneyInput;
+use App\Models\CompanyAgreement;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -12,12 +14,14 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Commission terms agreed with one company. They replace the default sale
@@ -82,6 +86,18 @@ class AgreementsRelationManager extends RelationManager
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
+                Action::make('end')
+                    ->label(__('End now'))
+                    ->icon('heroicon-o-stop-circle')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalDescription(__('New auctions use the default commission (or a newer agreement). Auctions already approved keep this one.'))
+                    ->visible(fn (CompanyAgreement $record) => Gate::allows('end', $record))
+                    ->action(function (CompanyAgreement $record): void {
+                        Gate::authorize('end', $record);
+                        $record->forceFill(['effective_until' => now()])->save();
+                        Notification::make()->success()->title(__('Agreement ended.'))->send();
+                    }),
             ]);
     }
 

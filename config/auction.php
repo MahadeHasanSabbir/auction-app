@@ -213,6 +213,28 @@ return [
         'home_featured' => 4,
     ],
 
+    // backup:run (daily): database dump and uploaded files.
+    'backup' => [
+        'path' => env('BACKUP_PATH') ?: storage_path('app/backups'),
+        'keep_days' => (int) (env('BACKUP_KEEP_DAYS') ?: 14),
+        // The mysqldump program; a full path when it is not on PATH.
+        'mysqldump' => env('BACKUP_MYSQLDUMP') ?: 'mysqldump',
+    ],
+
+    // Where operational alerts (failed jobs, failed backups) are mailed; empty for none.
+    'alerts_email' => env('ALERTS_EMAIL') ?: null,
+
+    // Behind a load balancer or proxy: its addresses (comma separated) or "*" (bootstrap/app.php).
+    'trusted_proxies' => env('TRUSTED_PROXIES') ?: null,
+
+    // How long housekeeping rows are kept, in days (pruned daily).
+    'retention' => [
+        // Bid and buy-now replay keys: a retry comes within seconds.
+        'idempotency_days' => 2,
+        // Notifications the user has already read.
+        'read_notifications_days' => 180,
+    ],
+
     'api' => [
         // Requests a token (or, without one, an IP address) may make per minute.
         'per_minute' => (int) env('API_RATE_PER_MINUTE', 120),

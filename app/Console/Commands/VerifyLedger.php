@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\Ledger\LedgerVerifier;
+use App\Support\OpsAlert;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -27,6 +28,7 @@ class VerifyLedger extends Command
         }
 
         Log::critical('ledger:verify found '.count($problems).' problem(s).', ['problems' => $problems]);
+        OpsAlert::send('ledger:verify found '.count($problems).' problem(s)', implode("\n", array_slice($problems, 0, 20)));
 
         return self::FAILURE;
     }

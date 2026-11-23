@@ -61,6 +61,10 @@ final class RetractBids
             $locked = Auction::query()->lockForUpdate()->findOrFail($auction->id);
             $this->check($locked, $buyer, $window);
 
+            // The strike below locks the buyer's row; take it now, before any
+            // wallet, as every other path does (auction, user, wallets, holds).
+            User::query()->whereKey($buyer->id)->lockForUpdate()->first();
+
             $wasLeader = $locked->leader_id === $buyer->id;
 
             Bid::query()->where('auction_id', $locked->id)->where('user_id', $buyer->id)->standing()->update(['retracted_at' => now()]);

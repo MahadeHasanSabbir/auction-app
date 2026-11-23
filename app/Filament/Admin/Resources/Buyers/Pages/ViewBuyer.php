@@ -19,6 +19,6 @@ class ViewBuyer extends ViewRecord
 
     protected function getHeaderActions(): array
     {
-        return [KycActions::request(), TrustActions::strike(), TrustActions::fine(), AccountActions::suspend(), AccountActions::reactivate()];
+        return [KycActions::request(), TrustActions::strike(), TrustActions::fine(), AccountActions::suspend(), AccountActions::reactivate(), AccountActions::anonymise()];
     }
 }

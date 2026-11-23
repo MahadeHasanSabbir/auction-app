@@ -7,6 +7,8 @@ use App\Services\TrustedDevices;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 class PasswordController extends Controller
@@ -28,12 +30,16 @@ class PasswordController extends Controller
         $user->forceFill([
             'password' => $validated['password'],
             'password_change_required' => false,
+            // Every "remember me" cookie stops working.
+            'remember_token' => Str::random(60),
         ])->save();
 
         // The panels' AuthenticateSession signs out sessions whose stored
         // password hash is stale; this one changed it, so it stays signed in.
         $request->session()->put('password_hash_'.Auth::getDefaultDriver(), $user->getAuthPassword());
 
+        // Every other browser is signed out.
+        DB::table('sessions')->where('user_id', $user->id)->where('id', '!=', $request->session()->getId())->delete();
         $devices->forgetAll($user);
 
         return back()->with('status', __('Password changed.'));

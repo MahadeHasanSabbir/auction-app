@@ -5,10 +5,9 @@ use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Auth\LoginCodeController;
-use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\OtpConfirmationController;
 use App\Http\Controllers\Auth\PasswordController;
-use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,7 +23,8 @@ Route::middleware('guest')->group(function () {
 
     // Sign-in, step one: email and password.
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
-    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+    // LoginRequest limits per address and IP; this caps one IP across many addresses.
+    Route::post('login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:30,1');
 
     // Sign-in, step two: the emailed code.
     Route::get('login/code', [LoginCodeController::class, 'create'])->name('login.code');
@@ -34,10 +34,12 @@ Route::middleware('guest')->group(function () {
     Route::get('auth/google/redirect', [GoogleController::class, 'redirect'])->middleware('throttle:20,1')->name('google.redirect');
     Route::get('auth/google/callback', [GoogleController::class, 'callback'])->middleware('throttle:20,1')->name('google.callback');
 
-    Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
-    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
-    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
-    Route::post('reset-password', [NewPasswordController::class, 'store'])->name('password.store');
+    // Forgotten password: the address, then the emailed code with a new password.
+    Route::get('forgot-password', [PasswordResetController::class, 'create'])->name('password.request');
+    Route::post('forgot-password', [PasswordResetController::class, 'store'])->middleware('throttle:6,1')->name('password.email');
+    Route::get('reset-password', [PasswordResetController::class, 'edit'])->name('password.reset');
+    Route::post('reset-password', [PasswordResetController::class, 'update'])->middleware('throttle:10,1')->name('password.store');
+    Route::post('reset-password/resend', [PasswordResetController::class, 'resend'])->middleware('throttle:6,1')->name('password.resend');
 });
 
 Route::middleware('auth')->group(function () {

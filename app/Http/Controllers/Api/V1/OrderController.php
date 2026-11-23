@@ -13,9 +13,12 @@ use App\Http\Resources\V1\MessageResource;
 use App\Http\Resources\V1\OrderResource;
 use App\Models\Message;
 use App\Models\Order;
+use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -27,8 +30,25 @@ use Illuminate\Support\Facades\Gate;
  *
  * @authenticated
  */
-class OrderController extends ApiController
+class OrderController extends ApiController implements HasMiddleware
 {
+    /**
+     * Someone else's order answers like a missing one, so order numbers
+     * (which run in sequence) cannot be probed for existence.
+     */
+    public static function middleware(): array
+    {
+        return [
+            new Middleware(function (Request $request, Closure $next) {
+                $order = $request->route('order');
+
+                abort_if($order instanceof Order && Gate::forUser($request->user())->denies('view', $order), 404);
+
+                return $next($request);
+            }),
+        ];
+    }
+
     /**
      * List my orders
      *

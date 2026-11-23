@@ -98,7 +98,8 @@ class Order extends Model
     /** @return BelongsTo<User, $this> */
     public function buyer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'buyer_id');
+        // A buyer who closed the account still bought this.
+        return $this->belongsTo(User::class, 'buyer_id')->withTrashed();
     }
 
     /** @return BelongsTo<Company, $this> */

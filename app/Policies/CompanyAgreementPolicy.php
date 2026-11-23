@@ -24,14 +24,26 @@ class CompanyAgreementPolicy
         return $this->owner($user);
     }
 
+    /**
+     * Only before it takes effect: an agreement in force may already be in an
+     * approved auction's fee snapshot and in ledger rows, which point at it.
+     * After that it is ended and replaced, like a fee rule.
+     */
     public function update(User $user, CompanyAgreement $model): bool
     {
-        return $this->owner($user);
+        return $this->owner($user) && $model->effective_from->isFuture();
     }
 
     public function delete(User $user, CompanyAgreement $model): bool
     {
-        return $this->owner($user);
+        return $this->update($user, $model);
+    }
+
+    /** Stop an agreement from now on; auctions approved under it keep it. */
+    public function end(User $user, CompanyAgreement $model): bool
+    {
+        return $this->owner($user) && ! $model->effective_from->isFuture()
+            && ($model->effective_until === null || $model->effective_until->isFuture());
     }
 
     private function owner(User $user): bool

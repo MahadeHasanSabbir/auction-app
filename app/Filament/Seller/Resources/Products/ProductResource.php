@@ -11,6 +11,7 @@ use App\Filament\Seller\Resources\Products\Pages\EditProduct;
 use App\Filament\Seller\Resources\Products\Pages\ListProducts;
 use App\Filament\Seller\Resources\Products\Pages\ViewProduct;
 use App\Models\Category;
+use App\Models\Company;
 use App\Models\Product;
 use App\Models\User;
 use BackedEnum;
@@ -18,6 +19,7 @@ use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
@@ -53,7 +55,10 @@ class ProductResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $tenant = Filament::getTenant();
+
+        // Filament adds its tenant scope too; this keeps the list safe without it.
+        return parent::getEloquentQuery()->where('company_id', $tenant instanceof Company ? $tenant->id : 0)
             ->with(['category:id,name', 'coverImage'])
             ->withCount('auctions')
             // Read by Product::isLocked(), so the list costs no query per row.

@@ -84,6 +84,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
             'password_change_required' => 'boolean',
             'notification_preferences' => 'array',
             'referral_rewarded_at' => 'datetime',
+            'anonymised_at' => 'datetime',
         ];
     }
 

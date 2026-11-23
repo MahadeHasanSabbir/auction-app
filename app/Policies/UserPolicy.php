@@ -52,6 +52,12 @@ final class UserPolicy
         return ! $model->is_active && $this->oversees($user, $model);
     }
 
+    /** Wipe a buyer's personal details on their request (once). */
+    public function anonymise(User $user, User $model): bool
+    {
+        return $model->role === UserRole::Buyer && $model->anonymised_at === null && $this->oversees($user, $model);
+    }
+
     /** Add staff accounts and give them a new temporary password. */
     public function manageStaff(User $user): bool
     {

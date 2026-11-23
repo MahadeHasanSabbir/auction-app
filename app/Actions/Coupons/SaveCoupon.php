@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\Coupon;
 use App\Models\User;
 use App\Support\Money;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
@@ -41,6 +42,15 @@ final class SaveCoupon
         $data['discount_type'] = $data['discount_type'] instanceof CouponDiscountType ? $data['discount_type']->value : $data['discount_type'] ?? null;
 
         $targets = $company !== null ? [CouponTarget::Order] : CouponTarget::platform();
+
+        // Bonus credit is money the platform gives away: the system owner's call.
+        if (! $by->isSystemOwner()) {
+            $targets = array_values(array_filter($targets, fn (CouponTarget $target) => $target !== CouponTarget::WalletBonus));
+
+            if ($coupon?->target === CouponTarget::WalletBonus) {
+                throw new AuthorizationException(__('Only the system owner manages wallet bonus coupons.'));
+            }
+        }
 
         $valid = Validator::make($data, [
             'code' => ['required', 'string', 'min:3', 'max:32', 'regex:/^[A-Z0-9_-]+$/', Rule::unique('coupons', 'code')->ignore($coupon?->id)],

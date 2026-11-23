@@ -56,6 +56,8 @@ return new class extends Migration
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
+            // Set when staff wiped the personal details on the person's request.
+            $table->dateTime('anonymised_at')->nullable();
 
             $table->index(['role', 'is_active']);
             $table->index(['company_id', 'role']);

@@ -49,7 +49,19 @@ final class OpenTicket
             throw ValidationException::withMessages(['subject' => __('You have sent several messages recently. Please wait a while before writing again.')]);
         }
 
+        // Visitors could rotate made-up addresses; the IP caps them as well
+        // (every ticket mails the staff).
+        $ipKey = 'ticket:ip:'.request()->ip();
+
+        if ($user === null && RateLimiter::tooManyAttempts($ipKey, (int) config('auction.messaging.tickets_per_hour'))) {
+            throw ValidationException::withMessages(['subject' => __('You have sent several messages recently. Please wait a while before writing again.')]);
+        }
+
         RateLimiter::hit($key, 3600);
+
+        if ($user === null) {
+            RateLimiter::hit($ipKey, 3600);
+        }
 
         $ticket = DB::transaction(function () use ($user, $data): Conversation {
             $ticket = new Conversation;

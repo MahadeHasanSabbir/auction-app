@@ -14,6 +14,7 @@ use App\Enums\SystemAccount;
 use App\Filament\Seller\Pages\Billing;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Models\Wallet;
 use App\Services\Payments\CheckoutUrls;
 use App\Services\Payments\FakeGateway;
 use App\Support\Money;
@@ -304,6 +305,32 @@ class SubscriptionTest extends TestCase
         // The gateway's notification arriving later changes nothing.
         $this->post(route('payments.notify', ['gateway' => 'fake']), FakeGateway::callback((string) $invoice->tran_id, $invoice->amount))->assertOk();
         $this->assertSame(100_000, $this->system(SystemAccount::SubscriptionRevenue)->balance->amount);
+        $this->assertLedgerBalanced();
+    }
+
+    public function test_a_payment_through_an_older_attempt_is_credited_to_the_company_wallet(): void
+    {
+        $plan = $this->plan();
+        [$company, $owner] = $this->company();
+        ['invoice' => $invoice] = app(SubscribeToPlan::class)->handle($owner, $company, $plan, BillingInterval::Monthly);
+
+        app(StartInvoicePayment::class)->handle($owner, $invoice, 'fake', CheckoutUrls::forGateway('fake'));
+        $first = (string) $invoice->refresh()->tran_id;
+        app(StartInvoicePayment::class)->handle($owner, $invoice, 'fake', CheckoutUrls::forGateway('fake'));
+        $second = (string) $invoice->refresh()->tran_id;
+
+        // The payer finishes the first tab: the money is kept for the company, the invoice stays open.
+        $this->post(route('payments.notify', ['gateway' => 'fake']), FakeGateway::callback($first, $invoice->amount))->assertOk();
+        $this->post(route('payments.notify', ['gateway' => 'fake']), FakeGateway::callback($first, $invoice->amount))->assertOk();
+
+        $wallet = Wallet::query()->where('company_id', $company->id)->firstOrFail();
+        $this->assertSame(100_000, $wallet->balance->amount);
+        $this->assertSame(InvoiceStatus::Open, $invoice->fresh()?->status);
+
+        // The current attempt still pays the invoice.
+        $this->post(route('payments.notify', ['gateway' => 'fake']), FakeGateway::callback($second, $invoice->amount))->assertOk();
+        $this->assertSame(InvoiceStatus::Paid, $invoice->fresh()?->status);
+        $this->assertSame(100_000, $wallet->fresh()?->balance->amount);
         $this->assertLedgerBalanced();
     }
 

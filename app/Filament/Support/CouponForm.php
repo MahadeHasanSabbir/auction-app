@@ -41,7 +41,10 @@ final class CouponForm
                 TextInput::make('code')->label(__('Code'))->required()->maxLength(32)
                     ->helperText(__('Letters, digits, dashes and underscores; saved in capitals.')),
                 Select::make('target')->label(__('For'))
-                    ->options(collect(CouponTarget::platform())->mapWithKeys(fn (CouponTarget $target) => [$target->value => $target->label()])->all())
+                    // Bonus credit coupons are the system owner's (SaveCoupon enforces it).
+                    ->options(fn () => collect(CouponTarget::platform())
+                        ->reject(fn (CouponTarget $target) => $target === CouponTarget::WalletBonus && ! (auth()->user()?->isSystemOwner() ?? false))
+                        ->mapWithKeys(fn (CouponTarget $target) => [$target->value => $target->label()])->all())
                     ->default(CouponTarget::PlanInvoice->value)
                     ->required()
                     ->live()

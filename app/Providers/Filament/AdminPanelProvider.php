@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Support\BrandAvatarProvider;
 use App\Filament\Support\PanelBranding;
+use App\Http\Middleware\EnsureActiveAccount;
 use App\Http\Middleware\RequirePasswordChange;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -69,6 +70,7 @@ class AdminPanelProvider extends PanelProvider
             // No panel login page: guests are sent to the site sign-in, so every
             // account passes the same emailed-code step.
             ->authMiddleware([
+                EnsureActiveAccount::class,
                 Authenticate::class,
                 EnsureEmailIsVerified::class,
                 RequirePasswordChange::class,

@@ -19,6 +19,7 @@ use App\Services\Ledger\Ledger;
 use App\Services\Payments\InvalidCallbackException;
 use App\Services\Payments\PaymentResult;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -66,6 +67,10 @@ final class PayInvoice
                 }
             }
 
+            // A gateway attempt still out there now finds the reference gone and
+            // is credited to the wallet instead.
+            $invoice->forceFill(['tran_id' => null]);
+
             return $this->settle($invoice, $transaction);
         });
     }
@@ -79,16 +84,34 @@ final class PayInvoice
     public function fromGateway(PaymentResult $result): SubscriptionInvoice
     {
         return DB::transaction(function () use ($result): SubscriptionInvoice {
-            $found = SubscriptionInvoice::query()->where('tran_id', $result->tranId)->value('id')
+            $found = (preg_match('/^INV(\d+)X/', $result->tranId, $m) === 1 ? (int) $m[1] : null)
+                ?? SubscriptionInvoice::query()->where('tran_id', $result->tranId)->value('id')
                 ?? throw new InvalidCallbackException("There is no invoice payment [{$result->tranId}].");
 
             $invoice = $this->lock($found);
+
+            // A payment through an older attempt, or for an invoice that was
+            // since voided, discounted or paid another way: the gateway has
+            // confirmed the money, so it goes to the company wallet.
+            if ($invoice->tran_id !== $result->tranId) {
+                if ($result->outcome === PaymentOutcome::Succeeded) {
+                    $this->creditStrayPayment($invoice, $result);
+                }
+
+                return $invoice;
+            }
 
             if ($invoice->gateway !== $result->gateway) {
                 throw new InvalidCallbackException("Invoice [{$invoice->number}] was not paid through {$result->gateway}.");
             }
 
-            if ($invoice->status === InvoiceStatus::Paid || $result->outcome !== PaymentOutcome::Succeeded) {
+            if ($result->outcome !== PaymentOutcome::Succeeded) {
+                return $invoice;
+            }
+
+            // Still this attempt's reference and not open: this very payment
+            // settled it already (paying from the wallet or voiding clears the reference).
+            if ($invoice->status !== InvoiceStatus::Open) {
                 return $invoice;
             }
 
@@ -106,9 +129,40 @@ final class PayInvoice
         });
     }
 
+    /**
+     * The subscription row first, then the invoice: the same order as
+     * RenewSubscription, so a callback during the renewal run cannot deadlock.
+     */
     private function lock(int $id): SubscriptionInvoice
     {
+        $subscriptionId = SubscriptionInvoice::query()->whereKey($id)->value('subscription_id')
+            ?? throw new InvalidCallbackException("There is no invoice [{$id}].");
+
+        Subscription::query()->whereKey($subscriptionId)->lockForUpdate()->first();
+
         return SubscriptionInvoice::query()->whereKey($id)->lockForUpdate()->firstOrFail();
+    }
+
+    /**
+     * Money the gateway confirmed for an invoice it can no longer pay goes to
+     * the company wallet (once per gateway reference), where the owner can use
+     * it for the open invoice or withdraw it.
+     */
+    private function creditStrayPayment(SubscriptionInvoice $invoice, PaymentResult $result): void
+    {
+        $this->ledger->transaction(LedgerTransactionType::Deposit)
+            ->reference($invoice)
+            ->idempotent("invoice-payment:{$result->tranId}")
+            ->describe("Payment {$result->tranId} for plan invoice {$invoice->number}, credited to the wallet")
+            ->debit($this->ledger->system(SystemAccount::GatewayClearing), $result->amount)
+            ->credit(Wallet::query()->where('company_id', $invoice->company_id)->firstOrFail(), $result->amount)
+            ->post();
+
+        Log::warning('A plan invoice payment could not be applied and was credited to the company wallet.', [
+            'invoice' => $invoice->number,
+            'tran_id' => $result->tranId,
+            'amount' => $result->amount->toDecimal(),
+        ]);
     }
 
     private function assertOpen(SubscriptionInvoice $invoice): void

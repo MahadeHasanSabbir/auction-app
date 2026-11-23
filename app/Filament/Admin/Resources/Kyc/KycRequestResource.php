@@ -24,6 +24,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\HtmlString;
 
 /**
@@ -92,7 +93,8 @@ class KycRequestResource extends Resource
     public static function subjectUrl(KycRequest $record): ?string
     {
         return match (true) {
-            $record->company !== null => CompanyResource::getUrl('view', ['record' => $record->company]),
+            // Company pages are the system owner's; staff see the request only.
+            $record->company !== null => Gate::allows('view', $record->company) ? CompanyResource::getUrl('view', ['record' => $record->company]) : null,
             $record->user !== null => BuyerResource::getUrl('view', ['record' => $record->user]),
             default => null,
         };
