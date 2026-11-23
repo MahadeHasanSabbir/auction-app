@@ -9,7 +9,7 @@ use App\Models\User;
 final class UpdateNotificationPreferences
 {
     /**
-     * @param  array<string, array{bell?: bool, mail?: bool}>  $choices  keyed by category value
+     * @param  array<string, array{bell?: bool, mail?: bool, push?: bool}>  $choices  keyed by category value
      */
     public function handle(User $user, array $choices): User
     {
@@ -19,6 +19,7 @@ final class UpdateNotificationPreferences
             $preferences[$category->value] = [
                 'bell' => (bool) ($choices[$category->value]['bell'] ?? false),
                 'mail' => (bool) ($choices[$category->value]['mail'] ?? false),
+                'push' => (bool) ($choices[$category->value]['push'] ?? false),
             ];
         }
 

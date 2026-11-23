@@ -28,6 +28,8 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
+        <env name="VAPID_PUBLIC_KEY" value=""/>
+        <env name="VAPID_PRIVATE_KEY" value=""/>
         <!-- VAT off unless a test turns it on, so money figures stay round. -->
         <env name="AUCTION_VAT_BPS" value="0"/>
         <env name="SESSION_DRIVER" value="array"/>

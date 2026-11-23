@@ -36,6 +36,9 @@
     <div class="border-t border-slate-200 dark:border-slate-800">
         <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-4 text-xs text-slate-500 sm:px-6 lg:px-8">
             <p>&copy; {{ now()->year }} {{ config('app.name') }}. {{ __('All rights reserved.') }}</p>
+            <div x-data="installApp" x-on:install-available.window="available = true" x-on:install-done.window="available = false" x-show="available" x-cloak>
+                <button type="button" x-on:click="install()" class="font-medium text-brand-700 hover:underline dark:text-brand-300">{{ __('Install the app') }}</button>
+            </div>
             <nav aria-label="{{ __('Legal') }}" class="flex gap-4">
                 <a class="hover:text-brand-700 dark:hover:text-brand-300" href="{{ route('pages.terms') }}">{{ __('Terms of use') }}</a>
                 <a class="hover:text-brand-700 dark:hover:text-brand-300" href="{{ route('pages.privacy') }}">{{ __('Privacy policy') }}</a>

@@ -3,12 +3,12 @@
 namespace App\Livewire\Auctions;
 
 use App\Actions\Searches\SaveSearch;
-use App\Enums\AuctionStatus;
 use App\Enums\CompanyStatus;
 use App\Models\Auction;
 use App\Models\Category;
 use App\Models\Company;
 use App\Support\AuctionFilters;
+use App\Support\AuctionListing;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -26,16 +26,6 @@ use Livewire\WithPagination;
 class Index extends Component
 {
     use WithPagination;
-
-    /** Which auctions each "status" filter value shows. */
-    private const STATUSES = [
-        'open' => [AuctionStatus::Live, AuctionStatus::Scheduled],
-        'live' => [AuctionStatus::Live],
-        'upcoming' => [AuctionStatus::Scheduled],
-        'ended' => [AuctionStatus::Sold, AuctionStatus::Unsold],
-    ];
-
-    private const SORTS = ['ending', 'newest', 'price_low', 'price_high', 'bids'];
 
     #[Url(as: 'q', except: '')]
     public string $search = '';
@@ -131,30 +121,7 @@ class Index extends Component
     /** @return Builder<Auction> */
     private function query(): Builder
     {
-        // Unknown values in the URL fall back to the defaults.
-        $statuses = self::STATUSES[$this->status] ?? self::STATUSES['open'];
-        $sort = in_array($this->sort, self::SORTS, true) ? $this->sort : 'ending';
-
-        $query = Auction::query()->forCards()->whereIn('status', $statuses);
-
-        $this->filters()->apply($query);
-
-        // Featured auctions lead the default order of open auctions.
-        if ($sort === 'ending' && $this->status !== 'ended') {
-            $query->orderByRaw('featured_at is null');
-        }
-
-        return match ($sort) {
-            'newest' => $query->latest('id'),
-            'price_low' => $query->orderBy('current_price')->orderBy('id'),
-            'price_high' => $query->orderByDesc('current_price')->orderBy('id'),
-            'bids' => $query->orderByDesc('bid_count')->orderBy('id'),
-            // Live before scheduled ("live" sorts first), then whatever ends
-            // or starts soonest; finished auctions newest first.
-            default => $this->status === 'ended'
-                ? $query->orderByDesc('closed_at')->orderByDesc('id')
-                : $query->orderBy('status')->orderByRaw('coalesce(ends_at, starts_at)')->orderBy('id'),
-        };
+        return AuctionListing::query($this->status, $this->sort, $this->filters());
     }
 
     public function filters(): AuctionFilters

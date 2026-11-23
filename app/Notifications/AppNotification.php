@@ -11,6 +11,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use NotificationChannels\WebPush\WebPushChannel;
+use NotificationChannels\WebPush\WebPushMessage;
 
 /**
  * The one notification the platform sends. What it says is in the title and
@@ -54,6 +56,11 @@ class AppNotification extends Notification implements ShouldQueue
             $channels[] = 'mail';
         }
 
+        // Web push (the installed app) once the owner has set the VAPID keys.
+        if (filled(config('webpush.vapid.public_key')) && $notifiable->wantsNotification($category, 'push')) {
+            $channels[] = WebPushChannel::class;
+        }
+
         return $channels;
     }
 
@@ -64,7 +71,19 @@ class AppNotification extends Notification implements ShouldQueue
             'mail' => 'default',
             'database' => 'default',
             'broadcast' => (string) config('auction.realtime.queue'),
+            WebPushChannel::class => 'default',
         ];
+    }
+
+    public function toWebPush(object $notifiable, mixed $notification = null): WebPushMessage
+    {
+        return (new WebPushMessage)
+            ->title($this->title)
+            ->body($this->body)
+            ->icon(url('/icons/icon-192.png'))
+            ->badge(url('/icons/badge.png'))
+            ->tag($this->kind->value)
+            ->data(['url' => $this->path]);
     }
 
     public function toMail(object $notifiable): MailMessage

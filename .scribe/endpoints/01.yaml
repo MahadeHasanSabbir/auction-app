@@ -1,0 +1,117 @@
+name: Catalogue
+description: |-
+
+  Categories and seller pages, for filters and storefronts. No token needed.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/categories
+    metadata:
+      custom: []
+      groupName: Catalogue
+      groupDescription: |-
+
+        Categories and seller pages, for filters and storefronts. No token needed.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List categories'
+      description: 'Active top-level categories with their active children.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":1,"name":"Electronics","slug":"electronics","children":[{"id":2,"name":"Phones","slug":"phones"},{"id":3,"name":"Computers","slug":"computers"},{"id":4,"name":"Cameras","slug":"cameras"}]},{"id":5,"name":"Vehicles","slug":"vehicles","children":[{"id":6,"name":"Cars","slug":"cars"},{"id":7,"name":"Motorcycles","slug":"motorcycles"}]},{"id":8,"name":"Collectibles","slug":"collectibles","children":[{"id":9,"name":"Coins and notes","slug":"coins-and-notes"},{"id":10,"name":"Stamps","slug":"stamps"},{"id":11,"name":"Antiques","slug":"antiques"}]},{"id":12,"name":"Art","slug":"art","children":[{"id":13,"name":"Paintings","slug":"paintings"},{"id":14,"name":"Sculpture","slug":"sculpture"}]},{"id":15,"name":"Fashion","slug":"fashion","children":[{"id":16,"name":"Watches","slug":"watches"},{"id":17,"name":"Jewellery","slug":"jewellery"},{"id":18,"name":"Textiles","slug":"textiles"}]},{"id":19,"name":"Home and living","slug":"home-and-living","children":[{"id":20,"name":"Furniture","slug":"furniture"},{"id":21,"name":"Handicrafts","slug":"handicrafts"}]}]}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          x-ratelimit-limit: '60'
+          x-ratelimit-remaining: '59'
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/sellers/{company_slug}'
+    metadata:
+      custom: []
+      groupName: Catalogue
+      groupDescription: |-
+
+        Categories and seller pages, for filters and storefronts. No token needed.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Show a seller'
+      description: "The seller's public page. Contact details are never included."
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      company_slug:
+        custom: []
+        name: company_slug
+        description: 'The slug of the company.'
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      company:
+        custom: []
+        name: company
+        description: "The seller's slug."
+        required: true
+        example: dhaka-antiques
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      company_slug: architecto
+      company: dhaka-antiques
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 404
+        content: '{"message":"Not found."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          x-ratelimit-limit: '60'
+          x-ratelimit-remaining: '59'
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

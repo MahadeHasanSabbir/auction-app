@@ -23,6 +23,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('partials.brand-head')
+    @include('partials.pwa-head')
     @livewireStyles
 </head>
 <body class="flex min-h-screen flex-col">

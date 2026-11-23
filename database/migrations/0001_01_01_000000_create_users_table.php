@@ -120,10 +120,36 @@ return new class extends Migration
             $table->unique(['provider', 'provider_id']);
             $table->unique(['user_id', 'provider']);
         });
+
+        // API tokens (Sanctum): created by the user on /profile/api-tokens,
+        // abilities are "read" and "write".
+        Schema::create('personal_access_tokens', function (Blueprint $table) {
+            $table->id();
+            $table->morphs('tokenable');
+            $table->text('name');
+            $table->string('token', 64)->unique();
+            $table->text('abilities')->nullable();
+            $table->timestamp('last_used_at')->nullable();
+            $table->timestamp('expires_at')->nullable()->index();
+            $table->timestamps();
+        });
+
+        // Browsers that agreed to web push (the PWA), one row per browser.
+        Schema::create('push_subscriptions', function (Blueprint $table) {
+            $table->id();
+            $table->morphs('subscribable', 'push_subscriptions_subscribable_morph_idx');
+            $table->string('endpoint', 1024)->charset('ascii')->unique();
+            $table->string('public_key')->nullable();
+            $table->string('auth_token')->nullable();
+            $table->string('content_encoding')->nullable();
+            $table->timestamps();
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('push_subscriptions');
+        Schema::dropIfExists('personal_access_tokens');
         Schema::dropIfExists('social_accounts');
         Schema::dropIfExists('trusted_devices');
         Schema::dropIfExists('otp_codes');

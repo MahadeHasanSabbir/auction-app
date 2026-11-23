@@ -58,6 +58,28 @@ return new class extends Migration
             $table->index('created_at');
         });
 
+        // One row per authenticated API request: who, which token, which
+        // endpoint (the route pattern, never the URL), and how it ended. Pruned
+        // after auction.api.log_days. token_id has no foreign key on purpose,
+        // so the history outlives a revoked token.
+        Schema::create('api_requests', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('token_id')->nullable();
+            $table->string('token_name', 120)->nullable();
+            $table->string('method', 8);
+            $table->string('route', 255);
+            $table->unsignedSmallInteger('status');
+            $table->string('ip_address', 45)->nullable();
+            $table->string('user_agent', 255)->nullable();
+            $table->unsignedInteger('duration_ms')->default(0);
+            $table->timestamp('created_at')->nullable();
+
+            $table->index('created_at');
+            $table->index(['user_id', 'created_at']);
+            $table->index(['token_id', 'created_at']);
+        });
+
         // Something that looks wrong, for platform staff to look at. One row
         // per kind, auction and user.
         Schema::create('fraud_flags', function (Blueprint $table) {
@@ -123,6 +145,7 @@ return new class extends Migration
         Schema::dropIfExists('blacklist_entries');
         Schema::dropIfExists('strikes');
         Schema::dropIfExists('fraud_flags');
+        Schema::dropIfExists('api_requests');
         Schema::dropIfExists('login_events');
         Schema::dropIfExists('settings');
         Schema::dropIfExists('kyc_documents');

@@ -1,0 +1,313 @@
+name: Bidding
+description: |-
+
+  Buyers bid, buy now and watch auctions. The same rules apply as on the website: a verified email,
+  cleared identity check, the biddable share of the wallet, and the per-minute bid limit.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/my/auctions
+    metadata:
+      custom: []
+      groupName: Bidding
+      groupDescription: |-
+
+        Buyers bid, buy now and watch auctions. The same rules apply as on the website: a verified email,
+        cleared identity check, the biddable share of the wallet, and the per-minute bid limit.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'My auctions'
+      description: 'Auctions you bid on or watch, with your own top bid.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      tab:
+        custom: []
+        name: tab
+        description: 'One of bidding (live auctions you bid on), won, lost, watching.'
+        required: false
+        example: bidding
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: 'Page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      tab: bidding
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/auctions/{auction_id}/bids'
+    metadata:
+      custom: []
+      groupName: Bidding
+      groupDescription: |-
+
+        Buyers bid, buy now and watch auctions. The same rules apply as on the website: a verified email,
+        cleared identity check, the biddable share of the wallet, and the per-minute bid limit.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Place a bid'
+      description: |-
+        With `auto` false the amount is the bid. With `auto` true the amount is your maximum: the system
+        bids for you up to it, and the maximum is held in your wallet while you lead. Send an
+        `Idempotency-Key` header (any unique string) to make a retry safe: a repeated key returns the first answer.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      auction_id:
+        custom: []
+        name: auction_id
+        description: 'The ID of the auction.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      auction:
+        custom: []
+        name: auction
+        description: 'The auction id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      auction_id: 1
+      auction: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      amount:
+        custom: []
+        name: amount
+        description: 'Amount in major units.'
+        required: true
+        example: '1500.00'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      auto:
+        custom: []
+        name: auto
+        description: 'Treat the amount as an automatic-bid maximum.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      amount: '1500.00'
+      auto: false
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"leading":true,"price":{"amount":150000,"currency":"BDT","formatted":"BDT 1,500.00"},"next_minimum":{"amount":160000,"currency":"BDT","formatted":"BDT 1,600.00"},"extended":false,"message":"You are the highest bidder at BDT 1,500.00."}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/auctions/{auction_id}/buy-now'
+    metadata:
+      custom: []
+      groupName: Bidding
+      groupDescription: |-
+
+        Buyers bid, buy now and watch auctions. The same rules apply as on the website: a verified email,
+        cleared identity check, the biddable share of the wallet, and the per-minute bid limit.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Buy now'
+      description: |-
+        Buys at the buy-now price, only while the auction has no bids. The full price must be available in the
+        wallet. Opens an order with the price held in escrow.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      auction_id:
+        custom: []
+        name: auction_id
+        description: 'The ID of the auction.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      auction:
+        custom: []
+        name: auction
+        description: 'The auction id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      auction_id: 1
+      auction: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/auctions/{auction_id}/watch'
+    metadata:
+      custom: []
+      groupName: Bidding
+      groupDescription: |-
+
+        Buyers bid, buy now and watch auctions. The same rules apply as on the website: a verified email,
+        cleared identity check, the biddable share of the wallet, and the per-minute bid limit.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Watch or unwatch'
+      description: 'Toggles the auction on your watchlist.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      auction_id:
+        custom: []
+        name: auction_id
+        description: 'The ID of the auction.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      auction:
+        custom: []
+        name: auction
+        description: 'The auction id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      auction_id: 1
+      auction: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"watching":true}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

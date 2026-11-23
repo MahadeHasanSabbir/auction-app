@@ -18,6 +18,7 @@
         ['url' => route('support.index'), 'label' => __('Support'), 'icon' => 'chat', 'active' => request()->routeIs('support.*')],
         ['url' => route('profile.edit'), 'label' => __('Profile'), 'icon' => 'user', 'active' => request()->routeIs('profile.edit')],
         ['url' => route('profile.security'), 'label' => __('Sign-in and security'), 'icon' => 'lock', 'active' => request()->routeIs('profile.security')],
+        ['url' => route('profile.api-tokens'), 'label' => __('API tokens'), 'icon' => 'document', 'active' => request()->routeIs('profile.api-tokens')],
     ]);
 @endphp
 

@@ -213,4 +213,32 @@ return [
         'home_featured' => 4,
     ],
 
+    'api' => [
+        // Requests a token (or, without one, an IP address) may make per minute.
+        'per_minute' => (int) env('API_RATE_PER_MINUTE', 120),
+        'guest_per_minute' => (int) env('API_GUEST_RATE_PER_MINUTE', 60),
+
+        // A new token stops working after this many days (null: it never does).
+        'token_days' => 365,
+
+        // Tokens one account may hold at a time.
+        'tokens_max' => 10,
+
+        // How long the log of API requests (admin → API activity) is kept, in days.
+        'log_days' => 30,
+
+        // Rows per page on list endpoints: the default, and the most a client may ask for.
+        'per_page' => 20,
+        'per_page_max' => 50,
+    ],
+
+    'push' => [
+        // Only these push services are ever contacted: a subscription's address
+        // comes from the browser, so it is checked against this list.
+        'allowed_hosts' => ['googleapis.com', 'mozilla.com', 'windows.com', 'apple.com'],
+
+        // Browsers one account may keep subscribed; the oldest are dropped.
+        'max_per_user' => 10,
+    ],
+
 ];

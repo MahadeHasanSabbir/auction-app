@@ -2,6 +2,7 @@
 // Components are registered on Alpine's own init event instead.
 import './bootstrap';
 import { registerLive } from './live';
+import { registerPwa } from './pwa';
 
 document.addEventListener('alpine:init', () => {
     const Alpine = window.Alpine;
@@ -99,3 +100,5 @@ document.addEventListener('alpine:init', () => {
         },
     });
 });
+
+registerPwa();

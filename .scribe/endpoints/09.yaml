@@ -1,0 +1,279 @@
+name: 'Seller: orders'
+description: |-
+
+  The company's sales. The whole team ships; only the owner cancels. Read one order, and use its chat,
+  with the buyer endpoints under "Orders (buyer)", which accept the selling team too.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/seller/orders
+    metadata:
+      custom: []
+      groupName: 'Seller: orders'
+      groupDescription: |-
+
+        The company's sales. The whole team ships; only the owner cancels. Read one order, and use its chat,
+        with the buyer endpoints under "Orders (buyer)", which accept the selling team too.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List orders'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      status:
+        custom: []
+        name: status
+        description: 'Only this status (in_escrow, shipped, completed, cancelled, disputed, refunded, partially_refunded).'
+        required: false
+        example: in_escrow
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: 'Page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      status: in_escrow
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/seller/orders/{order_number}/ship'
+    metadata:
+      custom: []
+      groupName: 'Seller: orders'
+      groupDescription: |-
+
+        The company's sales. The whole team ships; only the owner cancels. Read one order, and use its chat,
+        with the buyer endpoints under "Orders (buyer)", which accept the selling team too.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Ship an order'
+      description: "Needs the buyer's delivery address. Starts the buyer's confirmation and auto-release clock."
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      order_number:
+        custom: []
+        name: order_number
+        description: ''
+        required: true
+        example: ORD-2026-000001
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      order:
+        custom: []
+        name: order
+        description: 'The order number.'
+        required: true
+        example: ORD-000123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      order_number: ORD-2026-000001
+      order: ORD-000123
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      courier:
+        custom: []
+        name: courier
+        description: ''
+        required: true
+        example: Pathao
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      tracking_number:
+        custom: []
+        name: tracking_number
+        description: ''
+        required: false
+        example: PT123456
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      tracking_url:
+        custom: []
+        name: tracking_url
+        description: ''
+        required: false
+        example: 'https://track.example.com/PT123456'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      note:
+        custom: []
+        name: note
+        description: ''
+        required: false
+        example: 'Left with reception.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      courier: Pathao
+      tracking_number: PT123456
+      tracking_url: 'https://track.example.com/PT123456'
+      note: 'Left with reception.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/seller/orders/{order_number}/cancel'
+    metadata:
+      custom: []
+      groupName: 'Seller: orders'
+      groupDescription: |-
+
+        The company's sales. The whole team ships; only the owner cancels. Read one order, and use its chat,
+        with the buyer endpoints under "Orders (buyer)", which accept the selling team too.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Cancel an order'
+      description: 'Owner only, before shipping. The buyer is refunded in full.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      order_number:
+        custom: []
+        name: order_number
+        description: ''
+        required: true
+        example: ORD-2026-000001
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      order:
+        custom: []
+        name: order
+        description: 'The order number.'
+        required: true
+        example: ORD-000123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      order_number: ORD-2026-000001
+      order: ORD-000123
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      reason:
+        custom: []
+        name: reason
+        description: ''
+        required: true
+        example: 'Item damaged before shipping.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      reason: 'Item damaged before shipping.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

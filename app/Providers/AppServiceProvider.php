@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\ApiRequest;
+use App\Models\ApiToken;
 use App\Models\Auction;
 use App\Models\BlacklistEntry;
 use App\Models\Company;
@@ -26,22 +28,28 @@ use App\Models\SubscriptionInvoice;
 use App\Models\User;
 use App\Models\WithdrawalRequest;
 use App\Policies\ActivityPolicy;
+use App\Policies\ApiRequestPolicy;
+use App\Policies\ApiTokenPolicy;
 use App\Services\Branding\Branding;
 use App\Services\Ledger\Ledger;
 use App\Services\Settings\Settings;
 use Carbon\CarbonImmutable;
 use Filament\Support\Facades\FilamentTimezone;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Request;
 use Illuminate\Queue\Events\Looping;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Sanctum\Sanctum;
 use Spatie\Activitylog\Models\Activity;
 
 class AppServiceProvider extends ServiceProvider
@@ -65,6 +73,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $production = $this->app->isProduction();
+
+        // The API: a token is limited as a person, a guest by address.
+        RateLimiter::for('api', fn (Request $request) => $request->user() === null
+            ? Limit::perMinute((int) config('auction.api.guest_per_minute'))->by('ip:'.$request->ip())
+            : Limit::perMinute((int) config('auction.api.per_minute'))->by('user:'.$request->user()->getAuthIdentifier()));
 
         // Outside production an N+1 query throws, so it is caught by the test
         // suite instead of by a slow page.
@@ -105,6 +118,11 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Looping::class, fn () => $this->app->make(Settings::class)->apply());
 
         Gate::policy(Activity::class, ActivityPolicy::class);
+
+        // API tokens carry what the admin panel needs (requests, status); staff may see and revoke them.
+        Sanctum::usePersonalAccessTokenModel(ApiToken::class);
+        Gate::policy(ApiToken::class, ApiTokenPolicy::class);
+        Gate::policy(ApiRequest::class, ApiRequestPolicy::class);
 
         // Report pages: the marketplace figures for every platform account, the
         // platform's revenue for the system owner only.

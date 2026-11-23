@@ -6,8 +6,11 @@ use App\Http\Controllers\KycDocumentController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PushSubscriptionController;
+use App\Http\Controllers\PwaController;
 use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\SitemapController;
+use App\Livewire\Account\ApiTokens;
 use App\Livewire\Account\Bids;
 use App\Livewire\Account\Invoices as AccountInvoices;
 use App\Livewire\Account\Notifications;
@@ -43,11 +46,13 @@ Route::get('/terms', [PageController::class, 'show'])->defaults('page', SitePage
 Route::get('/privacy', [PageController::class, 'show'])->defaults('page', SitePage::Privacy->value)->name('pages.privacy');
 Route::get('/faq', [PageController::class, 'show'])->defaults('page', SitePage::Faq->value)->name('pages.faq');
 Route::post('/locale', LocaleController::class)->middleware('throttle:30,1')->name('locale');
+Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])->name('pwa.manifest');
+Route::get('/offline', [PwaController::class, 'offline'])->name('pwa.offline');
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/robots.txt', fn () => response(implode("\n", [
     'User-agent: *',
     // Panels, account pages and Livewire requests are not for search engines.
-    ...array_map(fn (string $path) => "Disallow: /{$path}", ['admin', 'seller', 'livewire', 'dashboard', 'wallet', 'my-bids', 'orders', 'purchases', 'saved-searches', 'referrals', 'invoices', 'verification', 'notifications', 'support', 'profile', 'login', 'register']),
+    ...array_map(fn (string $path) => "Disallow: /{$path}", ['admin', 'seller', 'livewire', 'dashboard', 'wallet', 'my-bids', 'orders', 'push', 'purchases', 'saved-searches', 'referrals', 'invoices', 'verification', 'notifications', 'support', 'profile', 'login', 'register']),
     'Sitemap: '.route('sitemap'),
 ])."\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']))->name('robots');
 Route::get('/contact', Contact::class)->name('contact');
@@ -77,6 +82,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::get('/profile/notifications', NotificationSettings::class)->name('profile.notifications');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/push/subscriptions', [PushSubscriptionController::class, 'store'])->middleware('throttle:20,1')->name('push.store');
+    Route::delete('/push/subscriptions', [PushSubscriptionController::class, 'destroy'])->middleware('throttle:20,1')->name('push.destroy');
 
     // Email, password, trusted devices, closing the account: these ask for
     // an emailed code first.
@@ -87,6 +94,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/profile', [SecurityController::class, 'destroy'])->name('profile.destroy');
 
         Route::get('/wallet/withdraw', Withdraw::class)->name('wallet.withdraw');
+        Route::get('/profile/api-tokens', ApiTokens::class)->name('profile.api-tokens');
     });
 });
 

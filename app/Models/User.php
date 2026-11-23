@@ -26,12 +26,15 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 use LogicException;
+use NotificationChannels\WebPush\HasPushSubscriptions;
+use NotificationChannels\WebPush\PushSubscription;
 
 class User extends Authenticatable implements FilamentUser, HasLocalePreference, HasTenants, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, HasPushSubscriptions, Notifiable, SoftDeletes;
 
     /**
      * role, company_id, user_type_id, kyc_status and is_active are left out on
@@ -244,7 +247,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
      * own choice if they made one, else the default (the bell is on for
      * everything; email only for the important categories).
      *
-     * @param  'bell'|'mail'  $channel
+     * @param  'bell'|'mail'|'push'  $channel
      */
     public function wantsNotification(NotificationCategory $category, string $channel): bool
     {
@@ -254,7 +257,19 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
             return $chosen;
         }
 
-        return $channel === 'bell' ? true : $category->mailByDefault();
+        // Push needs the browser's own consent first, so it is on wherever the bell is.
+        return $channel === 'mail' ? $category->mailByDefault() : true;
+    }
+
+    /**
+     * The browsers to push to. Queried here rather than read from the
+     * relation so a queued notification never lazy-loads it.
+     *
+     * @return Collection<int, PushSubscription>
+     */
+    public function routeNotificationForWebPush(): Collection
+    {
+        return $this->pushSubscriptions()->get();
     }
 
     /**

@@ -14,7 +14,7 @@ use Livewire\Component;
 #[Layout('layouts.site')]
 class NotificationSettings extends Component
 {
-    /** @var array<string, array{bell: bool, mail: bool}> */
+    /** @var array<string, array{bell: bool, mail: bool, push: bool}> */
     public array $choices = [];
 
     public function mount(): void
@@ -25,6 +25,7 @@ class NotificationSettings extends Component
             $this->choices[$category->value] = [
                 'bell' => $user->wantsNotification($category, 'bell'),
                 'mail' => $user->wantsNotification($category, 'mail'),
+                'push' => $user->wantsNotification($category, 'push'),
             ];
         }
     }
@@ -38,7 +39,10 @@ class NotificationSettings extends Component
 
     public function render(): View
     {
-        return view('livewire.account.notification-settings', ['categories' => NotificationCategory::cases()])
+        return view('livewire.account.notification-settings', [
+            'categories' => NotificationCategory::cases(),
+            'pushKey' => config('webpush.vapid.public_key'),
+        ])
             ->title(__('Notification settings'));
     }
 
