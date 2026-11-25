@@ -30,18 +30,32 @@ return [
 
     'disks' => [
 
+        // Private files. Never web-accessible.
         'local' => [
             'driver' => 'local',
-            'root' => storage_path('app'),
-            'throw' => false,
+            'root' => storage_path('app/private'),
+            'serve' => false,
+            'throw' => true,
         ],
 
+        // Public files (product images, logos), served through the
+        // public/storage symlink created by `php artisan storage:link`.
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
             'url' => env('APP_URL').'/storage',
             'visibility' => 'public',
-            'throw' => false,
+            'throw' => true,
+        ],
+
+        // Identity documents. Private, and only ever handed out through an
+        // authorized, short-lived signed URL.
+        'kyc' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/kyc'),
+            'serve' => false,
+            'visibility' => 'private',
+            'throw' => true,
         ],
 
         's3' => [

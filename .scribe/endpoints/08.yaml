@@ -1,0 +1,625 @@
+name: 'Seller: auctions'
+description: |-
+
+  Draft, submit and manage the company's auctions. Platform staff approve each one before it runs.
+  Prices are in major units ("1500" or "1500.50"); times are ISO 8601 and read as UTC unless they carry an offset.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/seller/auctions
+    metadata:
+      custom: []
+      groupName: 'Seller: auctions'
+      groupDescription: |-
+
+        Draft, submit and manage the company's auctions. Platform staff approve each one before it runs.
+        Prices are in major units ("1500" or "1500.50"); times are ISO 8601 and read as UTC unless they carry an offset.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List auctions'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      status:
+        custom: []
+        name: status
+        description: 'Only this status (draft, pending_review, scheduled, live, sold, unsold, cancelled, rejected).'
+        required: false
+        example: draft
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: 'Page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      status: draft
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/seller/auctions
+    metadata:
+      custom: []
+      groupName: 'Seller: auctions'
+      groupDescription: |-
+
+        Draft, submit and manage the company's auctions. Platform staff approve each one before it runs.
+        Prices are in major units ("1500" or "1500.50"); times are ISO 8601 and read as UTC unless they carry an offset.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create a draft'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      product_id:
+        custom: []
+        name: product_id
+        description: 'One of your products.'
+        required: true
+        example: 7
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      title:
+        custom: []
+        name: title
+        description: '3 to 255 characters.'
+        required: true
+        example: 'Brass table clock, 1950s'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      starting_price:
+        custom: []
+        name: starting_price
+        description: ''
+        required: true
+        example: '1000'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      min_increment:
+        custom: []
+        name: min_increment
+        description: ''
+        required: true
+        example: '50'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      reserve_price:
+        custom: []
+        name: reserve_price
+        description: 'Not lower than the starting price.'
+        required: false
+        example: '2000'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      buy_now_price:
+        custom: []
+        name: buy_now_price
+        description: 'Higher than the starting price.'
+        required: false
+        example: '4000'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      proposed_starts_at:
+        custom: []
+        name: proposed_starts_at
+        description: 'When you would like it to start.'
+        required: true
+        example: '2026-12-01T10:00:00Z'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      proposed_ends_at:
+        custom: []
+        name: proposed_ends_at
+        description: 'When you would like it to end.'
+        required: true
+        example: '2026-12-04T10:00:00Z'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      product_id: 7
+      title: 'Brass table clock, 1950s'
+      starting_price: '1000'
+      min_increment: '50'
+      reserve_price: '2000'
+      buy_now_price: '4000'
+      proposed_starts_at: '2026-12-01T10:00:00Z'
+      proposed_ends_at: '2026-12-04T10:00:00Z'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/seller/auctions/{auction}'
+    metadata:
+      custom: []
+      groupName: 'Seller: auctions'
+      groupDescription: |-
+
+        Draft, submit and manage the company's auctions. Platform staff approve each one before it runs.
+        Prices are in major units ("1500" or "1500.50"); times are ISO 8601 and read as UTC unless they carry an offset.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Show an auction'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      auction:
+        custom: []
+        name: auction
+        description: 'The auction id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      auction: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/v1/seller/auctions/{auction}'
+    metadata:
+      custom: []
+      groupName: 'Seller: auctions'
+      groupDescription: |-
+
+        Draft, submit and manage the company's auctions. Platform staff approve each one before it runs.
+        Prices are in major units ("1500" or "1500.50"); times are ISO 8601 and read as UTC unless they carry an offset.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update a draft'
+      description: 'Only a draft or a rejected auction can be changed (a rejected one becomes a draft again). Send all fields.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      auction:
+        custom: []
+        name: auction
+        description: 'The auction id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      auction: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      product_id:
+        custom: []
+        name: product_id
+        description: 'One of your products.'
+        required: true
+        example: 7
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      title:
+        custom: []
+        name: title
+        description: ''
+        required: true
+        example: 'Brass table clock, 1950s'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      starting_price:
+        custom: []
+        name: starting_price
+        description: ''
+        required: true
+        example: '1000'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      min_increment:
+        custom: []
+        name: min_increment
+        description: ''
+        required: true
+        example: '50'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      reserve_price:
+        custom: []
+        name: reserve_price
+        description: ''
+        required: false
+        example: '2000'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      buy_now_price:
+        custom: []
+        name: buy_now_price
+        description: ''
+        required: false
+        example: '4000'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      proposed_starts_at:
+        custom: []
+        name: proposed_starts_at
+        description: ''
+        required: true
+        example: '2026-12-01T10:00:00Z'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      proposed_ends_at:
+        custom: []
+        name: proposed_ends_at
+        description: ''
+        required: true
+        example: '2026-12-04T10:00:00Z'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      product_id: 7
+      title: 'Brass table clock, 1950s'
+      starting_price: '1000'
+      min_increment: '50'
+      reserve_price: '2000'
+      buy_now_price: '4000'
+      proposed_starts_at: '2026-12-01T10:00:00Z'
+      proposed_ends_at: '2026-12-04T10:00:00Z'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/seller/auctions/{auction}/submit'
+    metadata:
+      custom: []
+      groupName: 'Seller: auctions'
+      groupDescription: |-
+
+        Draft, submit and manage the company's auctions. Platform staff approve each one before it runs.
+        Prices are in major units ("1500" or "1500.50"); times are ISO 8601 and read as UTC unless they carry an offset.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Submit for review'
+      description: |-
+        Needs a verified company on a plan that allows selling, a product with a picture, a start in the
+        future and room in the plan's active-auction cap. An auto-approved company goes straight to scheduled.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      auction:
+        custom: []
+        name: auction
+        description: 'The auction id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      auction: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/seller/auctions/{auction}/withdraw'
+    metadata:
+      custom: []
+      groupName: 'Seller: auctions'
+      groupDescription: |-
+
+        Draft, submit and manage the company's auctions. Platform staff approve each one before it runs.
+        Prices are in major units ("1500" or "1500.50"); times are ISO 8601 and read as UTC unless they carry an offset.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Withdraw from review'
+      description: 'Back to a draft.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      auction:
+        custom: []
+        name: auction
+        description: 'The auction id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      auction: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/seller/auctions/{auction}/cancel'
+    metadata:
+      custom: []
+      groupName: 'Seller: auctions'
+      groupDescription: |-
+
+        Draft, submit and manage the company's auctions. Platform staff approve each one before it runs.
+        Prices are in major units ("1500" or "1500.50"); times are ISO 8601 and read as UTC unless they carry an offset.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Cancel an auction'
+      description: 'Any team member before approval; the owner after approval, and a live auction only while it has no bids.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      auction:
+        custom: []
+        name: auction
+        description: 'The auction id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      auction: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      reason:
+        custom: []
+        name: reason
+        description: Why.
+        required: false
+        example: 'Item no longer available.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      reason: 'Item no longer available.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

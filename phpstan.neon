@@ -1,0 +1,15 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 6
+
+    paths:
+        - app
+        - config
+        - database
+        - routes
+
+    # Read each model's casts() method body, so enum and Money casts give the
+    # properties their real types.
+    parseModelCastsMethod: true

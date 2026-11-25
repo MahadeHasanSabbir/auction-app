@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
+use App\Services\Trust\Blacklist;
+use App\Services\Trust\LoginHistory;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +25,7 @@ class LoginRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
+     * @return array<string, list<string>>
      */
     public function rules(): array
     {
@@ -33,16 +36,29 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Attempt to authenticate the request's credentials.
+     * Check the email and password without signing in, and return the account.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * Signing in happens afterwards, once the emailed code is confirmed or the
+     * browser is recognised as trusted.
+     *
+     * @throws ValidationException
      */
-    public function authenticate(): void
+    public function validateCredentials(): User
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        // A deactivated account, or a blacklisted address or IP, fails
+        // exactly like a wrong password.
+        $valid = Auth::validate($this->only('email', 'password') + ['is_active' => true]);
+        $user = Auth::getLastAttempted();
+        $blocked = app(Blacklist::class)->blocks($this->string('email')->toString(), $this->ip());
+
+        if (! $valid || ! $user instanceof User || $blocked) {
             RateLimiter::hit($this->throttleKey());
+
+            if ($user instanceof User) {
+                app(LoginHistory::class)->failed($this, $user, $this->string('email')->toString());
+            }
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
@@ -50,12 +66,14 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+
+        return $user;
     }
 
     /**
      * Ensure the login request is not rate limited.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function ensureIsNotRateLimited(): void
     {

@@ -2,112 +2,51 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use Illuminate\View\View;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\ImageStore;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
+use InvalidArgumentException;
 
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile edit form.
+     * The profile form: name, contact details, timezone and picture.
      */
     public function edit(Request $request): View
     {
-        return view('profile.edit', [
+        return view('account.profile', [
             'user' => $request->user(),
+            'timezones' => timezone_identifiers_list(),
         ]);
     }
 
-    /**
-     * Display the user's profile.
-     */
-    public function view(string $id): View
+    public function update(ProfileUpdateRequest $request, ImageStore $images): RedirectResponse
     {
-        $user = User::findorfail($id);
-        return view('users', compact('user'));
-    }
+        $user = $request->user();
+        $previousAvatar = $user->avatar_path;
 
-    /**
-     * Update the user's profile information.
-     */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
-    {
-        $request->user()->fill($request->validated());
+        $user->fill($request->safe()->only(['name', 'phone', 'address', 'timezone']));
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($request->hasFile('avatar')) {
+            try {
+                $user->avatar_path = $images->store($request->file('avatar'), 'avatars', maxSide: 400, square: true);
+            } catch (InvalidArgumentException) {
+                // It passed the type check but cannot be decoded: damaged, or not really a picture.
+                throw ValidationException::withMessages(['avatar' => __('This file could not be read as a picture. Try a JPG or PNG.')]);
+            }
+        } elseif ($request->boolean('remove_avatar')) {
+            $user->avatar_path = null;
         }
 
-        $request->user()->save();
+        $user->save();
 
-        return Redirect::route('profile.view', $request->user()->id)->with('status', 'profile-updated');
-    }
+        if ($user->avatar_path !== $previousAvatar) {
+            $images->delete($previousAvatar);
+        }
 
-    /**
-     * Update the user's fund information.
-     */
-    public function fund(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'amount' => ['required', 'integer'],
-            'card_no' => ['required', 'integer'],
-        ]);
-
-        $fund = $request->amount + $request->user()->asset;
-
-        $request->user()->update([
-            'asset' => $fund,
-            'card_no' => $request->card_no,
-        ]);
-
-        return Redirect::route('profile.view', $request->user()->id)->with('status', 'Fund added to profile');
-    }
-
-    /**
-     * Update the user's contact information.
-     */
-    public function contact(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'mobile' => ['required', 'unique:'.User::class],
-            'address' => ['required', 'string', 'max:200'],
-            'photo' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:5120'],
-        ]);
-
-        $picName = $request->user()->id.time().'.'.$request->photo->extension();
-        $path = $request->photo->move('storage', $picName);
-
-        $request->user()->update([
-            'mobile' => $request->mobile,
-            'address' => $request->address,
-            'avatar' => $path,
-        ]);
-
-        return Redirect::route('profile.view', $request->user()->id)->with('status', 'profile-updated');
-    }
-
-    /**
-     * Delete the user's account.
-     */
-    public function destroy(Request $request): RedirectResponse
-    {
-        $request->validateWithBag('userDeletion', [
-            'password' => ['required', 'current_password'],
-        ]);
-
-        $user = $request->user();
-
-        Auth::logout();
-
-        $user->delete();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return Redirect::to('/');
+        return redirect()->route('profile.edit')->with('status', __('Profile saved.'));
     }
 }

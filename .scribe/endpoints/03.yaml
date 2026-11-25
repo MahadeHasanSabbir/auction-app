@@ -1,0 +1,115 @@
+name: Wallet
+description: |-
+
+  Balances and statement of your wallet (a buyer's own, or the company's for seller accounts).
+  Adding and withdrawing money is not available here: deposits go through a payment page and
+  withdrawals need a fresh emailed code, so both stay on the website.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/wallet
+    metadata:
+      custom: []
+      groupName: Wallet
+      groupDescription: |-
+
+        Balances and statement of your wallet (a buyer's own, or the company's for seller accounts).
+        Adding and withdrawing money is not available here: deposits go through a payment page and
+        withdrawals need a fresh emailed code, so both stay on the website.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Wallet balances'
+      description: '`available` is balance minus held; `biddable` is the share of it that can go into bids.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/wallet/statement
+    metadata:
+      custom: []
+      groupName: Wallet
+      groupDescription: |-
+
+        Balances and statement of your wallet (a buyer's own, or the company's for seller accounts).
+        Adding and withdrawing money is not available here: deposits go through a payment page and
+        withdrawals need a fresh emailed code, so both stay on the website.
+      subgroup: ''
+      subgroupDescription: ''
+      title: Statement
+      description: 'Newest first. Amounts are signed: positive adds to the wallet, negative takes from it.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'Page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

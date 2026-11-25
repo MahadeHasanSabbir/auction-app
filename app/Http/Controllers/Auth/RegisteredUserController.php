@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Actions\Accounts\RegisterBuyer;
+use App\Actions\Accounts\RegisterCompany;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Trust\Blacklist;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
@@ -17,34 +20,47 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('auth.register');
+        // A referral link (/register?ref=CODE) is remembered until sign-up.
+        if (is_string($ref = $request->query('ref')) && $ref !== '') {
+            $request->session()->put('referral_code', mb_substr($ref, 0, 16));
+        }
+
+        return view('auth.register', [
+            'accountType' => $request->query('type') === 'seller' ? 'seller' : 'buyer',
+        ]);
     }
 
     /**
-     * Handle an incoming registration request.
+     * Create a buyer account, or a seller company with its owner account.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * Either way the new user is signed in and sent to confirm the email
+     * address with the code the Registered event has just emailed.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, RegisterBuyer $registerBuyer, RegisterCompany $registerCompany, Blacklist $blacklist): RedirectResponse
     {
-        $request->validate([
+        $data = $request->validate([
+            'account_type' => ['required', Rule::in(['buyer', 'seller'])],
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)],
+            'password' => ['required', 'confirmed', Password::defaults()],
+            'company_name' => ['exclude_unless:account_type,seller', 'required', 'string', 'min:2', 'max:255'],
+            'phone' => ['exclude_unless:account_type,seller', 'nullable', 'string', 'max:32'],
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        $blacklist->ensureAllowed($data['email'], $request->ip());
+
+        $user = $data['account_type'] === 'seller'
+            ? $registerCompany->handle($data)
+            : $registerBuyer->handle($data, User::findByReferralCode($request->session()->pull('referral_code')));
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        $request->session()->regenerate();
+
+        return redirect()->route('verification.notice');
     }
 }

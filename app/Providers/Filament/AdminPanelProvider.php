@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Providers\Filament;
+
+use App\Filament\Support\BrandAvatarProvider;
+use App\Filament\Support\PanelBranding;
+use App\Http\Middleware\EnsureActiveAccount;
+use App\Http\Middleware\RequirePasswordChange;
+use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Middleware\AuthenticateSession;
+use Filament\Http\Middleware\DisableBladeIconComponents;
+use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
+use Filament\Pages\Dashboard;
+use Filament\Panel;
+use Filament\PanelProvider;
+use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
+
+/**
+ * The platform panel at /admin, for the system owner and platform staff.
+ * Who gets in is decided by User::canAccessPanel().
+ */
+class AdminPanelProvider extends PanelProvider
+{
+    public function panel(Panel $panel): Panel
+    {
+        // The brand colour, logo and favicon, English only; the site fonts and
+        // our compiled theme (resources/css/filament/panels/theme.css).
+        return PanelBranding::apply($panel, 'Admin')
+            ->default()
+            ->id('admin')
+            ->path('admin')
+            ->font('Inter', url: 'https://fonts.bunny.net/css?family=inter:400,500,600,700|space-grotesk:500,600,700&display=swap')
+            ->viteTheme('resources/css/filament/panels/theme.css')
+            ->sidebarCollapsibleOnDesktop()
+            ->navigationGroups([
+                NavigationGroup::make(fn () => __('Desk')),
+                NavigationGroup::make(fn () => __('People')),
+                NavigationGroup::make(fn () => __('Marketplace')),
+                NavigationGroup::make(fn () => __('Reports')),
+                NavigationGroup::make(fn () => __('System'))->collapsed(),
+            ])
+            ->databaseNotifications()
+            ->defaultAvatarProvider(BrandAvatarProvider::class)
+            ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\Filament\Admin\Resources')
+            ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\Filament\Admin\Pages')
+            ->pages([
+                Dashboard::class,
+            ])
+            ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\Filament\Admin\Widgets')
+            ->widgets([
+            ])
+            ->middleware([
+                EncryptCookies::class,
+                AddQueuedCookiesToResponse::class,
+                StartSession::class,
+                AuthenticateSession::class,
+                ShareErrorsFromSession::class,
+                PreventRequestForgery::class,
+                SubstituteBindings::class,
+                DisableBladeIconComponents::class,
+                DispatchServingFilamentEvent::class,
+            ])
+            // No panel login page: guests are sent to the site sign-in, so every
+            // account passes the same emailed-code step.
+            ->authMiddleware([
+                EnsureActiveAccount::class,
+                Authenticate::class,
+                EnsureEmailIsVerified::class,
+                RequirePasswordChange::class,
+            ]);
+    }
+}
